@@ -1,0 +1,16 @@
+{
+  "short_name": "Foundly",
+  "name": "Foundly - Youth Organization Platform",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#8B5CF6",
+  "background_color": "#FEFEFE",
+  "description": "All-in-one platform for youth-led organizations to manage projects, events, and team collaboration."
+}
