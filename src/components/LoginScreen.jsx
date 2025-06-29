@@ -157,7 +157,7 @@ function LoginScreen({ onLogin }) {
             This is a one-person team working on this as a side project - I'm not a professional developer! 
             While I try my best, this app may have bugs or imperfections. By using Foundly, you acknowledge 
             that it's a student project and agree not to hold me liable for any issues or data loss. 
-            This is meant for fun organizational use, not critical business operations. Thanks for understanding! 🎓
+            This is meant for fun organizational use, not critical business operations. Thanks for understanding! 
           </p>
         </div>
       </div>
