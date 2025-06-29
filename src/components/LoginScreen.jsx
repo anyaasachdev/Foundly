@@ -75,7 +75,23 @@ function LoginScreen({ onLogin }) {
           </div>
         </div>
 
-        <div className="login-form-section">
+        <div className="login-form-container">
+          <div className="login-header">
+            <div className="logo">
+              <span className="logo-icon">⭐</span>
+              <span className="logo-text">Foundly</span>
+            </div>
+            <h1 className="login-title">
+              {isLogin ? 'Welcome back!' : 'Join Foundly'}
+            </h1>
+            <p className="login-subtitle">
+              {isLogin 
+                ? 'Sign in to continue your impact journey' 
+                : 'Start making a difference today'
+              }
+            </p>
+          </div>
+
           {error && (
             <div className="error-alert">
               <span className="error-icon">⚠️</span>
@@ -161,8 +177,23 @@ function LoginScreen({ onLogin }) {
       </div>
 
       {/* Footer Disclaimer */}
-      <div className="disclaimer-footer">
-        <p>
+      <div style={{
+        background: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(10px)',
+        borderTop: '1px solid #e5e7eb',
+        padding: '12px 20px',
+        textAlign: 'center',
+        marginTop: 'auto'
+      }}>
+        <p style={{
+          fontSize: '10px',
+          color: '#6b7280',
+          lineHeight: '1.3',
+          fontFamily: 'Poppins, sans-serif',
+          margin: '0',
+          maxWidth: '600px',
+          margin: '0 auto'
+        }}>
           <strong>Note:</strong> Foundly is a student hobby project created for organizational purposes only. 
           This is a one-person team working on this as a side project - I'm not a professional developer! 
           While I try my best, this app may have bugs or imperfections. By using Foundly, you acknowledge 
