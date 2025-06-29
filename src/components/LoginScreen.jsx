@@ -50,9 +50,17 @@ function LoginScreen({ onLogin }) {
   };
 
   return (
-    <div className="login-container">
+    <div className="login-container" style={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
       <div className="login-card" style={{
-        marginBottom: '120px' // Add bottom margin to prevent overlap
+        flex: '1',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px'
       }}>
         <div className="login-header">
           <div className="logo">
@@ -153,25 +161,19 @@ function LoginScreen({ onLogin }) {
         </div>
       </div>
 
-      {/* Disclaimer Footer */}
+      {/* Footer Disclaimer */}
       <div style={{
-        position: 'fixed',
-        bottom: '0',
-        left: '0',
-        right: '0',
         background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
         borderTop: '1px solid #e5e7eb',
-        padding: '15px 20px',
+        padding: '12px 20px',
         textAlign: 'center',
-        zIndex: 100,
-        maxHeight: '100px', // Limit height
-        overflow: 'auto' // Allow scrolling if needed
+        marginTop: 'auto' // This pushes it to the bottom
       }}>
         <p style={{
-          fontSize: '10px', // Slightly smaller font
+          fontSize: '10px',
           color: '#6b7280',
-          lineHeight: '1.3', // Tighter line height
+          lineHeight: '1.3',
           fontFamily: 'Poppins, sans-serif',
           margin: '0',
           maxWidth: '600px',
