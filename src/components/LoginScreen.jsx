@@ -17,7 +17,7 @@ function LoginScreen({ onLogin }) {
       ...formData,
       [e.target.name]: e.target.value
     });
-    setError('');
+    setError(''); // Clear error when user types
   };
 
   const handleSubmit = async (e) => {
@@ -35,6 +35,7 @@ function LoginScreen({ onLogin }) {
       }
 
       if (result.success) {
+        // Store user data in localStorage
         localStorage.setItem('user', JSON.stringify(result.user));
         onLogin(result.user);
       } else {
@@ -49,130 +50,114 @@ function LoginScreen({ onLogin }) {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-background">
-        <div className="bg-gradient-1"></div>
-        <div className="bg-gradient-2"></div>
-        <div className="bg-pattern"></div>
-      </div>
-      
-      <div className="login-content">
-        <div className="login-branding">
-          <div className="brand-content">
-            <div className="brand-logo">
-              <span className="logo-icon">⭐</span>
-              <span className="logo-text">Foundly</span>
-            </div>
-            <h1 className="brand-title">
-              {isLogin ? 'Welcome back!' : 'Join Foundly'}
-            </h1>
-            <p className="brand-subtitle">
-              {isLogin 
-                ? 'Sign in to continue your impact journey' 
-                : 'Start making a difference today'
-              }
-            </p>
+    <div className="login-container" style={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      <div className="login-card" style={{
+        flex: '1',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px'
+      }}>
+        <div className="login-header">
+          <div className="logo">
+            <span className="logo-icon">⭐</span>
+            <span className="logo-text">Foundly</span>
           </div>
+          <h1 className="login-title">
+            {isLogin ? 'Welcome back!' : 'Join Foundly'}
+          </h1>
+          <p className="login-subtitle">
+            {isLogin 
+              ? 'Sign in to continue your impact journey' 
+              : 'Start making a difference today'
+            }
+          </p>
         </div>
 
-        <div className="login-form-container">
-          <div className="login-header">
-            <div className="logo">
-              <span className="logo-icon">⭐</span>
-              <span className="logo-text">Foundly</span>
-            </div>
-            <h1 className="login-title">
-              {isLogin ? 'Welcome back!' : 'Join Foundly'}
-            </h1>
-            <p className="login-subtitle">
-              {isLogin 
-                ? 'Sign in to continue your impact journey' 
-                : 'Start making a difference today'
-              }
-            </p>
+        {error && (
+          <div className="error-alert">
+            <span className="error-icon">⚠️</span>
+            <span className="error-text">{error}</span>
           </div>
+        )}
 
-          {error && (
-            <div className="error-alert">
-              <span className="error-icon">⚠️</span>
-              <span className="error-text">{error}</span>
+        <form onSubmit={handleSubmit} className="login-form">
+          {!isLogin && (
+            <div className="form-group">
+              <label className="form-label">Full Name</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                className="form-input"
+                placeholder="Enter your full name"
+                required={!isLogin}
+                disabled={loading}
+              />
             </div>
           )}
+          
+          <div className="form-group">
+            <label className="form-label">Email Address</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              className="form-input"
+              placeholder="Enter your email"
+              required
+              disabled={loading}
+            />
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Password</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              className="form-input"
+              placeholder="Enter your password"
+              required
+              disabled={loading}
+            />
+          </div>
 
-          <form onSubmit={handleSubmit} className="login-form">
-            {!isLogin && (
-              <div className="form-group">
-                <label className="form-label">Full Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="Enter your full name"
-                  required={!isLogin}
-                  disabled={loading}
-                />
-              </div>
+          <button 
+            type="submit" 
+            className={`submit-btn ${loading ? 'loading' : ''}`}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span className="loading-spinner"></span>
+                Processing...
+              </>
+            ) : (
+              isLogin ? 'Sign In' : 'Create Account'
             )}
-            
-            <div className="form-group">
-              <label className="form-label">Email Address</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="Enter your email"
-                required
-                disabled={loading}
-              />
-            </div>
-            
-            <div className="form-group">
-              <label className="form-label">Password</label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="Enter your password"
-                required
-                disabled={loading}
-              />
-            </div>
+          </button>
+        </form>
 
+        <div className="form-footer">
+          <p className="switch-text">
+            {isLogin ? "Don't have an account?" : "Already have an account?"}
             <button 
-              type="submit" 
-              className={`submit-btn ${loading ? 'loading' : ''}`}
+              type="button" 
+              className="switch-btn"
+              onClick={() => setIsLogin(!isLogin)}
               disabled={loading}
             >
-              {loading ? (
-                <>
-                  <span className="loading-spinner"></span>
-                  Processing...
-                </>
-              ) : (
-                isLogin ? 'Sign In' : 'Create Account'
-              )}
+              {isLogin ? 'Sign Up' : 'Sign In'}
             </button>
-          </form>
-
-          <div className="form-footer">
-            <p className="switch-text">
-              {isLogin ? "Don't have an account?" : "Already have an account?"}
-              <button 
-                type="button" 
-                className="switch-btn"
-                onClick={() => setIsLogin(!isLogin)}
-                disabled={loading}
-              >
-                {isLogin ? 'Sign Up' : 'Sign In'}
-              </button>
-            </p>
-          </div>
+          </p>
         </div>
       </div>
 
@@ -183,7 +168,7 @@ function LoginScreen({ onLogin }) {
         borderTop: '1px solid #e5e7eb',
         padding: '12px 20px',
         textAlign: 'center',
-        marginTop: 'auto'
+        marginTop: 'auto' // This pushes it to the bottom
       }}>
         <p style={{
           fontSize: '10px',
