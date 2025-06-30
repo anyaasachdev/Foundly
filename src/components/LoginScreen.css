@@ -756,10 +756,10 @@
 }
 
 .disclaimer-text {
-  fontSize: 11px;
+  font-size: 11px;
   color: #6b7280;
-  lineHeight: 1.4;
-  fontFamily: 'Poppins, sans-serif';
+  line-height: 1.4;
+  font-family: 'Poppins', sans-serif;
   margin: 0;
   text-align: center;
 }
