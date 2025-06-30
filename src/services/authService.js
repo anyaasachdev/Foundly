@@ -1,8 +1,13 @@
 class AuthService {
+  // Get the API base URL from environment or fallback to localhost
+  getApiUrl() {
+    return process.env.REACT_APP_API_URL || 'http://localhost:3001';
+  }
+
   // Register a new user
   async register(email, password, name) {
     try {
-      const response = await fetch('http://localhost:3001/api/auth/register', {
+      const response = await fetch(`${this.getApiUrl()}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,7 +45,7 @@ class AuthService {
   // Login user
   async login(email, password) {
     try {
-      const response = await fetch('http://localhost:3001/api/auth/login', {
+      const response = await fetch(`${this.getApiUrl()}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +86,7 @@ class AuthService {
     try {
       const token = localStorage.getItem('authToken');
       if (token) {
-        await fetch('http://localhost:3001/api/auth/logout', {
+        await fetch(`${this.getApiUrl()}/api/auth/logout`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -122,4 +127,5 @@ class AuthService {
   }
 }
 
-export default new AuthService();
+const authService = new AuthService();
+export default authService;
