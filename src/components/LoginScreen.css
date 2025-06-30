@@ -592,7 +592,7 @@
 .logo-text {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #000000;
+  color: #000000 !important; /* Force black color with !important */
   font-family: 'Poppins', sans-serif;
 }
 
@@ -777,6 +777,11 @@
   .logo-text {
     font-size: 1.3rem;
   }
+}
+
+/* Additional override for logo text */
+.login-card .logo .logo-text {
+  color: #000000 !important;
 }
 
 /* Remove conflicting styles */
