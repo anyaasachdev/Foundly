@@ -102,8 +102,25 @@ function App() {
       }
     } catch (error) {
       console.error('Error checking organization status:', error);
-      // If there's an error, assume user has organizations to prevent infinite redirect
-      setNeedsOrgSetup(false);
+      
+      // Check if user has any organizations in localStorage as fallback
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        try {
+          const userData = JSON.parse(savedUser);
+          if (userData.organizations && userData.organizations.length > 0) {
+            console.log('Found organizations in localStorage, setting needsOrgSetup to false');
+            setNeedsOrgSetup(false);
+            return;
+          }
+        } catch (parseError) {
+          console.error('Error parsing saved user data:', parseError);
+        }
+      }
+      
+      // If no organizations found anywhere, redirect to setup
+      console.log('No organizations found anywhere, setting needsOrgSetup to true');
+      setNeedsOrgSetup(true);
     }
   };
 
@@ -176,12 +193,15 @@ function App() {
 
   // Show organization setup if user is logged in but needs org setup
   if (user && needsOrgSetup) {
+    console.log('User needs organization setup, showing OrganizationSetup component');
     return (
       <div className="app">
         <OrganizationSetup onComplete={handleOrganizationSetup} />
       </div>
     );
   }
+
+  console.log('App state - user:', !!user, 'needsOrgSetup:', needsOrgSetup, 'loading:', loading);
 
   return (
     <NotificationProvider user={user}>

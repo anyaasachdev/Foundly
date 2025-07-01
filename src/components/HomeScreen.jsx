@@ -119,8 +119,34 @@ const HomeScreen = ({ user }) => {
         
         setLoading(false);
       } else {
-        // User has no organizations - redirect to create one
-        console.log('No organizations found, redirecting to create');
+        // User has no organizations - check localStorage as fallback
+        console.log('No organizations found in API response, checking localStorage');
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+          try {
+            const userData = JSON.parse(savedUser);
+            if (userData.organizations && userData.organizations.length > 0) {
+              console.log('Found organizations in localStorage, using fallback data');
+              const fallbackOrg = userData.organizations[0];
+              const orgData = fallbackOrg.organizationId || fallbackOrg;
+              setOrganization(orgData);
+              setIsAdmin(['admin', 'owner'].includes(fallbackOrg.role));
+              setStats({
+                totalMembers: 1,
+                activeProjects: 0,
+                hoursLogged: 0,
+                completedTasks: 0
+              });
+              setLoading(false);
+              return;
+            }
+          } catch (parseError) {
+            console.error('Error parsing saved user data:', parseError);
+          }
+        }
+        
+        // If no organizations found anywhere, redirect to create one
+        console.log('No organizations found anywhere, redirecting to create');
         window.location.href = '/organization/create';
       }
     } catch (error) {
@@ -136,7 +162,33 @@ const HomeScreen = ({ user }) => {
         return;
       }
       
-      // For other errors, show error state but don't set fallback organization
+      // For other errors, try to use localStorage as fallback
+      console.log('API error, trying localStorage fallback');
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        try {
+          const userData = JSON.parse(savedUser);
+          if (userData.organizations && userData.organizations.length > 0) {
+            console.log('Using localStorage fallback data');
+            const fallbackOrg = userData.organizations[0];
+            const orgData = fallbackOrg.organizationId || fallbackOrg;
+            setOrganization(orgData);
+            setIsAdmin(['admin', 'owner'].includes(fallbackOrg.role));
+            setStats({
+              totalMembers: 1,
+              activeProjects: 0,
+              hoursLogged: 0,
+              completedTasks: 0
+            });
+            setLoading(false);
+            return;
+          }
+        } catch (parseError) {
+          console.error('Error parsing saved user data:', parseError);
+        }
+      }
+      
+      // If no fallback data available, show error state
       setOrganization(null);
       setStats({
         totalMembers: 0,
