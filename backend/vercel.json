@@ -18,6 +18,9 @@
     },
     "api/projects/[id].js": {
       "maxDuration": 30
+    },
+    "api/test-project.js": {
+      "maxDuration": 30
     }
   },
   "env": {
