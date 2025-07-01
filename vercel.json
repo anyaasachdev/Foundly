@@ -20,6 +20,6 @@
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://foundly-backend.vercel.app"
+    "API_URL": "https://foundly-backend.vercel.app"
   }
 }
