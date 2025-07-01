@@ -15,10 +15,21 @@
     },
     "api/auth/register.js": {
       "maxDuration": 30
+    },
+    "api/auth/test-auth.js": {
+      "maxDuration": 30
+    },
+    "api/debug-env.js": {
+      "maxDuration": 30
     }
   },
   "env": {
     "NODE_ENV": "production",
     "FRONTEND_URL": "https://foundly-olive.vercel.app"
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
   }
 }
