@@ -32,8 +32,10 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: true, // Allow all origins for debugging
-  credentials: true
+  origin: ['https://foundly-olive.vercel.app', 'http://localhost:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json({ limit: '10mb' }));
