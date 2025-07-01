@@ -1,5 +1,19 @@
 {
   "version": 2,
+  "functions": {
+    "api/test.js": {
+      "maxDuration": 30
+    },
+    "api/health.js": {
+      "maxDuration": 30
+    },
+    "api/index.js": {
+      "maxDuration": 30
+    },
+    "api/auth/login.js": {
+      "maxDuration": 30
+    }
+  },
   "env": {
     "NODE_ENV": "production",
     "FRONTEND_URL": "https://foundly-olive.vercel.app"
