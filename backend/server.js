@@ -48,8 +48,8 @@ app.use(cors({
     const allowedOrigins = [
       process.env.FRONTEND_URL,
       "http://localhost:3000",
-      "https://foundly-web.vercel.app",
-      "https://foundly-web-git-main.vercel.app"
+      "https://foundly-olive.vercel.app",
+      "https://foundly-olive-git-main.vercel.app"
     ].filter(Boolean);
     
     if (allowedOrigins.indexOf(origin) !== -1) {
@@ -1133,6 +1133,24 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
 });
 
 
+
+// Health check endpoint for debugging
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    cors: {
+      frontendUrl: process.env.FRONTEND_URL,
+      allowedOrigins: [
+        process.env.FRONTEND_URL,
+        "http://localhost:3000",
+        "https://foundly-olive.vercel.app",
+        "https://foundly-olive-git-main.vercel.app"
+      ].filter(Boolean)
+    }
+  });
+});
 
 app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
