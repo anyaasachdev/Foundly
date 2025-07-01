@@ -26,22 +26,20 @@ const DebugConnection = () => {
         return;
       }
       
-      // Then test the auth endpoint
-      const response = await fetch(`${apiUrl}/auth/login`, {
-        method: 'POST',
+      // Then test the simple test endpoint
+      const response = await fetch(`${apiUrl}/test`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: 'test@test.com', password: 'test' })
+        }
       });
       
       console.log('Response status:', response.status);
       console.log('Response headers:', response.headers);
       
-      if (response.status === 401) {
-        setStatus('✅ Connection successful! (Got 401 as expected for invalid credentials)');
-      } else if (response.ok) {
-        setStatus('✅ Connection successful!');
+      if (response.ok) {
+        const data = await response.json();
+        setStatus('✅ Connection successful! Test endpoint working.');
       } else {
         const data = await response.text();
         setError(`❌ Server error: ${response.status} - ${data}`);
