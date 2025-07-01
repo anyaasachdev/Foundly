@@ -1,10 +1,5 @@
 {
   "version": 2,
-  "functions": {
-    "api/[...path].js": {
-      "maxDuration": 30
-    }
-  },
   "env": {
     "NODE_ENV": "production",
     "FRONTEND_URL": "https://foundly-olive.vercel.app"
