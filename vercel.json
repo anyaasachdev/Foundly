@@ -20,6 +20,6 @@
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://foundly-backend.vercel.app"
+    "REACT_APP_API_URL": "https://foundly-olive.vercel.app"
   }
 }
