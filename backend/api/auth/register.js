@@ -36,37 +36,21 @@ export default async function handler(req, res) {
     await connectDB();
 
     // Validate input
-    const { email, password } = req.body;
+    const { email, password, name } = req.body;
     
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: 'Email, password, and name are required' });
     }
 
-    // Find user
-    const user = await User.findOne({ email }).populate('currentOrganization');
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' });
     }
 
-    // Check if account is locked
-    if (user.isLocked) {
-      return res.status(423).json({ error: 'Account temporarily locked due to too many failed login attempts' });
-    }
-
-    // Verify password
-    const isValidPassword = await user.comparePassword(password);
-    if (!isValidPassword) {
-      await user.incLoginAttempts();
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Reset login attempts if successful
-    if (user.loginAttempts > 0) {
-      await user.updateOne({
-        $unset: { loginAttempts: 1, lockUntil: 1 },
-        $set: { lastLogin: new Date() }
-      });
-    }
+    // Create new user
+    const user = new User({ email, password, name });
+    await user.save();
 
     // Generate tokens
     const accessToken = jwt.sign(
@@ -86,21 +70,19 @@ export default async function handler(req, res) {
     await user.save();
 
     // Return success response
-    res.status(200).json({
-      message: 'Login successful',
+    res.status(201).json({
+      message: 'User created successfully',
       token: accessToken,
       refreshToken: refreshToken,
       user: {
         id: user._id,
         email: user.email,
-        name: user.name,
-        currentOrganization: user.currentOrganization,
-        organizations: user.organizations
+        name: user.name
       }
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Registration error:', error);
     res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 } 
