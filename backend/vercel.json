@@ -21,6 +21,15 @@
     },
     "api/test-project.js": {
       "maxDuration": 30
+    },
+    "api/organizations.js": {
+      "maxDuration": 30
+    },
+    "api/organizations/my.js": {
+      "maxDuration": 30
+    },
+    "api/announcements.js": {
+      "maxDuration": 30
     }
   },
   "env": {
