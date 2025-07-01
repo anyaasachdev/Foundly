@@ -12,6 +12,12 @@
     },
     "api/auth/register.js": {
       "maxDuration": 30
+    },
+    "api/projects.js": {
+      "maxDuration": 30
+    },
+    "api/projects/[id].js": {
+      "maxDuration": 30
     }
   },
   "env": {
