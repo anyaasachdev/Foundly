@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, ArrowRight, Key, Shield, AlertCircle, Copy, CheckCircle } from 'lucide-react';
 import ApiService from '../services/api';
+import CollapsibleDisclaimer from './CollapsibleDisclaimer';
 
 const OrganizationSetup = ({ onComplete }) => {
   const [step, setStep] = useState('choose'); // 'choose', 'join', 'create', 'success'
@@ -284,35 +285,7 @@ const OrganizationSetup = ({ onComplete }) => {
           </button>
         </div>
 
-        {/* Disclaimer Footer */}
-        <div style={{
-          position: 'fixed',
-          bottom: '0',
-          left: '0',
-          right: '0',
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(10px)',
-          borderTop: '1px solid #e5e7eb',
-          padding: '15px 20px',
-          textAlign: 'center',
-          zIndex: 100
-        }}>
-          <p style={{
-            fontSize: '11px',
-            color: '#6b7280',
-            lineHeight: '1.4',
-            fontFamily: 'Poppins, sans-serif',
-            margin: '0',
-            maxWidth: '600px',
-            margin: '0 auto'
-          }}>
-            <strong>Note:</strong> Foundly is a student hobby project created for organizational purposes only. 
-            This is a one-person team working on this as a side project - I'm not a professional developer! 
-            While I try my best, this app may have bugs or imperfections. By using Foundly, you acknowledge 
-            that it's a student project and agree not to hold me liable for any issues or data loss. 
-            This is meant for fun organizational use, not critical business operations. Thanks for understanding! 🎓
-          </p>
-        </div>
+        <CollapsibleDisclaimer />
       </div>
     );
   }
@@ -472,35 +445,7 @@ const OrganizationSetup = ({ onComplete }) => {
           </div>
         </div>
 
-        {/* Disclaimer Footer */}
-        <div style={{
-          position: 'fixed',
-          bottom: '0',
-          left: '0',
-          right: '0',
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(10px)',
-          borderTop: '1px solid #e5e7eb',
-          padding: '15px 20px',
-          textAlign: 'center',
-          zIndex: 100
-        }}>
-          <p style={{
-            fontSize: '11px',
-            color: '#6b7280',
-            lineHeight: '1.4',
-            fontFamily: 'Poppins, sans-serif',
-            margin: '0',
-            maxWidth: '600px',
-            margin: '0 auto'
-          }}>
-            <strong>Note:</strong> Foundly is a student hobby project created for organizational purposes only. 
-            This is a one-person team working on this as a side project - I'm not a professional developer! 
-            While I try my best, this app may have bugs or imperfections. By using Foundly, you acknowledge 
-            that it's a student project and agree not to hold me liable for any issues or data loss. 
-            This is meant for fun organizational use, not critical business operations. Thanks for understanding! 🎓
-          </p>
-        </div>
+        <CollapsibleDisclaimer />
       </div>
     );
   }

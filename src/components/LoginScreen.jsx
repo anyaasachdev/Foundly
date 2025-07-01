@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './LoginScreen.css';
 import authService from '../services/authService';
+import CollapsibleDisclaimer from './CollapsibleDisclaimer';
 
 function LoginScreen({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -150,16 +151,7 @@ function LoginScreen({ onLogin }) {
           </p>
         </div>
 
-        {/* Disclaimer - moved inside the card and positioned normally */}
-        <div className="disclaimer">
-          <p className="disclaimer-text">
-            <strong>Note:</strong> Foundly is a student hobby project created for organizational purposes only. 
-            This is a one-person team working on this as a side project - I'm not a professional developer! 
-            While I try my best, this app may have bugs or imperfections. By using Foundly, you acknowledge 
-            that it's a student project and agree not to hold me liable for any issues or data loss. 
-            This is meant for fun organizational use, not critical business operations. Thanks for understanding! 
-          </p>
-        </div>
+        <CollapsibleDisclaimer position="inline" />
       </div>
     </div>
   );
