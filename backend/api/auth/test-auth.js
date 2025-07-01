@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+// Test auth endpoint with database connection check
+// Updated to trigger redeploy with new environment variables
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', 'https://foundly-olive.vercel.app');
