@@ -28,6 +28,9 @@
     "api/organizations/my.js": {
       "maxDuration": 30
     },
+    "api/organizations/join.js": {
+      "maxDuration": 30
+    },
     "api/announcements.js": {
       "maxDuration": 30
     }
