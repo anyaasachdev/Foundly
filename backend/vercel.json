@@ -1,9 +1,6 @@
 {
   "version": 2,
   "functions": {
-    "api/test.js": {
-      "maxDuration": 30
-    },
     "api/health.js": {
       "maxDuration": 30
     },
@@ -14,12 +11,6 @@
       "maxDuration": 30
     },
     "api/auth/register.js": {
-      "maxDuration": 30
-    },
-    "api/auth/test-auth.js": {
-      "maxDuration": 30
-    },
-    "api/debug-env.js": {
       "maxDuration": 30
     }
   },

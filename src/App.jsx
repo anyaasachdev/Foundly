@@ -9,7 +9,7 @@ import ProfileScreen from './components/ProfileScreen';
 import OrganizationSetup from './components/OrganizationSetup';
 import Navbar from './components/Navbar';
 import ToastNotification from './components/ToastNotification';
-import DebugConnection from './components/DebugConnection';
+
 import { NotificationProvider } from './contexts/NotificationContext';
 import ApiService from './services/api';
 import './App.css';
@@ -188,7 +188,6 @@ function App() {
         <div className="app">
           {user && <Navbar user={user} onLogout={handleLogout} />}
           <main className={user ? 'main-content' : 'main-content-full'}>
-            <DebugConnection />
             <Routes>
               <Route 
                 path="/login" 
