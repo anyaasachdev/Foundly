@@ -106,6 +106,20 @@ const validateLogin = [
   body('password').notEmpty()
 ];
 
+// Root endpoint for testing
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Foundly Backend API is running!',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: {
+      health: '/health',
+      register: '/auth/register',
+      login: '/auth/login'
+    }
+  });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
