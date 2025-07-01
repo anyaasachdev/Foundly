@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: white;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  color: #333;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #1e3a8a;
+  margin: 0 0 10px 0;
+  font-weight: 700;
+}
+
+p {
+  color: #374151;
+  margin: 0 0 15px 0;
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+button {
+  font-family: 'Inter', sans-serif;
+  display: inline-block;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+a {
+  color: #3B82F6;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #2563EB;
+}
+
+.app {
+  min-height: 100vh;
+  background: white;
+  color: #333;
+  font-family: 'Inter', sans-serif;
+}
+
+.main-content {
+  margin-left: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: white;
+  width: 100%;
+}
+
+.main-content-full {
+  padding: 0;
+  min-height: 100vh;
+  background: white;
+  width: 100%;
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  color: #333;
+  min-height: 50vh;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(59, 130, 246, 0.3);
+  border-top: 4px solid #3B82F6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Keep navbar styling */
+.navbar {
+  background-color: #1E3A8A;
+  color: white;
+}
+
+.nav-item {
+  color: white;
+  font-weight: 500;
+  padding: 0.75rem 1.25rem;
+}
+
+.nav-item:hover {
+  background-color: #2563EB;
+}

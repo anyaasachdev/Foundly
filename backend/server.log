@@ -1,0 +1,6 @@
+
+> foundly-backend@1.0.0 start
+> node server.js
+
+🚀 Foundly server running at http://localhost:3001
+✅ Connected to MongoDB
