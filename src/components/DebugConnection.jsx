@@ -26,12 +26,13 @@ const DebugConnection = () => {
         return;
       }
       
-      // Then test the simple test endpoint
-      const response = await fetch(`${apiUrl}/test`, {
-        method: 'GET',
+      // Then test the auth test endpoint
+      const response = await fetch(`${apiUrl}/auth/test-auth`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify({ test: 'data' })
       });
       
       console.log('Response status:', response.status);
@@ -39,7 +40,8 @@ const DebugConnection = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setStatus('✅ Connection successful! Test endpoint working.');
+        console.log('Auth test response:', data);
+        setStatus('✅ Connection successful! Auth test working. Check console for details.');
       } else {
         const data = await response.text();
         setError(`❌ Server error: ${response.status} - ${data}`);
