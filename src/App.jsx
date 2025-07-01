@@ -9,6 +9,7 @@ import ProfileScreen from './components/ProfileScreen';
 import OrganizationSetup from './components/OrganizationSetup';
 import Navbar from './components/Navbar';
 import ToastNotification from './components/ToastNotification';
+import ApiTest from './components/ApiTest';
 
 import { NotificationProvider } from './contexts/NotificationContext';
 import ApiService from './services/api';
@@ -216,6 +217,10 @@ function App() {
               <Route 
                 path="/organization/create" 
                 element={user ? <OrganizationSetup onComplete={handleOrganizationSetup} /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/api-test" 
+                element={user ? <ApiTest /> : <Navigate to="/login" />} 
               />
               <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
             </Routes>
