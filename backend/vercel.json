@@ -33,6 +33,9 @@
     },
     "api/announcements.js": {
       "maxDuration": 30
+    },
+    "api/debug-join.js": {
+      "maxDuration": 30
     }
   },
   "env": {

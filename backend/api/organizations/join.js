@@ -68,7 +68,19 @@ export default async function handler(req, res) {
 
   try {
     await connectDB();
-    authenticateToken(req, res, () => {});
+    
+    // Authenticate the user
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'Access token required' });
+    
+    let decodedUser;
+    try {
+      decodedUser = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(403).json({ error: 'Invalid token' });
+    }
+    
     const { joinCode } = req.body;
     if (!joinCode || !joinCode.trim()) {
       return res.status(400).json({ error: 'Join code is required' });
@@ -79,16 +91,16 @@ export default async function handler(req, res) {
     }
     // Check if user is already a member in the organization
     const isInOrgMembers = organization.members.some(member => 
-      member.user.toString() === req.user.userId.toString()
+      member.user.toString() === decodedUser.userId.toString()
     );
     // Check if user has the organization in their organizations array
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(decodedUser.userId);
     const isInUserOrgs = user.organizations.some(org => 
       org.organizationId.toString() === organization._id.toString()
     );
     // If user is in org members but not in user orgs (data inconsistency), fix it
     if (isInOrgMembers && !isInUserOrgs) {
-      await User.findByIdAndUpdate(req.user.userId, {
+      await User.findByIdAndUpdate(decodedUser.userId, {
         $push: {
           organizations: {
             organizationId: organization._id,
@@ -111,12 +123,12 @@ export default async function handler(req, res) {
     if (!isInOrgMembers && !isInUserOrgs) {
       // Add user to organization
       organization.members.push({
-        user: req.user.userId,
+        user: decodedUser.userId,
         role: 'member'
       });
       await organization.save();
       // Add organization to user
-      await User.findByIdAndUpdate(req.user.userId, {
+      await User.findByIdAndUpdate(decodedUser.userId, {
         $push: {
           organizations: {
             organizationId: organization._id,
