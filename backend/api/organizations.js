@@ -175,6 +175,24 @@ export default async function handler(req, res) {
     }
   } catch (error) {
     console.error('Organizations API error:', error);
+    if (
+      error.message &&
+      error.message.toLowerCase().includes('already a member')
+    ) {
+      // Try to fetch orgs and redirect
+      try {
+        const orgs = await ApiService.getMyOrganizations();
+        if (orgs && orgs.length > 0) {
+          res.status(200).json({
+            success: true,
+            organization: orgs[0].organizationId || orgs[0]
+          });
+          return;
+        }
+      } catch (fetchError) {
+        // fallback to error message
+      }
+    }
     res.status(500).json({ error: 'Internal server error' });
   }
 } 

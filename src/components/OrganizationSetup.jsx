@@ -35,7 +35,7 @@ const OrganizationSetup = ({ onComplete }) => {
       return;
     }
 
-    setIsValidating(true); // CHANGE FROM setIsLoading
+    setIsValidating(true);
     setJoinCodeError('');
     
     try {
@@ -45,9 +45,27 @@ const OrganizationSetup = ({ onComplete }) => {
         organization: response.organization
       });
     } catch (error) {
+      if (
+        error.message &&
+        error.message.toLowerCase().includes('already a member')
+      ) {
+        // Try to fetch orgs and redirect
+        try {
+          const orgs = await ApiService.getMyOrganizations();
+          if (orgs && orgs.length > 0) {
+            onComplete({
+              type: 'joined',
+              organization: orgs[0].organizationId || orgs[0]
+            });
+            return;
+          }
+        } catch (fetchError) {
+          // fallback to error message
+        }
+      }
       setJoinCodeError(error.message || 'Invalid join code. Please verify with your organization admin.');
     } finally {
-      setIsValidating(false); // CHANGE FROM setIsLoading
+      setIsValidating(false);
     }
   };
 
