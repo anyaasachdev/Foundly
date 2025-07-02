@@ -1,124 +1,46 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { ChevronDown, ChevronRight, AlertCircle } from 'lucide-react';
 
-const CollapsibleDisclaimer = ({ position = 'bottom' }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const defaultDisclaimer = (
+  <>
+    <strong>Note:</strong> Foundly is a student hobby project created for organizational purposes only. 
+    This is a one-person team working on this as a side project - I'm not a professional developer! 
+    While I try my best, this app may have bugs or imperfections. By using Foundly, you acknowledge 
+    that it's a student project and agree not to hold me liable for any issues or data loss. 
+    This is meant for fun organizational use, not critical business operations. Thanks for understanding! 🎓
+  </>
+);
 
-  const disclaimerText = (
-    <>
-      <strong>Note:</strong> Foundly is a student hobby project created for organizational purposes only. 
-      This is a one-person team working on this as a side project - I'm not a professional developer! 
-      While I try my best, this app may have bugs or imperfections. By using Foundly, you acknowledge 
-      that it's a student project and agree not to hold me liable for any issues or data loss. 
-      This is meant for fun organizational use, not critical business operations. Thanks for understanding! 🎓
-    </>
-  );
+const CollapsibleDisclaimer = ({ title = 'Student Project Disclaimer', children, defaultOpen = false }) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
-  if (position === 'inline') {
-    return (
-      <div style={{
-        marginTop: '20px',
-        padding: '15px',
-        background: 'rgba(249, 250, 251, 0.8)',
-        border: '1px solid #e5e7eb',
-        borderRadius: '8px',
-        width: '100%',
-        boxSizing: 'border-box'
-      }}>
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            color: '#6b7280',
-            fontSize: '11px',
-            fontWeight: '600',
-            fontFamily: 'Poppins, sans-serif',
-            width: '100%',
-            justifyContent: 'center',
-            padding: '0'
-          }}
-        >
-          <Info size={12} />
-          Student Project Disclaimer
-          {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-        </button>
-        
-        {isOpen && (
-          <p style={{
-            fontSize: '11px',
-            color: '#6b7280',
-            lineHeight: '1.4',
-            fontFamily: 'Poppins, sans-serif',
-            margin: '10px 0 0 0',
-            textAlign: 'center'
-          }}>
-            {disclaimerText}
-          </p>
-        )}
-      </div>
-    );
-  }
-
-  // Fixed bottom position
   return (
-    <div style={{
-      position: 'fixed',
-      bottom: '0',
-      left: '0',
-      right: '0',
-      background: 'rgba(255, 255, 255, 0.95)',
-      backdropFilter: 'blur(10px)',
-      borderTop: '1px solid #e5e7eb',
-      padding: '10px 20px',
-      textAlign: 'center',
-      zIndex: 100
-    }}>
-      <button
+    <div className="collapsible-disclaimer" style={{ margin: '0 auto', maxWidth: 700 }}>
+      <button 
+        className="disclaimer-header"
         onClick={() => setIsOpen(!isOpen)}
         style={{
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          color: '#6b7280',
-          fontSize: '11px',
-          fontWeight: '600',
-          fontFamily: 'Poppins, sans-serif',
-          margin: '0 auto',
-          padding: '5px 10px',
-          borderRadius: '6px',
-          transition: 'background-color 0.2s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.backgroundColor = 'rgba(107, 114, 128, 0.1)';
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.backgroundColor = 'transparent';
+          display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 16, color: '#1F2937', margin: '0 auto', padding: 0
         }}
       >
-        <Info size={12} />
-        Student Project Disclaimer
-        {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        <AlertCircle size={18} style={{ color: '#f59e42' }} />
+        <span>{title}</span>
+        {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
       </button>
-      
       {isOpen && (
-        <p style={{
-          fontSize: '11px',
+        <div className="disclaimer-content" style={{
+          background: '#f9fafb',
+          border: '1px solid #e5e7eb',
+          borderRadius: 8,
+          marginTop: 10,
+          padding: 16,
           color: '#6b7280',
-          lineHeight: '1.4',
+          fontSize: 14,
           fontFamily: 'Poppins, sans-serif',
-          margin: '10px auto 0',
-          maxWidth: '600px'
+          textAlign: 'left'
         }}>
-          {disclaimerText}
-        </p>
+          {children || defaultDisclaimer}
+        </div>
       )}
     </div>
   );

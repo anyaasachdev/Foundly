@@ -3,6 +3,7 @@ import { Clock, Users, Target, TrendingUp, Plus, Bell, AlertCircle, Info, CheckC
 import ApiService from '../services/api';
 import { useSocket } from '../hooks/useSocket';
 import './HomeScreen.css';
+import CollapsibleDisclaimer from './CollapsibleDisclaimer';
 
 const HomeScreen = ({ user }) => {
   const [organization, setOrganization] = useState(null);
@@ -1073,18 +1074,7 @@ const HomeScreen = ({ user }) => {
         borderTop: '1px solid #e5e7eb',
         paddingTop: '20px'
       }}>
-        <p style={{
-          fontSize: '12px',
-          color: '#6b7280',
-          lineHeight: '1.5',
-          fontFamily: 'Poppins, sans-serif'
-        }}>
-          <strong>Note:</strong> Foundly is a student hobby project created for organizational purposes only. 
-          This is a one-person team working on this as a side project - I'm not a professional developer! 
-          While I try my best, this app may have bugs or imperfections. By using Foundly, you acknowledge 
-          that it's a student project and agree not to hold me liable for any issues or data loss. 
-          This is meant for fun organizational use, not critical business operations. Thanks for understanding! 🎓
-        </p>
+        <CollapsibleDisclaimer />
       </div>
     </div>
   );

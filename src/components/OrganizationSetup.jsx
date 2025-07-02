@@ -657,21 +657,7 @@ const OrganizationSetup = ({ onComplete }) => {
             textAlign: 'center',
             zIndex: 100
           }}>
-            <p style={{
-              fontSize: '11px',
-              color: '#6b7280',
-              lineHeight: '1.4',
-              fontFamily: 'Poppins, sans-serif',
-              margin: '0',
-              maxWidth: '600px',
-              margin: '0 auto'
-            }}>
-              <strong>Note:</strong> Foundly is a student hobby project created for organizational purposes only. 
-              This is a one-person team working on this as a side project - I'm not a professional developer! 
-              While I try my best, this app may have bugs or imperfections. By using Foundly, you acknowledge 
-              that it's a student project and agree not to hold me liable for any issues or data loss. 
-              This is meant for fun organizational use, not critical business operations. Thanks for understanding! 🎓
-            </p>
+            <CollapsibleDisclaimer />
           </div>
         </div>
       </div>
@@ -948,21 +934,7 @@ const OrganizationSetup = ({ onComplete }) => {
           textAlign: 'center',
           zIndex: 100
         }}>
-          <p style={{
-            fontSize: '11px',
-            color: '#6b7280',
-            lineHeight: '1.4',
-            fontFamily: 'Poppins, sans-serif',
-            margin: '0',
-            maxWidth: '600px',
-            margin: '0 auto'
-          }}>
-            <strong>Note:</strong> Foundly is a student hobby project created for organizational purposes only. 
-            This is a one-person team working on this as a side project - I'm not a professional developer! 
-            While I try my best, this app may have bugs or imperfections. By using Foundly, you acknowledge 
-            that it's a student project and agree not to hold me liable for any issues or data loss. 
-            This is meant for fun organizational use, not critical business operations. Thanks for understanding! 🎓
-          </p>
+          <CollapsibleDisclaimer />
         </div>
       </div>
     );

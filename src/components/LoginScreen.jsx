@@ -151,7 +151,7 @@ function LoginScreen({ onLogin }) {
           </p>
         </div>
 
-        <CollapsibleDisclaimer position="inline" />
+        <CollapsibleDisclaimer />
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import OrganizationSetup from './components/OrganizationSetup';
 import Navbar from './components/Navbar';
 import ToastNotification from './components/ToastNotification';
 import ApiTest from './components/ApiTest';
+import DebugInfo from './components/DebugInfo';
 
 import { NotificationProvider } from './contexts/NotificationContext';
 import ApiService from './services/api';
@@ -241,6 +242,10 @@ function App() {
               <Route 
                 path="/api-test" 
                 element={user ? <ApiTest /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/debug" 
+                element={user ? <DebugInfo /> : <Navigate to="/login" />} 
               />
               <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
             </Routes>
