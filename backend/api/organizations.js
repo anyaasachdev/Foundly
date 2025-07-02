@@ -168,6 +168,23 @@ export default async function handler(req, res) {
           organization,
           message: 'Organization created successfully'
         });
+
+        // Always fetch orgs after creation to ensure state is up to date
+        try {
+          const orgs = await ApiService.getMyOrganizations();
+          console.log('Orgs after creation:', orgs);
+          if (orgs && orgs.length > 0) {
+            onComplete({
+              type: 'created',
+              organization: orgs[0].organizationId || orgs[0]
+            });
+            return;
+          } else {
+            alert('Organization created, but not found in your organizations. Please refresh or contact support.');
+          }
+        } catch (fetchError) {
+          alert('Organization created, but failed to fetch organizations. Please refresh or contact support.');
+        }
         break;
 
       default:
