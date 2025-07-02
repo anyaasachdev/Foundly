@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 
 const defaultDisclaimer = (
   <>
@@ -15,33 +15,57 @@ const CollapsibleDisclaimer = ({ title = 'Student Project Disclaimer', children,
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="collapsible-disclaimer" style={{ margin: '40px auto 0 auto', maxWidth: 700 }}>
-      <button 
-        className="disclaimer-header"
-        onClick={() => setIsOpen(!isOpen)}
+    <div
+      className="collapsible-disclaimer-fixed"
+      style={{
+        position: 'fixed',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 9999,
+        background: 'rgba(255,255,255,0.97)',
+        borderTop: '1px solid #e5e7eb',
+        boxShadow: '0 -2px 12px rgba(0,0,0,0.04)',
+        padding: isOpen ? '18px 32px 18px 24px' : '8px 32px 8px 24px',
+        minHeight: isOpen ? 60 : 36,
+        display: 'flex',
+        alignItems: isOpen ? 'flex-start' : 'center',
+        justifyContent: 'center',
+        transition: 'padding 0.2s, min-height 0.2s',
+        fontFamily: 'Poppins, sans-serif',
+        fontSize: 14,
+        color: '#6b7280',
+        width: '100%',
+        maxWidth: '100vw',
+        pointerEvents: 'auto',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'center', width: '100%' }}>
+        <AlertCircle size={18} style={{ color: '#f59e42', marginRight: 8, flexShrink: 0 }} />
+        <span style={{ fontWeight: 600, color: '#1F2937', marginRight: 8 }}>{title}</span>
+        {isOpen && (
+          <span style={{ marginLeft: 8, color: '#6b7280', fontWeight: 400 }}>
+            {children || defaultDisclaimer}
+          </span>
+        )}
+      </div>
+      <button
+        onClick={() => setIsOpen((v) => !v)}
+        aria-label={isOpen ? 'Collapse disclaimer' : 'Expand disclaimer'}
         style={{
-          display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 16, color: '#1F2937', margin: '0 auto', padding: 0
+          position: 'absolute',
+          top: 8,
+          right: 16,
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: '#6b7280',
+          padding: 4,
+          zIndex: 10000,
         }}
       >
-        <AlertCircle size={18} style={{ color: '#f59e42' }} />
-        <span>{title}</span>
-        {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+        {isOpen ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
       </button>
-      {isOpen && (
-        <div className="disclaimer-content" style={{
-          background: '#f9fafb',
-          border: '1px solid #e5e7eb',
-          borderRadius: 8,
-          marginTop: 10,
-          padding: 16,
-          color: '#6b7280',
-          fontSize: 14,
-          fontFamily: 'Poppins, sans-serif',
-          textAlign: 'left'
-        }}>
-          {children || defaultDisclaimer}
-        </div>
-      )}
     </div>
   );
 };

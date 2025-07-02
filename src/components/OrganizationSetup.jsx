@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, ArrowRight, Key, Shield, AlertCircle, Copy, CheckCircle } from 'lucide-react';
 import ApiService from '../services/api';
-import CollapsibleDisclaimer from './CollapsibleDisclaimer';
 
 const OrganizationSetup = ({ onComplete }) => {
   const [step, setStep] = useState('choose'); // 'choose', 'join', 'create', 'success'
@@ -284,8 +283,6 @@ const OrganizationSetup = ({ onComplete }) => {
             <ArrowRight size={20} />
           </button>
         </div>
-
-        <CollapsibleDisclaimer />
       </div>
     );
   }
@@ -444,8 +441,6 @@ const OrganizationSetup = ({ onComplete }) => {
             </p>
           </div>
         </div>
-
-        <CollapsibleDisclaimer />
       </div>
     );
   }
@@ -642,22 +637,6 @@ const OrganizationSetup = ({ onComplete }) => {
             color: '#92400E'
           }}>
             <strong>Need an invite code?</strong> Contact your organization's admin or the person who invited you to get your secure access code.
-          </div>
-
-          {/* Disclaimer Footer */}
-          <div style={{
-            position: 'fixed',
-            bottom: '0',
-            left: '0',
-            right: '0',
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(10px)',
-            borderTop: '1px solid #e5e7eb',
-            padding: '15px 20px',
-            textAlign: 'center',
-            zIndex: 100
-          }}>
-            <CollapsibleDisclaimer />
           </div>
         </div>
       </div>
@@ -919,22 +898,6 @@ const OrganizationSetup = ({ onComplete }) => {
               <ArrowRight size={20} />
             </button>
           </form>
-        </div>
-
-        {/* Disclaimer Footer */}
-        <div style={{
-          position: 'fixed',
-          bottom: '0',
-          left: '0',
-          right: '0',
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(10px)',
-          borderTop: '1px solid #e5e7eb',
-          padding: '15px 20px',
-          textAlign: 'center',
-          zIndex: 100
-        }}>
-          <CollapsibleDisclaimer />
         </div>
       </div>
     );

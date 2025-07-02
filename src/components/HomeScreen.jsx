@@ -3,7 +3,6 @@ import { Clock, Users, Target, TrendingUp, Plus, Bell, AlertCircle, Info, CheckC
 import ApiService from '../services/api';
 import { useSocket } from '../hooks/useSocket';
 import './HomeScreen.css';
-import CollapsibleDisclaimer from './CollapsibleDisclaimer';
 
 const HomeScreen = ({ user }) => {
   const [organization, setOrganization] = useState(null);
@@ -1064,18 +1063,6 @@ const HomeScreen = ({ user }) => {
           </div>
         </div>
       )}
-
-      {/* Disclaimer */}
-      <div style={{
-        maxWidth: '1200px',
-        margin: '40px auto 20px',
-        padding: '0 20px',
-        textAlign: 'center',
-        borderTop: '1px solid #e5e7eb',
-        paddingTop: '20px'
-      }}>
-        <CollapsibleDisclaimer />
-      </div>
     </div>
   );
 };

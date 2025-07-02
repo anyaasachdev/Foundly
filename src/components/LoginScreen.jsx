@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import './LoginScreen.css';
 import authService from '../services/authService';
-import CollapsibleDisclaimer from './CollapsibleDisclaimer';
 
 function LoginScreen({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -150,8 +149,6 @@ function LoginScreen({ onLogin }) {
             </button>
           </p>
         </div>
-
-        <CollapsibleDisclaimer />
       </div>
     </div>
   );

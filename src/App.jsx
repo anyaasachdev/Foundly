@@ -11,6 +11,7 @@ import Navbar from './components/Navbar';
 import ToastNotification from './components/ToastNotification';
 import ApiTest from './components/ApiTest';
 import DebugInfo from './components/DebugInfo';
+import CollapsibleDisclaimer from './components/CollapsibleDisclaimer';
 
 import { NotificationProvider } from './contexts/NotificationContext';
 import ApiService from './services/api';
@@ -251,6 +252,7 @@ function App() {
             </Routes>
           </main>
           <ToastNotification />
+          <CollapsibleDisclaimer />
         </div>
       </Router>
     </NotificationProvider>
