@@ -125,7 +125,8 @@ const OrganizationSetup = ({ onComplete }) => {
       console.log('Response received:', response);
       
       if (response && response.organization) {
-        // Always fetch orgs after creation to ensure state is up to date
+        // Add a short delay before fetching orgs to allow DB propagation
+        await new Promise(resolve => setTimeout(resolve, 500));
         try {
           const orgs = await ApiService.getMyOrganizations();
           console.log('Orgs after creation:', orgs);
