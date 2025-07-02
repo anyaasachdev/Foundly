@@ -15,7 +15,7 @@ const CollapsibleDisclaimer = ({ title = 'Student Project Disclaimer', children,
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="collapsible-disclaimer" style={{ margin: '0 auto', maxWidth: 700 }}>
+    <div className="collapsible-disclaimer" style={{ margin: '40px auto 0 auto', maxWidth: 700 }}>
       <button 
         className="disclaimer-header"
         onClick={() => setIsOpen(!isOpen)}
