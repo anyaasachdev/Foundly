@@ -40,10 +40,23 @@ const OrganizationSetup = ({ onComplete }) => {
     
     try {
       const response = await ApiService.joinOrganization(joinCode.trim());
-      onComplete({
-        type: 'joined',
-        organization: response.organization
-      });
+      console.log('Join response:', response);
+      // Always fetch orgs after join
+      try {
+        const orgs = await ApiService.getMyOrganizations();
+        console.log('Orgs after join:', orgs);
+        if (orgs && orgs.length > 0) {
+          onComplete({
+            type: 'joined',
+            organization: orgs[0].organizationId || orgs[0]
+          });
+          return;
+        } else {
+          setJoinCodeError('Joined, but no organizations found. Please refresh or contact support.');
+        }
+      } catch (fetchError) {
+        setJoinCodeError('Joined, but failed to fetch organizations. Please refresh or contact support.');
+      }
     } catch (error) {
       if (
         error.message &&
@@ -52,6 +65,7 @@ const OrganizationSetup = ({ onComplete }) => {
         // Try to fetch orgs and redirect
         try {
           const orgs = await ApiService.getMyOrganizations();
+          console.log('Orgs after already-member:', orgs);
           if (orgs && orgs.length > 0) {
             onComplete({
               type: 'joined',
