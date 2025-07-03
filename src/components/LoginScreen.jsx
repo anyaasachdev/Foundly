@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './LoginScreen.css';
 import authService from '../services/authService';
+import ApiService from '../services/api';
 
 function LoginScreen({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -37,6 +38,7 @@ function LoginScreen({ onLogin }) {
       if (result.success) {
         // Store user data in localStorage
         localStorage.setItem('user', JSON.stringify(result.user));
+        ApiService.setToken(localStorage.getItem('authToken'));
         onLogin(result.user);
       } else {
         setError(result.error);
