@@ -81,11 +81,23 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Invalid token' });
     }
     
+    console.log('Join request body:', req.body);
+    console.log('Decoded user:', decodedUser);
+    
     const { joinCode } = req.body;
+    console.log('Received joinCode:', joinCode);
+    
     if (!joinCode || !joinCode.trim()) {
+      console.log('Join code is missing or empty');
       return res.status(400).json({ error: 'Join code is required' });
     }
-    const organization = await Organization.findOne({ joinCode: joinCode.trim().toUpperCase() });
+    
+    const trimmedJoinCode = joinCode.trim().toUpperCase();
+    console.log('Looking for organization with joinCode:', trimmedJoinCode);
+    
+    const organization = await Organization.findOne({ joinCode: trimmedJoinCode });
+    console.log('Found organization:', organization ? organization.name : 'Not found');
+    
     if (!organization) {
       return res.status(404).json({ error: 'Invalid join code. Please verify with your organization admin.' });
     }
@@ -93,11 +105,15 @@ export default async function handler(req, res) {
     const isInOrgMembers = organization.members.some(member => 
       member.user.toString() === decodedUser.userId.toString()
     );
+    console.log('User in org members:', isInOrgMembers);
+    
     // Check if user has the organization in their organizations array
     const user = await User.findById(decodedUser.userId);
     const isInUserOrgs = user.organizations.some(org => 
       org.organizationId.toString() === organization._id.toString()
     );
+    console.log('User in user orgs:', isInUserOrgs);
+    console.log('User organizations:', user.organizations);
     // If user is in org members but not in user orgs (data inconsistency), fix it
     if (isInOrgMembers && !isInUserOrgs) {
       await User.findByIdAndUpdate(decodedUser.userId, {
@@ -117,7 +133,12 @@ export default async function handler(req, res) {
     }
     // If user is already a member in both places
     if (isInOrgMembers && isInUserOrgs) {
-      return res.status(400).json({ error: 'You are already a member of this organization' });
+      console.log('User is already a member, returning organization info');
+      return res.json({ 
+        message: 'You are already a member of this organization',
+        organization: organization,
+        alreadyMember: true
+      });
     }
     // If user is not a member anywhere, add them
     if (!isInOrgMembers && !isInUserOrgs) {
