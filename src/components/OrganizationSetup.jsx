@@ -51,6 +51,15 @@ const OrganizationSetup = ({ onComplete }) => {
         return;
       }
       
+      // Handle already member case
+      if (response && response.alreadyMember && response.organization) {
+        onComplete({
+          type: 'joined',
+          organization: response.organization
+        });
+        return;
+      }
+      
       // Fallback: try to fetch orgs if response doesn't have organization
       try {
         const orgs = await ApiService.getMyOrganizations();
@@ -74,6 +83,9 @@ const OrganizationSetup = ({ onComplete }) => {
         setJoinCodeError('Joined, but failed to fetch organizations. Please refresh or contact support.');
       }
     } catch (error) {
+      console.log('Join error:', error);
+      
+      // Check if it's an "already a member" error
       if (
         error.message &&
         error.message.toLowerCase().includes('already a member')
@@ -81,7 +93,7 @@ const OrganizationSetup = ({ onComplete }) => {
         // Try to fetch orgs and redirect
         try {
           const orgs = await ApiService.getMyOrganizations();
-          console.log('Orgs after already-member:', orgs);
+          console.log('Orgs after already-member error:', orgs);
           if (orgs && orgs.organizations && orgs.organizations.length > 0) {
             onComplete({
               type: 'joined',
@@ -96,9 +108,10 @@ const OrganizationSetup = ({ onComplete }) => {
             return;
           }
         } catch (fetchError) {
-          // fallback to error message
+          console.log('Failed to fetch orgs after already-member error:', fetchError);
         }
       }
+      
       setJoinCodeError(error.message || 'Invalid join code. Please verify with your organization admin.');
     } finally {
       setIsValidating(false);
