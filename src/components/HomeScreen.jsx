@@ -267,9 +267,10 @@ const HomeScreen = ({ user }) => {
     e.preventDefault();
     try {
       const hourEntry = {
-        ...hourLogData,
-        userId: user.id,
-        memberName: hourLogData.member
+        hours: parseFloat(hourLogData.hours),
+        description: hourLogData.description,
+        date: hourLogData.date,
+        category: 'volunteer'
       };
       
       // Try to save to API
