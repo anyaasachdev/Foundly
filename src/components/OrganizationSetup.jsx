@@ -41,14 +41,30 @@ const OrganizationSetup = ({ onComplete }) => {
     try {
       const response = await ApiService.joinOrganization(joinCode.trim());
       console.log('Join response:', response);
-      // Always fetch orgs after join
+      
+      // Use the organization from the join response directly
+      if (response && response.organization) {
+        onComplete({
+          type: 'joined',
+          organization: response.organization
+        });
+        return;
+      }
+      
+      // Fallback: try to fetch orgs if response doesn't have organization
       try {
         const orgs = await ApiService.getMyOrganizations();
         console.log('Orgs after join:', orgs);
-        if (orgs && orgs.length > 0) {
+        if (orgs && orgs.organizations && orgs.organizations.length > 0) {
           onComplete({
             type: 'joined',
-            organization: orgs[0].organizationId || orgs[0]
+            organization: orgs.organizations[0]
+          });
+          return;
+        } else if (orgs && Array.isArray(orgs) && orgs.length > 0) {
+          onComplete({
+            type: 'joined',
+            organization: orgs[0]
           });
           return;
         } else {
@@ -66,10 +82,16 @@ const OrganizationSetup = ({ onComplete }) => {
         try {
           const orgs = await ApiService.getMyOrganizations();
           console.log('Orgs after already-member:', orgs);
-          if (orgs && orgs.length > 0) {
+          if (orgs && orgs.organizations && orgs.organizations.length > 0) {
             onComplete({
               type: 'joined',
-              organization: orgs[0].organizationId || orgs[0]
+              organization: orgs.organizations[0]
+            });
+            return;
+          } else if (orgs && Array.isArray(orgs) && orgs.length > 0) {
+            onComplete({
+              type: 'joined',
+              organization: orgs[0]
             });
             return;
           }
@@ -175,6 +197,7 @@ const OrganizationSetup = ({ onComplete }) => {
   };
 
   const finishSetup = () => {
+    console.log('finishSetup called with:', createdOrg);
     onComplete({
       type: 'created',
       organization: createdOrg
