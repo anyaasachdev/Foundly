@@ -1,0 +1,50 @@
+{
+  "version": 2,
+  "functions": {
+    "api/health.js": {
+      "maxDuration": 30
+    },
+    "api/index.js": {
+      "maxDuration": 30
+    },
+    "api/auth/login.js": {
+      "maxDuration": 30
+    },
+    "api/auth/register.js": {
+      "maxDuration": 30
+    },
+    "api/projects.js": {
+      "maxDuration": 30
+    },
+    "api/projects/[id].js": {
+      "maxDuration": 30
+    },
+    "api/test-project.js": {
+      "maxDuration": 30
+    },
+    "api/organizations.js": {
+      "maxDuration": 30
+    },
+    "api/organizations/my.js": {
+      "maxDuration": 30
+    },
+    "api/organizations/join.js": {
+      "maxDuration": 30
+    },
+    "api/announcements.js": {
+      "maxDuration": 30
+    },
+    "api/debug-join.js": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "NODE_ENV": "production",
+    "FRONTEND_URL": "https://foundly-olive.vercel.app"
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  }
+}
