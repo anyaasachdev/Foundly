@@ -738,12 +738,17 @@ app.put('/api/projects/:id', authenticateToken, async (req, res) => {
 app.get('/api/events', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
+    console.log('Fetching events for organization:', user.currentOrganization);
+    
     const events = await Event.find({ organization: user.currentOrganization })
       .populate('createdBy', 'name email')
       .populate('attendees.user', 'name email')
       .sort({ startDate: 1 });
+    
+    console.log('Found events:', events.length);
     res.json({ data: events });
   } catch (error) {
+    console.error('Error fetching events:', error);
     res.status(500).json({ error: 'Failed to fetch events' });
   }
 });
@@ -751,6 +756,9 @@ app.get('/api/events', authenticateToken, async (req, res) => {
 app.post('/api/events', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
+    console.log('Creating event with data:', req.body);
+    console.log('User current organization:', user.currentOrganization);
+    
     const event = new Event({
       ...req.body,
       organization: user.currentOrganization,
@@ -758,8 +766,9 @@ app.post('/api/events', authenticateToken, async (req, res) => {
     });
     await event.save();
     await event.populate('createdBy', 'name email');
-    res.status(201).json({ event });
+    res.status(201).json({ data: event });
   } catch (error) {
+    console.error('Event creation error:', error);
     res.status(500).json({ error: 'Failed to create event' });
   }
 });
@@ -809,7 +818,7 @@ app.get('/api/hours', authenticateToken, async (req, res) => {
       .populate('user', 'name email')
       .populate('project', 'title')
       .sort({ date: -1 });
-    res.json({ hours });
+    res.json({ data: hours });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch hours' });
   }
@@ -818,6 +827,9 @@ app.get('/api/hours', authenticateToken, async (req, res) => {
 app.post('/api/hours', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
+    console.log('Logging hours with data:', req.body);
+    console.log('User current organization:', user.currentOrganization);
+    
     const hourLog = new HourLog({
       ...req.body,
       user: req.user.userId,
@@ -830,8 +842,10 @@ app.post('/api/hours', authenticateToken, async (req, res) => {
       $inc: { 'stats.hoursVolunteered': hourLog.hours }
     });
     
-    res.status(201).json({ hourLog });
+    console.log('Hours logged successfully:', hourLog);
+    res.status(201).json({ data: hourLog });
   } catch (error) {
+    console.error('Error logging hours:', error);
     res.status(500).json({ error: 'Failed to log hours' });
   }
 });
@@ -853,7 +867,7 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
     ]);
     
     res.json({
-      stats: {
+      data: {
         totalProjects,
         activeProjects,
         totalHours: totalHours[0]?.total || 0,

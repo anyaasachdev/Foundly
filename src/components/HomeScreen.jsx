@@ -113,7 +113,7 @@ const HomeScreen = ({ user }) => {
         setStats({
           totalMembers: currentOrg.organizationId.members?.length || 1,
           activeProjects: projectsResponse.data?.filter(p => p.status === 'active').length || 0,
-          hoursLogged: statsResponse.stats?.totalHours || 0,
+          hoursLogged: statsResponse.data?.totalHours || 0,
           completedTasks: projectsResponse.data?.filter(p => p.status === 'completed').length || 0
         });
         
