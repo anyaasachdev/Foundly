@@ -86,17 +86,18 @@ function App() {
       console.log('Organization check response:', response);
       
       // Check if user has any organizations
-      if (!response || !response.length || response.length === 0) {
+      const organizations = response?.organizations || response;
+      if (!organizations || !organizations.length || organizations.length === 0) {
         console.log('No organizations found, setting needsOrgSetup to true');
         setNeedsOrgSetup(true);
       } else {
-        console.log('Organizations found:', response.length);
+        console.log('Organizations found:', organizations.length);
         // User has organizations, ensure one is set as current
         const currentOrgId = localStorage.getItem('currentOrganization');
-        if (!currentOrgId && response.length > 0) {
+        if (!currentOrgId && organizations.length > 0) {
           // Set first organization as current
-          const firstOrg = response[0];
-          const orgId = firstOrg.organizationId?._id || firstOrg.organizationId || firstOrg._id;
+          const firstOrg = organizations[0];
+          const orgId = firstOrg._id || firstOrg.organizationId?._id || firstOrg.organizationId;
           console.log('Setting current organization to:', orgId);
           localStorage.setItem('currentOrganization', orgId);
         }
