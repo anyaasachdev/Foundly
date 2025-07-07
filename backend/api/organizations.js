@@ -133,7 +133,7 @@ export default async function handler(req, res) {
     switch (req.method) {
       case 'POST':
         // Create a new organization
-        const { name, description, category, location, website } = req.body;
+        const { name, description, category, location, website, customJoinCode } = req.body;
         
         const organization = new Organization({
           name,
@@ -141,6 +141,7 @@ export default async function handler(req, res) {
           category,
           location,
           website,
+          joinCode: customJoinCode, // Use the custom join code
           createdBy: req.user.userId,
           admins: [req.user.userId],
           members: [{

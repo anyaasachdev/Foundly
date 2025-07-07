@@ -212,13 +212,37 @@ const OrganizationSetup = ({ onComplete }) => {
             fontFamily: 'Poppins, sans-serif'
           }}>Organization Created!</h1>
           
-          <p style={{
-            margin: '0 0 30px 0',
-            fontSize: '1.1rem',
-            color: '#6B7280',
-            lineHeight: '1.6',
-            fontFamily: 'Poppins, sans-serif'
-          }}>Congratulations! You're now the admin of <strong>{createdOrg?.name}</strong>.</p>
+                        <p style={{
+                margin: '0 0 30px 0',
+                fontSize: '1.1rem',
+                color: '#6B7280',
+                lineHeight: '1.6',
+                fontFamily: 'Poppins, sans-serif'
+              }}>Congratulations! You're now the admin of <strong>{createdOrg?.name}</strong>.</p>
+              
+              <button
+                onClick={finishSetup}
+                style={{
+                  width: '100%',
+                  padding: '16px',
+                  background: 'linear-gradient(135deg, #374151 0%, #1f2937 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s ease',
+                  marginBottom: '20px'
+                }}
+              >
+                Continue to Dashboard
+                <ArrowRight size={20} />
+              </button>
           
           <div style={{
             background: '#F3F4F6',
