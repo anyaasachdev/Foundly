@@ -57,45 +57,27 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Check for existing user session and validate with backend
-    const validateSession = async () => {
-      const savedUser = localStorage.getItem('user');
-      const token = localStorage.getItem('authToken');
-      
-      if (savedUser && token) {
-        try {
-          const userData = JSON.parse(savedUser);
-          
-          // Validate token with backend before setting user
-          const isValid = await ApiService.validateToken(token);
-          
-          if (isValid) {
-            setUser(userData);
-            ApiService.setToken(token);
-            
-            // Check if user needs organization setup
-            checkOrganizationStatus(userData);
-          } else {
-            // Token is invalid, clear everything
-            console.log('Invalid token, clearing session');
-            localStorage.removeItem('user');
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('refreshToken');
-            setUser(null);
-          }
-        } catch (error) {
-          console.error('Error validating session:', error);
-          localStorage.removeItem('user');
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('refreshToken');
-          setUser(null);
-        }
+    // Check for existing user session
+    const savedUser = localStorage.getItem('user');
+    const token = localStorage.getItem('authToken');
+    
+    if (savedUser && token) {
+      try {
+        const userData = JSON.parse(savedUser);
+        setUser(userData);
+        ApiService.setToken(token);
+        
+        // Check if user needs organization setup
+        checkOrganizationStatus(userData);
+      } catch (error) {
+        console.error('Error parsing saved user:', error);
+        localStorage.removeItem('user');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('refreshToken');
       }
-      
-      setLoading(false);
-    };
-
-    validateSession();
+    }
+    
+    setLoading(false);
   }, []);
 
   const checkOrganizationStatus = async (userData) => {

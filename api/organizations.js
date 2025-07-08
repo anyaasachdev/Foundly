@@ -132,7 +132,7 @@ module.exports = async function handler(req, res) {
 
     switch (true) {
       // POST /organizations/join
-      case req.method === 'POST' && req.url.endsWith('/join'):
+      case req.method === 'POST' && (req.url.endsWith('/join') || req.url.endsWith('/organizations/join')):
         {
           const { joinCode } = req.body;
           if (!joinCode || !joinCode.trim()) {
@@ -201,7 +201,7 @@ module.exports = async function handler(req, res) {
           break;
         }
       // GET /organizations/my
-      case req.method === 'GET' && req.url.endsWith('/my'):
+      case req.method === 'GET' && (req.url.endsWith('/my') || req.url.endsWith('/organizations/my')):
         {
           const user = await User.findById(req.user.userId)
             .populate({
@@ -231,7 +231,7 @@ module.exports = async function handler(req, res) {
           break;
         }
       // POST /organizations (create organization)
-      case req.method === 'POST' && req.url === '/api/organizations':
+      case req.method === 'POST' && (req.url === '/api/organizations' || req.url === '/organizations'):
         // Create a new organization
         const { name, description, category, location, website, customJoinCode } = req.body;
         

@@ -183,37 +183,6 @@ module.exports = async function handler(req, res) {
         }
       });
       
-    } else if (action === 'validate' && req.method === 'POST') {
-      const authHeader = req.headers.authorization;
-      
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'No token provided' });
-      }
-      
-      const token = authHeader.substring(7);
-      
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
-        
-        // Check if user still exists
-        const user = await User.findById(decoded.userId).maxTimeMS(5000);
-        if (!user) {
-          return res.status(401).json({ error: 'User not found' });
-        }
-        
-        return res.status(200).json({ 
-          valid: true, 
-          user: {
-            id: user._id,
-            email: user.email,
-            name: user.name
-          }
-        });
-        
-      } catch (error) {
-        return res.status(401).json({ error: 'Invalid token' });
-      }
-      
     } else if (action === 'refresh' && req.method === 'POST') {
       const { refreshToken } = req.body;
       
