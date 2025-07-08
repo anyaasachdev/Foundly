@@ -1,7 +1,7 @@
 class ApiService {
   constructor() {
-    // Use only /api for single-project Vercel deployment
-    this.baseURL = process.env.REACT_APP_API_URL || '/api';
+    // Use Vercel deployment URL for API calls
+    this.baseURL = process.env.REACT_APP_API_URL || 'https://foundly-olive.vercel.app/api';
     this.refreshPromise = null;
   }
   
