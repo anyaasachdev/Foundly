@@ -30,15 +30,28 @@ const Organization = mongoose.model('Organization', new mongoose.Schema({
   }]
 }));
 
+let isConnected = false;
+
 const connectDB = async () => {
   try {
-    if (mongoose.connections[0].readyState) return;
+    if (isConnected) return;
+    
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI environment variable is not set');
+    }
+    
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000, // 5 second timeout
+      socketTimeoutMS: 45000, // 45 second timeout
     });
+    
+    isConnected = true;
+    console.log('MongoDB connected successfully');
   } catch (error) {
     console.error('DB connection error:', error);
+    throw error;
   }
 };
 
@@ -55,9 +68,19 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    // Test database connection first
     await connectDB();
     
     const action = req.query.action || req.body.action || 'login';
+    
+    if (action === 'test') {
+      // Simple test endpoint to check if everything is working
+      return res.status(200).json({ 
+        message: 'Auth API is working',
+        database: 'Connected',
+        timestamp: new Date().toISOString()
+      });
+    }
     
     if (action === 'login' && req.method === 'POST') {
       const { email, password } = req.body;
@@ -66,8 +89,8 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Email and password are required' });
       }
       
-      // Find user by email
-      const user = await User.findOne({ email });
+      // Find user by email with timeout
+      const user = await User.findOne({ email }).maxTimeMS(5000);
       if (!user) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
@@ -116,7 +139,7 @@ module.exports = async function handler(req, res) {
       }
       
       // Check if user already exists
-      const existingUser = await User.findOne({ email });
+      const existingUser = await User.findOne({ email }).maxTimeMS(5000);
       if (existingUser) {
         return res.status(400).json({ error: 'User already exists' });
       }
@@ -174,7 +197,7 @@ module.exports = async function handler(req, res) {
           return res.status(403).json({ error: 'Invalid token type' });
         }
         
-        const user = await User.findById(decoded.userId);
+        const user = await User.findById(decoded.userId).maxTimeMS(5000);
         if (!user || user.refreshToken !== refreshToken) {
           return res.status(403).json({ error: 'Invalid refresh token' });
         }
@@ -209,6 +232,16 @@ module.exports = async function handler(req, res) {
     
   } catch (error) {
     console.error('Auth API error:', error);
+    
+    // Check if it's a database connection error
+    if (error.message.includes('MONGODB_URI') || error.message.includes('timed out') || error.message.includes('buffering')) {
+      return res.status(500).json({ 
+        error: 'Database connection failed', 
+        details: 'Please check your MONGODB_URI environment variable in Vercel',
+        message: error.message
+      });
+    }
+    
     return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 }; 
