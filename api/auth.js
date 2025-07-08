@@ -72,6 +72,7 @@ module.exports = async function handler(req, res) {
     await connectDB();
     
     const action = req.query.action || req.body.action || 'login';
+    console.log('Auth action:', action, 'Method:', req.method, 'URL:', req.url);
     
     if (action === 'test') {
       // Simple test endpoint to check if everything is working
