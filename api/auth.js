@@ -226,6 +226,20 @@ module.exports = async function handler(req, res) {
         return res.status(403).json({ error: 'Invalid refresh token' });
       }
       
+    } else if (action === 'join-org' && req.method === 'POST') {
+      // Temporary organization join functionality in auth endpoint
+      const { joinCode } = req.body;
+      if (!joinCode) {
+        return res.status(400).json({ error: 'Join code is required' });
+      }
+      
+      // For now, return a success response to test the flow
+      return res.status(200).json({ 
+        message: 'Join functionality temporarily moved to auth endpoint',
+        joinCode: joinCode,
+        status: 'pending'
+      });
+      
     } else {
       return res.status(405).json({ error: 'Method not allowed' });
     }

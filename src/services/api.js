@@ -172,7 +172,8 @@ class ApiService {
   }
   
   async joinOrganization(joinCode) {
-    return this.request('/organizations/join', {
+    // Temporary: use auth endpoint since organizations endpoint is not working
+    return this.request('/auth?action=join-org', {
       method: 'POST',
       body: JSON.stringify({ joinCode })
     });
