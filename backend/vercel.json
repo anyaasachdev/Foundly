@@ -51,6 +51,9 @@
     },
     "api/analytics.js": {
       "maxDuration": 30
+    },
+    "api/debug-data.js": {
+      "maxDuration": 30
     }
   },
   "env": {
