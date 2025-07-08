@@ -13,6 +13,9 @@
     "api/auth/register.js": {
       "maxDuration": 30
     },
+    "api/auth/refresh.js": {
+      "maxDuration": 30
+    },
     "api/projects.js": {
       "maxDuration": 30
     },

@@ -1,6 +1,7 @@
 class ApiService {
   constructor() {
-    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+    // Use the Vercel backend URL from environment or fallback to localhost
+    this.baseURL = process.env.REACT_APP_API_URL || 'https://foundlybackend-alpha.vercel.app/api';
     this.refreshPromise = null;
   }
   
