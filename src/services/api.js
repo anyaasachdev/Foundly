@@ -165,7 +165,8 @@ class ApiService {
   
   // Organizations
   async createOrganization(organizationData) {
-    return this.request('/organizations', {
+    // Temporary: use auth endpoint since organizations endpoint is not working
+    return this.request('/auth?action=create-org', {
       method: 'POST',
       body: JSON.stringify(organizationData)
     });
@@ -180,7 +181,8 @@ class ApiService {
   }
   
   async getMyOrganizations() {
-    return this.request('/organizations/my');
+    // Temporary: use auth endpoint since organizations endpoint is not working
+    return this.request('/auth?action=get-orgs');
   }
   
   async switchOrganization(organizationId) {

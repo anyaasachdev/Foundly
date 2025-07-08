@@ -234,12 +234,117 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Join code is required' });
       }
       
-      // For now, return a success response to test the flow
-      return res.status(200).json({ 
-        message: 'Join functionality temporarily moved to auth endpoint',
-        joinCode: joinCode,
-        status: 'pending'
-      });
+      try {
+        // Find organization by join code
+        const organization = await Organization.findOne({ joinCode: joinCode.trim().toUpperCase() });
+        if (!organization) {
+          return res.status(404).json({ error: 'Invalid join code. Please verify with your organization admin.' });
+        }
+        
+        // For now, return success with organization data
+        return res.status(200).json({ 
+          message: 'Successfully joined organization',
+          organization: {
+            _id: organization._id,
+            name: organization.name,
+            description: organization.description,
+            category: organization.category,
+            joinCode: organization.joinCode
+          }
+        });
+      } catch (error) {
+        console.error('Join org error:', error);
+        return res.status(500).json({ error: 'Failed to join organization' });
+      }
+      
+    } else if (action === 'create-org' && req.method === 'POST') {
+      // Temporary organization creation functionality in auth endpoint
+      const { name, description, category, location, website, customJoinCode } = req.body;
+      
+      if (!name || !description || !customJoinCode) {
+        return res.status(400).json({ error: 'Name, description, and join code are required' });
+      }
+      
+      try {
+        // Check if join code already exists
+        const existingOrg = await Organization.findOne({ joinCode: customJoinCode.toUpperCase() });
+        if (existingOrg) {
+          return res.status(400).json({ error: 'Join code already exists. Please choose a different one.' });
+        }
+        
+        // Create new organization
+        const organization = new Organization({
+          name,
+          description,
+          category: category || 'community',
+          location,
+          website,
+          joinCode: customJoinCode.toUpperCase(),
+          createdBy: req.user ? req.user.userId : null,
+          admins: req.user ? [req.user.userId] : [],
+          members: req.user ? [{
+            user: req.user.userId,
+            role: 'admin',
+            joinedAt: new Date()
+          }] : []
+        });
+
+        await organization.save();
+
+        return res.status(201).json({ 
+          message: 'Organization created successfully',
+          organization: {
+            _id: organization._id,
+            name: organization.name,
+            description: organization.description,
+            category: organization.category,
+            joinCode: organization.joinCode
+          }
+        });
+      } catch (error) {
+        console.error('Create org error:', error);
+        return res.status(500).json({ error: 'Failed to create organization' });
+      }
+      
+    } else if (action === 'get-orgs' && req.method === 'GET') {
+      // Temporary get organizations functionality in auth endpoint
+      try {
+        if (!req.user || !req.user.userId) {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        const user = await User.findById(req.user.userId)
+          .populate({
+            path: 'organizations.organizationId',
+            select: 'name description category joinCode createdBy'
+          });
+          
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const organizations = user.organizations
+          .filter(org => org.isActive !== false)
+          .map(org => ({
+            _id: org.organizationId._id,
+            name: org.organizationId.name,
+            description: org.organizationId.description,
+            category: org.organizationId.category,
+            joinCode: org.organizationId.joinCode,
+            role: org.role,
+            joinedAt: org.joinedAt,
+            isCurrent: user.currentOrganization && user.currentOrganization.equals(org.organizationId._id)
+          }));
+          
+        return res.status(200).json({ 
+          success: true, 
+          organizations,
+          currentOrganization: user.currentOrganization
+        });
+      } catch (error) {
+        console.error('Get orgs error:', error);
+        return res.status(500).json({ error: 'Failed to fetch organizations' });
+      }
       
     } else {
       return res.status(405).json({ error: 'Method not allowed' });
