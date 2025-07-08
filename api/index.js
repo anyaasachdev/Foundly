@@ -1,4 +1,4 @@
-// Simple test endpoint
+// Simple test endpoint - Updated for Vercel compatibility
 module.exports = function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
