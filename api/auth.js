@@ -72,7 +72,7 @@ module.exports = async function handler(req, res) {
     await connectDB();
     
     const action = req.query.action || req.body.action || 'login';
-    console.log('Auth action:', action, 'Method:', req.method, 'URL:', req.url);
+    console.log('Auth action:', action, 'Method:', req.method, 'URL:', req.url, 'Body:', req.body);
     
     if (action === 'test') {
       // Simple test endpoint to check if everything is working
@@ -272,7 +272,7 @@ module.exports = async function handler(req, res) {
           return res.status(400).json({ error: 'Join code already exists. Please choose a different one.' });
         }
         
-        // Create new organization
+        // Create new organization (temporarily without user for testing)
         const organization = new Organization({
           name,
           description,
@@ -303,7 +303,7 @@ module.exports = async function handler(req, res) {
         });
       } catch (error) {
         console.error('Create org error:', error);
-        return res.status(500).json({ error: 'Failed to create organization' });
+        return res.status(500).json({ error: 'Failed to create organization: ' + error.message });
       }
       
     } else if (action === 'get-orgs' && req.method === 'GET') {
