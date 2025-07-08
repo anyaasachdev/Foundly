@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 // Define User model inline
 const User = mongoose.model('User', new mongoose.Schema({
@@ -141,7 +141,7 @@ const connectDB = async () => {
   });
 };
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -279,4 +279,4 @@ export default async function handler(req, res) {
     console.error('Auth API error:', error);
     return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
-} 
+}; 
