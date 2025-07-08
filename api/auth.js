@@ -392,7 +392,7 @@ module.exports = async function handler(req, res) {
           success: true, 
           projects: projects.map(p => ({
             _id: p._id,
-            name: p.name,
+            title: p.name, // Return as 'title' for frontend compatibility
             description: p.description,
             status: p.status,
             startDate: p.startDate,
@@ -705,6 +705,111 @@ module.exports = async function handler(req, res) {
       } catch (error) {
         console.error('Get announcements error:', error);
         return res.status(500).json({ error: 'Failed to fetch announcements' });
+      }
+      
+    } else if (action === 'create-project' && req.method === 'POST') {
+      // Temporary project creation functionality in auth endpoint
+      const { title, description, startDate, endDate, status, organizationId } = req.body;
+      
+      if (!title || !description) {
+        return res.status(400).json({ error: 'Title and description are required' });
+      }
+      
+      try {
+        // Create a simple project model
+        const Project = mongoose.model('Project', new mongoose.Schema({
+          name: String,
+          description: String,
+          startDate: Date,
+          endDate: Date,
+          status: { type: String, default: 'active' },
+          organizationId: String,
+          createdBy: String,
+          members: [String]
+        }));
+        
+        const project = new Project({
+          name: title, // Frontend sends 'title', we store as 'name'
+          description,
+          startDate: startDate ? new Date(startDate) : new Date(),
+          endDate: endDate ? new Date(endDate) : null,
+          status: status || 'active',
+          organizationId: organizationId || 'default',
+          createdBy: req.user?.userId || 'anonymous',
+          members: req.user?.userId ? [req.user.userId] : []
+        });
+
+        await project.save();
+
+        return res.status(201).json({ 
+          success: true,
+          message: 'Project created successfully',
+          project: {
+            _id: project._id,
+            title: project.name, // Return as 'title' for frontend compatibility
+            description: project.description,
+            status: project.status,
+            startDate: project.startDate,
+            endDate: project.endDate
+          }
+        });
+      } catch (error) {
+        console.error('Create project error:', error);
+        return res.status(500).json({ error: 'Failed to create project: ' + error.message });
+      }
+      
+    } else if (action === 'create-event' && req.method === 'POST') {
+      // Temporary event creation functionality in auth endpoint
+      const { title, description, startDate, endDate, location, type, organizationId } = req.body;
+      
+      if (!title || !startDate) {
+        return res.status(400).json({ error: 'Title and start date are required' });
+      }
+      
+      try {
+        // Create a simple event model
+        const Event = mongoose.model('Event', new mongoose.Schema({
+          title: String,
+          description: String,
+          startDate: Date,
+          endDate: Date,
+          location: String,
+          type: String,
+          organizationId: String,
+          createdBy: String,
+          attendees: [String]
+        }));
+        
+        const event = new Event({
+          title,
+          description,
+          startDate: new Date(startDate),
+          endDate: endDate ? new Date(endDate) : null,
+          location,
+          type: type || 'meeting',
+          organizationId: organizationId || 'default',
+          createdBy: req.user?.userId || 'anonymous',
+          attendees: req.user?.userId ? [req.user.userId] : []
+        });
+
+        await event.save();
+
+        return res.status(201).json({ 
+          success: true,
+          message: 'Event created successfully',
+          event: {
+            _id: event._id,
+            title: event.title,
+            description: event.description,
+            startDate: event.startDate,
+            endDate: event.endDate,
+            location: event.location,
+            type: event.type
+          }
+        });
+      } catch (error) {
+        console.error('Create event error:', error);
+        return res.status(500).json({ error: 'Failed to create event: ' + error.message });
       }
       
     } else {
