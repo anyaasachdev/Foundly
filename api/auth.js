@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// Simple User model
+// Simple User model - Updated for new MongoDB connection
 const User = mongoose.model('User', new mongoose.Schema({
   email: String,
   password: String,
