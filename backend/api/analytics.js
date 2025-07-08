@@ -213,6 +213,16 @@ export default async function handler(req, res) {
         };
         
         res.json({ data: analyticsData });
+      } else if (req.method === 'POST' && req.query.debug === 'syncMembers') {
+        // Debug: Sync organization members array with all users who have this org
+        const user = await User.findById(req.user.userId);
+        const orgId = user.currentOrganization;
+        const organization = await Organization.findById(orgId);
+        const usersInOrg = await User.find({ 'organizations.organizationId': orgId });
+        organization.members = usersInOrg.map(u => ({ user: u._id, role: 'member', joinedAt: new Date() }));
+        await organization.save();
+        res.json({ message: 'Organization members synced', count: organization.members.length });
+        return;
       } else {
         res.status(405).json({ error: 'Method not allowed' });
       }

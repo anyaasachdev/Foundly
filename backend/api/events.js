@@ -64,13 +64,9 @@ export default async function handler(req, res) {
         case 'POST':
           // Create new event
           const createUser = await User.findById(req.user.userId);
-          console.log('Creating event with data:', req.body);
-          console.log('User current organization:', createUser.currentOrganization);
-          
           if (!createUser.currentOrganization) {
             return res.status(400).json({ error: 'No organization selected' });
           }
-          
           const { 
             title, 
             description, 
@@ -92,19 +88,27 @@ export default async function handler(req, res) {
 
           // Combine date and time for start
           const startDateTime = new Date(`${startDate}T${startTime}`);
-          
           // Handle end date/time
           let endDateTime;
           if (endDate && endTime) {
             endDateTime = new Date(`${endDate}T${endTime}`);
           } else if (endDate) {
-            // If only end date is provided, use start time
             endDateTime = new Date(`${endDate}T${startTime}`);
           } else {
-            // If no end date/time, use start date/time + 1 hour
             endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000);
           }
-          
+
+          // Fix: attendees should be user IDs if possible
+          let attendeeObjs = [];
+          if (Array.isArray(attendees) && attendees.length > 0) {
+            // Try to resolve emails to user IDs
+            attendeeObjs = await Promise.all(attendees.map(async (email) => {
+              const user = await User.findOne({ email });
+              return user ? { user: user._id, status: 'pending' } : null;
+            }));
+            attendeeObjs = attendeeObjs.filter(Boolean);
+          }
+
           const event = new Event({
             title,
             description,
@@ -114,16 +118,14 @@ export default async function handler(req, res) {
             endDate: endDateTime,
             type: type || 'meeting',
             location: location || '',
-            attendees: attendees ? attendees.map(email => ({ user: email, status: 'pending' })) : [],
+            attendees: attendeeObjs,
             reminder: reminder || 15,
             recurring: recurring || 'none',
             color: color || '#667eea'
           });
-          
           await event.save();
           await event.populate('createdBy', 'name email');
-          
-          console.log('Event created successfully:', event);
+          await event.populate('attendees.user', 'name email');
           res.status(201).json({ data: event });
           break;
 

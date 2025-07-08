@@ -64,44 +64,33 @@ export default async function handler(req, res) {
         case 'POST':
           // Log new hours
           const logUser = await User.findById(req.user.userId);
-          console.log('Logging hours with data:', req.body);
-          console.log('User current organization:', logUser.currentOrganization);
-          
           if (!logUser.currentOrganization) {
-            return res.status(400).json({ error: 'No organization selected' });
+            return res.status(400).json({ error: 'No organization selected. Please join or create an organization.' });
           }
-          
           const { hours: hoursValue, description, date, project, category } = req.body;
-
-          if (!hoursValue || !description || !date) {
-            return res.status(400).json({ error: 'Hours, description, and date are required' });
+          if (hoursValue === undefined || hoursValue === null || description === undefined || description === null || !date) {
+            return res.status(400).json({ error: 'Hours, description, and date are required.' });
           }
-
-          if (isNaN(hoursValue) || hoursValue <= 0) {
-            return res.status(400).json({ error: 'Hours must be a positive number' });
+          if (isNaN(hoursValue) || Number(hoursValue) <= 0) {
+            return res.status(400).json({ error: 'Hours must be a positive number.' });
           }
-
+          if (typeof description !== 'string' || description.trim().length < 3) {
+            return res.status(400).json({ error: 'Description must be at least 3 characters.' });
+          }
           const hourLog = new HourLog({
             user: req.user.userId,
             organization: logUser.currentOrganization,
             hours: parseFloat(hoursValue),
-            description,
+            description: description.trim(),
             date: new Date(date),
             project: project || null,
             category: category || 'volunteer'
           });
-          
           await hourLog.save();
-          
-          // Update user stats
           await User.findByIdAndUpdate(req.user.userId, {
             $inc: { 'stats.hoursVolunteered': hourLog.hours }
           });
-          
-          // Populate user info for response
           await hourLog.populate('user', 'name email');
-          
-          console.log('Hours logged successfully:', hourLog);
           res.status(201).json({ data: hourLog });
           break;
 
