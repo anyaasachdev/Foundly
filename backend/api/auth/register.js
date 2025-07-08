@@ -43,6 +43,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Email, password, and name are required' });
     }
 
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'A user with this email already exists. Please log in.' });
+    }
+
     // Create new user
     const user = new User({ email, password, name });
     await user.save();

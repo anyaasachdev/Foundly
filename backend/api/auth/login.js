@@ -43,34 +43,21 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find all users with this email (since we allow multiple users with same email)
-    const users = await User.find({ email }).populate('currentOrganization');
-    if (!users || users.length === 0) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Find the user with the correct password
-    let user = null;
-    for (const potentialUser of users) {
-      if (await potentialUser.comparePassword(password)) {
-        user = potentialUser;
-        break;
-      }
-    }
-
+    // Find user by email
+    const user = await User.findOne({ email }).populate('currentOrganization');
     if (!user) {
-      // Increment login attempts for the first user found (for security tracking)
-      if (users.length > 0) {
-        await users[0].incLoginAttempts();
-      }
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-
     // Check if account is locked
     if (user.isLocked) {
       return res.status(423).json({ error: 'Account temporarily locked due to too many failed login attempts' });
     }
-
+    // Verify password
+    const isValidPassword = await user.comparePassword(password);
+    if (!isValidPassword) {
+      await user.incLoginAttempts();
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
     // Reset login attempts if successful
     if (user.loginAttempts > 0) {
       await user.updateOne({
