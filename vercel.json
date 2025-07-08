@@ -10,16 +10,11 @@
     }
   ],
   "routes": [
-    {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/static/(.*)", "dest": "/static/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://foundlybackend-alpha.vercel.app/api"
+    "REACT_APP_API_URL": "/api"
   }
 }
