@@ -336,9 +336,9 @@ module.exports = async function handler(req, res) {
           startDate: Date,
           endDate: Date,
           status: { type: String, default: 'active' },
-          organizationId: mongoose.Schema.Types.ObjectId,
-          createdBy: mongoose.Schema.Types.ObjectId,
-          members: [mongoose.Schema.Types.ObjectId]
+          organizationId: String,
+          createdBy: String,
+          members: [String]
         }));
         
         const project = new Project({
@@ -347,8 +347,8 @@ module.exports = async function handler(req, res) {
           startDate: startDate ? new Date(startDate) : new Date(),
           endDate: endDate ? new Date(endDate) : null,
           status: status || 'active',
-          organizationId: organizationId || req.user?.userId,
-          createdBy: req.user?.userId,
+          organizationId: organizationId || 'default',
+          createdBy: req.user?.userId || 'anonymous',
           members: req.user?.userId ? [req.user.userId] : []
         });
 
@@ -379,13 +379,13 @@ module.exports = async function handler(req, res) {
           startDate: Date,
           endDate: Date,
           status: String,
-          organizationId: mongoose.Schema.Types.ObjectId,
-          createdBy: mongoose.Schema.Types.ObjectId,
-          members: [mongoose.Schema.Types.ObjectId]
+          organizationId: String,
+          createdBy: String,
+          members: [String]
         }));
         
         const projects = await Project.find({ 
-          organizationId: req.query.organizationId || req.user?.userId 
+          organizationId: req.query.organizationId || 'default'
         }).sort({ createdAt: -1 });
 
         return res.status(200).json({ 
@@ -421,9 +421,9 @@ module.exports = async function handler(req, res) {
           endDate: Date,
           location: String,
           type: String,
-          organizationId: mongoose.Schema.Types.ObjectId,
-          createdBy: mongoose.Schema.Types.ObjectId,
-          attendees: [mongoose.Schema.Types.ObjectId]
+          organizationId: String,
+          createdBy: String,
+          attendees: [String]
         }));
         
         const event = new Event({
@@ -433,8 +433,8 @@ module.exports = async function handler(req, res) {
           endDate: endDate ? new Date(endDate) : null,
           location,
           type: type || 'meeting',
-          organizationId: organizationId || req.user?.userId,
-          createdBy: req.user?.userId,
+          organizationId: organizationId || 'default',
+          createdBy: req.user?.userId || 'anonymous',
           attendees: req.user?.userId ? [req.user.userId] : []
         });
 
@@ -467,13 +467,13 @@ module.exports = async function handler(req, res) {
           endDate: Date,
           location: String,
           type: String,
-          organizationId: mongoose.Schema.Types.ObjectId,
-          createdBy: mongoose.Schema.Types.ObjectId,
-          attendees: [mongoose.Schema.Types.ObjectId]
+          organizationId: String,
+          createdBy: String,
+          attendees: [String]
         }));
         
         const events = await Event.find({ 
-          organizationId: req.query.organizationId || req.user?.userId 
+          organizationId: req.query.organizationId || 'default'
         }).sort({ startDate: 1 });
 
         return res.status(200).json({ 
@@ -504,22 +504,22 @@ module.exports = async function handler(req, res) {
       try {
         // Create a simple hour log model
         const HourLog = mongoose.model('HourLog', new mongoose.Schema({
-          projectId: mongoose.Schema.Types.ObjectId,
-          userId: mongoose.Schema.Types.ObjectId,
+          projectId: String,
+          userId: String,
           hours: Number,
           date: Date,
           description: String,
-          organizationId: mongoose.Schema.Types.ObjectId,
+          organizationId: String,
           createdAt: { type: Date, default: Date.now }
         }));
         
         const hourLog = new HourLog({
-          projectId,
-          userId: req.user?.userId,
+          projectId: projectId || 'default',
+          userId: req.user?.userId || 'anonymous',
           hours: parseFloat(hours),
           date: new Date(date),
-          description,
-          organizationId: organizationId || req.user?.userId
+          description: description || '',
+          organizationId: organizationId || 'default'
         });
 
         await hourLog.save();
@@ -542,18 +542,17 @@ module.exports = async function handler(req, res) {
       // Temporary get hours functionality
       try {
         const HourLog = mongoose.model('HourLog', new mongoose.Schema({
-          projectId: mongoose.Schema.Types.ObjectId,
-          userId: mongoose.Schema.Types.ObjectId,
+          projectId: String,
+          userId: String,
           hours: Number,
           date: Date,
           description: String,
-          organizationId: mongoose.Schema.Types.ObjectId,
+          organizationId: String,
           createdAt: { type: Date, default: Date.now }
         }));
         
         const hourLogs = await HourLog.find({ 
-          userId: req.user?.userId,
-          organizationId: req.query.organizationId || req.user?.userId 
+          organizationId: req.query.organizationId || 'default'
         }).sort({ date: -1 });
 
         const totalHours = hourLogs.reduce((sum, log) => sum + log.hours, 0);
@@ -578,12 +577,12 @@ module.exports = async function handler(req, res) {
       // Temporary stats functionality
       try {
         const HourLog = mongoose.model('HourLog', new mongoose.Schema({
-          projectId: mongoose.Schema.Types.ObjectId,
-          userId: mongoose.Schema.Types.ObjectId,
+          projectId: String,
+          userId: String,
           hours: Number,
           date: Date,
           description: String,
-          organizationId: mongoose.Schema.Types.ObjectId,
+          organizationId: String,
           createdAt: { type: Date, default: Date.now }
         }));
         
@@ -593,18 +592,17 @@ module.exports = async function handler(req, res) {
           startDate: Date,
           endDate: Date,
           status: String,
-          organizationId: mongoose.Schema.Types.ObjectId,
-          createdBy: mongoose.Schema.Types.ObjectId,
-          members: [mongoose.Schema.Types.ObjectId]
+          organizationId: String,
+          createdBy: String,
+          members: [String]
         }));
         
         const hourLogs = await HourLog.find({ 
-          userId: req.user?.userId,
-          organizationId: req.query.organizationId || req.user?.userId 
+          organizationId: req.query.organizationId || 'default'
         });
         
         const projects = await Project.find({ 
-          organizationId: req.query.organizationId || req.user?.userId 
+          organizationId: req.query.organizationId || 'default'
         });
 
         const totalHours = hourLogs.reduce((sum, log) => sum + log.hours, 0);
@@ -644,9 +642,9 @@ module.exports = async function handler(req, res) {
           title: String,
           content: String,
           priority: { type: String, default: 'normal' },
-          organizationId: mongoose.Schema.Types.ObjectId,
-          createdBy: mongoose.Schema.Types.ObjectId,
-          readBy: [mongoose.Schema.Types.ObjectId],
+          organizationId: String,
+          createdBy: String,
+          readBy: [String],
           createdAt: { type: Date, default: Date.now }
         }));
         
@@ -654,8 +652,8 @@ module.exports = async function handler(req, res) {
           title,
           content,
           priority: priority || 'normal',
-          organizationId: organizationId || req.user?.userId,
-          createdBy: req.user?.userId,
+          organizationId: organizationId || 'default',
+          createdBy: req.user?.userId || 'anonymous',
           readBy: []
         });
 
@@ -683,14 +681,14 @@ module.exports = async function handler(req, res) {
           title: String,
           content: String,
           priority: String,
-          organizationId: mongoose.Schema.Types.ObjectId,
-          createdBy: mongoose.Schema.Types.ObjectId,
-          readBy: [mongoose.Schema.Types.ObjectId],
+          organizationId: String,
+          createdBy: String,
+          readBy: [String],
           createdAt: { type: Date, default: Date.now }
         }));
         
         const announcements = await Announcement.find({ 
-          organizationId: req.query.organizationId || req.user?.userId 
+          organizationId: req.query.organizationId || 'default'
         }).sort({ createdAt: -1 });
 
         return res.status(200).json({ 
@@ -701,7 +699,7 @@ module.exports = async function handler(req, res) {
             content: a.content,
             priority: a.priority,
             createdAt: a.createdAt,
-            isRead: a.readBy.includes(req.user?.userId)
+            isRead: a.readBy.includes(req.user?.userId || 'anonymous')
           }))
         });
       } catch (error) {
