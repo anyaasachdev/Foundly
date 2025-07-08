@@ -57,27 +57,45 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Check for existing user session
-    const savedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('authToken');
-    
-    if (savedUser && token) {
-      try {
-        const userData = JSON.parse(savedUser);
-        setUser(userData);
-        ApiService.setToken(token);
-        
-        // Check if user needs organization setup
-        checkOrganizationStatus(userData);
-      } catch (error) {
-        console.error('Error parsing saved user:', error);
-        localStorage.removeItem('user');
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('refreshToken');
+    // Check for existing user session and validate with backend
+    const validateSession = async () => {
+      const savedUser = localStorage.getItem('user');
+      const token = localStorage.getItem('authToken');
+      
+      if (savedUser && token) {
+        try {
+          const userData = JSON.parse(savedUser);
+          
+          // Validate token with backend before setting user
+          const isValid = await ApiService.validateToken(token);
+          
+          if (isValid) {
+            setUser(userData);
+            ApiService.setToken(token);
+            
+            // Check if user needs organization setup
+            checkOrganizationStatus(userData);
+          } else {
+            // Token is invalid, clear everything
+            console.log('Invalid token, clearing session');
+            localStorage.removeItem('user');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+            setUser(null);
+          }
+        } catch (error) {
+          console.error('Error validating session:', error);
+          localStorage.removeItem('user');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('refreshToken');
+          setUser(null);
+        }
       }
-    }
-    
-    setLoading(false);
+      
+      setLoading(false);
+    };
+
+    validateSession();
   }, []);
 
   const checkOrganizationStatus = async (userData) => {
@@ -106,23 +124,8 @@ function App() {
     } catch (error) {
       console.error('Error checking organization status:', error);
       
-      // Check if user has any organizations in localStorage as fallback
-      const savedUser = localStorage.getItem('user');
-      if (savedUser) {
-        try {
-          const userData = JSON.parse(savedUser);
-          if (userData.organizations && userData.organizations.length > 0) {
-            console.log('Found organizations in localStorage, setting needsOrgSetup to false');
-            setNeedsOrgSetup(false);
-            return;
-          }
-        } catch (parseError) {
-          console.error('Error parsing saved user data:', parseError);
-        }
-      }
-      
-      // If no organizations found anywhere, redirect to setup
-      console.log('No organizations found anywhere, setting needsOrgSetup to true');
+      // For new users or API errors, default to organization setup
+      console.log('API error or new user, setting needsOrgSetup to true');
       setNeedsOrgSetup(true);
     }
   };

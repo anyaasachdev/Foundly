@@ -153,6 +153,23 @@ class ApiService {
     return this.request('/auth/me');
   }
   
+  async validateToken(token) {
+    try {
+      const response = await fetch(`${this.baseURL}/auth?action=validate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      return response.ok;
+    } catch (error) {
+      console.error('Token validation failed:', error);
+      return false;
+    }
+  }
+  
   async logout() {
     try {
       await this.request('/auth/logout', { method: 'POST' });
