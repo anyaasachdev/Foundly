@@ -196,6 +196,8 @@ const HomeScreen = ({ user }) => {
   const handleCreateAnnouncement = async (e) => {
     e.preventDefault();
     try {
+      console.log('Creating announcement with data:', newAnnouncement);
+      
       // Add organization context to the announcement
       const currentOrgId = localStorage.getItem('currentOrganization') || 'default';
       
@@ -204,7 +206,10 @@ const HomeScreen = ({ user }) => {
         organizationId: currentOrgId
       };
       
-      await ApiService.createAnnouncement(announcementWithOrg);
+      console.log('Sending announcement data:', announcementWithOrg);
+      const result = await ApiService.createAnnouncement(announcementWithOrg);
+      console.log('Announcement creation result:', result);
+      
       setNewAnnouncement({
         title: '',
         content: '',
@@ -221,6 +226,8 @@ const HomeScreen = ({ user }) => {
   const handleLogHours = async (e) => {
     e.preventDefault();
     try {
+      console.log('Logging hours with data:', hourLogData);
+      
       const hourEntry = {
         hours: parseFloat(hourLogData.hours),
         description: hourLogData.description,
@@ -229,8 +236,9 @@ const HomeScreen = ({ user }) => {
         organizationId: localStorage.getItem('currentOrganization') || 'default'
       };
       
-      // Save to API only - no fallback to localStorage
-      await ApiService.logHours(hourEntry);
+      console.log('Sending hours data:', hourEntry);
+      const result = await ApiService.logHours(hourEntry);
+      console.log('Hours logging result:', result);
       
       // Emit via socket for real-time updates
       if (socket) {

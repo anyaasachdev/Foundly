@@ -200,8 +200,8 @@ class ApiService {
   
   // Announcements
   async createAnnouncement(announcementData) {
-    // Temporary: use auth endpoint since announcements endpoint is not working
-    return this.request('/auth?action=create-announcement', {
+    // Temporary: use debug endpoint to see what's happening
+    return this.request('/debug?action=create-announcement', {
       method: 'POST',
       body: JSON.stringify(announcementData)
     });
@@ -249,8 +249,8 @@ class ApiService {
   }
   
   async createProject(projectData) {
-    // Temporary: use auth endpoint since projects endpoint is not working
-    return this.request('/auth?action=create-project', {
+    // Temporary: use debug endpoint to see what's happening
+    return this.request('/debug?action=create-project', {
       method: 'POST',
       body: JSON.stringify(projectData)
     });
@@ -276,8 +276,8 @@ class ApiService {
   }
   
   async createEvent(eventData) {
-    // Temporary: use auth endpoint since events endpoint is not working
-    return this.request('/auth?action=create-event', {
+    // Temporary: use debug endpoint to see what's happening
+    return this.request('/debug?action=create-event', {
       method: 'POST',
       body: JSON.stringify(eventData)
     });
@@ -303,8 +303,8 @@ class ApiService {
   }
   
   async logHours(hoursData) {
-    // Temporary: use auth endpoint since hours endpoint is not working
-    return this.request('/auth?action=log-hours', {
+    // Temporary: use debug endpoint to see what's happening
+    return this.request('/debug?action=log-hours', {
       method: 'POST',
       body: JSON.stringify(hoursData)
     });
