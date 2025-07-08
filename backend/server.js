@@ -126,11 +126,6 @@ app.post('/api/auth/register', authLimiter, validateRegistration, async (req, re
 
     const { email, password, name } = req.body;
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
-    }
-
     const user = new User({ email, password, name });
     await user.save();
 
@@ -176,19 +171,31 @@ app.post('/api/auth/login', authLimiter, validateLogin, async (req, res) => {
 
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email }).populate('currentOrganization');
+    // Find all users with this email (since we allow multiple users with same email)
+    const users = await User.find({ email }).populate('currentOrganization');
+    if (!users || users.length === 0) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Find the user with the correct password
+    let user = null;
+    for (const potentialUser of users) {
+      if (await potentialUser.comparePassword(password)) {
+        user = potentialUser;
+        break;
+      }
+    }
+
     if (!user) {
+      // Increment login attempts for the first user found (for security tracking)
+      if (users.length > 0) {
+        await users[0].incLoginAttempts();
+      }
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     if (user.isLocked) {
       return res.status(423).json({ error: 'Account temporarily locked due to too many failed login attempts' });
-    }
-
-    const isValidPassword = await user.comparePassword(password);
-    if (!isValidPassword) {
-      await user.incLoginAttempts();
-      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     if (user.loginAttempts > 0) {
