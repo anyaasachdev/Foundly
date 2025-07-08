@@ -31,7 +31,7 @@ class ApiService {
           throw new Error('No refresh token available');
         }
 
-        const response = await fetch(`${this.baseURL}/auth/refresh`, {
+        const response = await fetch(`${this.baseURL}/auth?action=refresh`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ class ApiService {
   
   // Authentication
   async login(email, password) {
-    const response = await this.request('/auth/login', {
+    const response = await this.request('/auth?action=login', {
       method: 'POST',
       body: JSON.stringify({ email, password })
     });
@@ -132,7 +132,7 @@ class ApiService {
   }
   
   async register(name, email, password) {
-    const response = await this.request('/auth/register', {
+    const response = await this.request('/auth?action=register', {
       method: 'POST',
       body: JSON.stringify({ name, email, password })
     });

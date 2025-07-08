@@ -7,7 +7,7 @@ class AuthService {
   // Register a new user
   async register(email, password, name) {
     try {
-      const response = await fetch(`${this.getApiUrl()}/auth/register`, {
+      const response = await fetch(`${this.getApiUrl()}/auth?action=register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ class AuthService {
   // Login user
   async login(email, password) {
     try {
-      const response = await fetch(`${this.getApiUrl()}/auth/login`, {
+      const response = await fetch(`${this.getApiUrl()}/auth?action=login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
