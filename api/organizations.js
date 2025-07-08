@@ -130,8 +130,108 @@ export default async function handler(req, res) {
       authenticateToken(req, res, () => {});
     }
 
-    switch (req.method) {
-      case 'POST':
+    switch (true) {
+      // POST /organizations/join
+      case req.method === 'POST' && req.url.endsWith('/join'):
+        {
+          const { joinCode } = req.body;
+          if (!joinCode || !joinCode.trim()) {
+            return res.status(400).json({ error: 'Join code is required' });
+          }
+          const trimmedJoinCode = joinCode.trim().toUpperCase();
+          const organization = await Organization.findOne({ joinCode: trimmedJoinCode });
+          if (!organization) {
+            return res.status(404).json({ error: 'Invalid join code. Please verify with your organization admin.' });
+          }
+          const decodedUser = req.user;
+          // Check if user is already a member in the organization
+          const isInOrgMembers = organization.members.some(member => 
+            member.user.toString() === decodedUser.userId.toString()
+          );
+          // Check if user has the organization in their organizations array
+          const user = await User.findById(decodedUser.userId);
+          const isInUserOrgs = user.organizations.some(org => 
+            org.organizationId.toString() === organization._id.toString()
+          );
+          // If user is in org members but not in user orgs (data inconsistency), fix it
+          if (isInOrgMembers && !isInUserOrgs) {
+            await User.findByIdAndUpdate(decodedUser.userId, {
+              $push: {
+                organizations: {
+                  organizationId: organization._id,
+                  role: 'member'
+                }
+              },
+              currentOrganization: organization._id
+            });
+            return res.json({ 
+              message: 'Organization membership restored', 
+              organization,
+              wasInconsistent: true 
+            });
+          }
+          // If user is already a member in both places
+          if (isInOrgMembers && isInUserOrgs) {
+            return res.json({ 
+              message: 'You are already a member of this organization',
+              organization: organization,
+              alreadyMember: true
+            });
+          }
+          // If user is not a member anywhere, add them
+          if (!isInOrgMembers && !isInUserOrgs) {
+            // Add user to organization
+            organization.members.push({
+              user: decodedUser.userId,
+              role: 'member'
+            });
+            await organization.save();
+            // Add organization to user
+            await User.findByIdAndUpdate(decodedUser.userId, {
+              $push: {
+                organizations: {
+                  organizationId: organization._id,
+                  role: 'member'
+                }
+              },
+              currentOrganization: organization._id
+            });
+            res.json({ message: 'Successfully joined organization', organization });
+          }
+          break;
+        }
+      // GET /organizations/my
+      case req.method === 'GET' && req.url.endsWith('/my'):
+        {
+          const user = await User.findById(req.user.userId)
+            .populate({
+              path: 'organizations.organizationId',
+              select: 'name description category joinCode createdBy'
+            });
+          if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+          }
+          const organizations = user.organizations
+            .filter(org => org.isActive)
+            .map(org => ({
+              _id: org.organizationId._id,
+              name: org.organizationId.name,
+              description: org.organizationId.description,
+              category: org.organizationId.category,
+              joinCode: org.organizationId.joinCode,
+              role: org.role,
+              joinedAt: org.joinedAt,
+              isCurrent: user.currentOrganization && user.currentOrganization.equals(org.organizationId._id)
+            }));
+          res.json({ 
+            success: true, 
+            organizations,
+            currentOrganization: user.currentOrganization
+          });
+          break;
+        }
+      // POST /organizations (create organization)
+      case req.method === 'POST' && req.url === '/api/organizations':
         // Create a new organization
         const { name, description, category, location, website, customJoinCode } = req.body;
         
@@ -170,7 +270,6 @@ export default async function handler(req, res) {
           message: 'Organization created successfully'
         });
         break;
-
       default:
         res.status(405).json({ error: 'Method not allowed' });
     }

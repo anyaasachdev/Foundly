@@ -116,6 +116,57 @@ export default async function handler(req, res) {
       authenticateToken(req, res, () => {});
     }
 
+    // If an id is provided in the query, handle single project operations
+    if (req.query && req.query.id) {
+      switch (req.method) {
+        case 'GET': {
+          const user = await User.findById(req.user.userId);
+          const project = await Project.findOne({ 
+            _id: req.query.id, 
+            organization: user.currentOrganization 
+          }).populate('createdBy', 'name email').populate('assignedTo', 'name email');
+          if (!project) {
+            return res.status(404).json({ error: 'Project not found' });
+          }
+          return res.json({ success: true, project });
+        }
+        case 'PUT': {
+          const updateUser = await User.findById(req.user.userId);
+          const projectToUpdate = await Project.findOne({ 
+            _id: req.query.id, 
+            organization: updateUser.currentOrganization 
+          });
+          if (!projectToUpdate) {
+            return res.status(404).json({ error: 'Project not found' });
+          }
+          const allowedFields = ['title', 'description', 'status', 'priority', 'category', 'assignedTo', 'dueDate', 'completed', 'progress'];
+          for (const key of Object.keys(req.body)) {
+            if (allowedFields.includes(key)) {
+              projectToUpdate[key] = req.body[key];
+            }
+          }
+          await projectToUpdate.save();
+          await projectToUpdate.populate('createdBy', 'name email');
+          await projectToUpdate.populate('assignedTo', 'name email');
+          return res.json({ success: true, project: projectToUpdate });
+        }
+        case 'DELETE': {
+          const deleteUser = await User.findById(req.user.userId);
+          const projectToDelete = await Project.findOne({ 
+            _id: req.query.id, 
+            organization: deleteUser.currentOrganization 
+          });
+          if (!projectToDelete) {
+            return res.status(404).json({ error: 'Project not found' });
+          }
+          await Project.findByIdAndDelete(req.query.id);
+          return res.json({ success: true, message: 'Project deleted successfully' });
+        }
+        default:
+          return res.status(405).json({ error: 'Method not allowed' });
+      }
+    }
+
     switch (req.method) {
       case 'GET':
         // Get all projects for the user's organization
@@ -138,48 +189,6 @@ export default async function handler(req, res) {
         await project.save();
         await project.populate('createdBy', 'name email');
         res.status(201).json({ success: true, project });
-        break;
-
-      case 'PUT':
-        // Update a project
-        const updateUser = await User.findById(req.user.userId);
-        const projectToUpdate = await Project.findOne({ 
-          _id: req.query.id, 
-          organization: updateUser.currentOrganization 
-        });
-        
-        if (!projectToUpdate) {
-          return res.status(404).json({ error: 'Project not found' });
-        }
-        
-        // Only allow updating certain fields
-        const allowedFields = ['title', 'description', 'status', 'priority', 'category', 'assignedTo', 'dueDate', 'completed', 'progress'];
-        for (const key of Object.keys(req.body)) {
-          if (allowedFields.includes(key)) {
-            projectToUpdate[key] = req.body[key];
-          }
-        }
-        
-        await projectToUpdate.save();
-        await projectToUpdate.populate('createdBy', 'name email');
-        await projectToUpdate.populate('assignedTo', 'name email');
-        res.json({ success: true, project: projectToUpdate });
-        break;
-
-      case 'DELETE':
-        // Delete a project
-        const deleteUser = await User.findById(req.user.userId);
-        const projectToDelete = await Project.findOne({ 
-          _id: req.query.id, 
-          organization: deleteUser.currentOrganization 
-        });
-        
-        if (!projectToDelete) {
-          return res.status(404).json({ error: 'Project not found' });
-        }
-        
-        await Project.findByIdAndDelete(req.query.id);
-        res.json({ success: true, message: 'Project deleted successfully' });
         break;
 
       default:
