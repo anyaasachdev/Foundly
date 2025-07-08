@@ -82,6 +82,14 @@ function App() {
 
   const checkOrganizationStatus = async (userData) => {
     try {
+      // Check if user has organizations in their data first
+      if (userData.organizations && userData.organizations.length > 0) {
+        console.log('Found organizations in user data:', userData.organizations.length);
+        setNeedsOrgSetup(false);
+        return;
+      }
+      
+      // If no organizations in user data, try to fetch from API
       const response = await ApiService.getMyOrganizations();
       console.log('Organization check response:', response);
       
