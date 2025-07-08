@@ -15,41 +15,34 @@ const connectDB = async () => {
 };
 
 export default async function handler(req, res) {
-  // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', 'https://foundly-olive.vercel.app');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   
-  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
-  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // Connect to database
     await connectDB();
 
-    // Validate input
     const { email, password } = req.body;
     
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find all users with this email (since we allow multiple users with same email)
     const users = await User.find({ email }).populate('currentOrganization');
     if (!users || users.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Find the user with the correct password
     let user = null;
     for (const potentialUser of users) {
       if (await potentialUser.comparePassword(password)) {
@@ -59,19 +52,16 @@ export default async function handler(req, res) {
     }
 
     if (!user) {
-      // Increment login attempts for the first user found (for security tracking)
       if (users.length > 0) {
         await users[0].incLoginAttempts();
       }
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Check if account is locked
     if (user.isLocked) {
       return res.status(423).json({ error: 'Account temporarily locked due to too many failed login attempts' });
     }
 
-    // Reset login attempts if successful
     if (user.loginAttempts > 0) {
       await user.updateOne({
         $unset: { loginAttempts: 1, lockUntil: 1 },
@@ -79,7 +69,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // Generate tokens
     const accessToken = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
@@ -92,11 +81,9 @@ export default async function handler(req, res) {
       { expiresIn: '7d' }
     );
 
-    // Save refresh token
     user.refreshToken = refreshToken;
     await user.save();
 
-    // Return success response
     res.status(200).json({
       message: 'Login successful',
       token: accessToken,
