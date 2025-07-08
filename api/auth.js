@@ -320,6 +320,395 @@ module.exports = async function handler(req, res) {
         return res.status(500).json({ error: 'Failed to fetch organizations' });
       }
       
+    } else if (action === 'create-project' && req.method === 'POST') {
+      // Temporary project creation functionality in auth endpoint
+      const { name, description, startDate, endDate, status, organizationId } = req.body;
+      
+      if (!name || !description) {
+        return res.status(400).json({ error: 'Name and description are required' });
+      }
+      
+      try {
+        // Create a simple project model
+        const Project = mongoose.model('Project', new mongoose.Schema({
+          name: String,
+          description: String,
+          startDate: Date,
+          endDate: Date,
+          status: { type: String, default: 'active' },
+          organizationId: mongoose.Schema.Types.ObjectId,
+          createdBy: mongoose.Schema.Types.ObjectId,
+          members: [mongoose.Schema.Types.ObjectId]
+        }));
+        
+        const project = new Project({
+          name,
+          description,
+          startDate: startDate ? new Date(startDate) : new Date(),
+          endDate: endDate ? new Date(endDate) : null,
+          status: status || 'active',
+          organizationId: organizationId || req.user?.userId,
+          createdBy: req.user?.userId,
+          members: req.user?.userId ? [req.user.userId] : []
+        });
+
+        await project.save();
+
+        return res.status(201).json({ 
+          message: 'Project created successfully',
+          project: {
+            _id: project._id,
+            name: project.name,
+            description: project.description,
+            status: project.status,
+            startDate: project.startDate,
+            endDate: project.endDate
+          }
+        });
+      } catch (error) {
+        console.error('Create project error:', error);
+        return res.status(500).json({ error: 'Failed to create project: ' + error.message });
+      }
+      
+    } else if (action === 'get-projects' && req.method === 'GET') {
+      // Temporary get projects functionality
+      try {
+        const Project = mongoose.model('Project', new mongoose.Schema({
+          name: String,
+          description: String,
+          startDate: Date,
+          endDate: Date,
+          status: String,
+          organizationId: mongoose.Schema.Types.ObjectId,
+          createdBy: mongoose.Schema.Types.ObjectId,
+          members: [mongoose.Schema.Types.ObjectId]
+        }));
+        
+        const projects = await Project.find({ 
+          organizationId: req.query.organizationId || req.user?.userId 
+        }).sort({ createdAt: -1 });
+
+        return res.status(200).json({ 
+          success: true, 
+          projects: projects.map(p => ({
+            _id: p._id,
+            name: p.name,
+            description: p.description,
+            status: p.status,
+            startDate: p.startDate,
+            endDate: p.endDate
+          }))
+        });
+      } catch (error) {
+        console.error('Get projects error:', error);
+        return res.status(500).json({ error: 'Failed to fetch projects' });
+      }
+      
+    } else if (action === 'create-event' && req.method === 'POST') {
+      // Temporary event creation functionality in auth endpoint
+      const { title, description, startDate, endDate, location, type, organizationId } = req.body;
+      
+      if (!title || !startDate) {
+        return res.status(400).json({ error: 'Title and start date are required' });
+      }
+      
+      try {
+        // Create a simple event model
+        const Event = mongoose.model('Event', new mongoose.Schema({
+          title: String,
+          description: String,
+          startDate: Date,
+          endDate: Date,
+          location: String,
+          type: String,
+          organizationId: mongoose.Schema.Types.ObjectId,
+          createdBy: mongoose.Schema.Types.ObjectId,
+          attendees: [mongoose.Schema.Types.ObjectId]
+        }));
+        
+        const event = new Event({
+          title,
+          description,
+          startDate: new Date(startDate),
+          endDate: endDate ? new Date(endDate) : null,
+          location,
+          type: type || 'meeting',
+          organizationId: organizationId || req.user?.userId,
+          createdBy: req.user?.userId,
+          attendees: req.user?.userId ? [req.user.userId] : []
+        });
+
+        await event.save();
+
+        return res.status(201).json({ 
+          message: 'Event created successfully',
+          event: {
+            _id: event._id,
+            title: event.title,
+            description: event.description,
+            startDate: event.startDate,
+            endDate: event.endDate,
+            location: event.location,
+            type: event.type
+          }
+        });
+      } catch (error) {
+        console.error('Create event error:', error);
+        return res.status(500).json({ error: 'Failed to create event: ' + error.message });
+      }
+      
+    } else if (action === 'get-events' && req.method === 'GET') {
+      // Temporary get events functionality
+      try {
+        const Event = mongoose.model('Event', new mongoose.Schema({
+          title: String,
+          description: String,
+          startDate: Date,
+          endDate: Date,
+          location: String,
+          type: String,
+          organizationId: mongoose.Schema.Types.ObjectId,
+          createdBy: mongoose.Schema.Types.ObjectId,
+          attendees: [mongoose.Schema.Types.ObjectId]
+        }));
+        
+        const events = await Event.find({ 
+          organizationId: req.query.organizationId || req.user?.userId 
+        }).sort({ startDate: 1 });
+
+        return res.status(200).json({ 
+          success: true, 
+          events: events.map(e => ({
+            _id: e._id,
+            title: e.title,
+            description: e.description,
+            startDate: e.startDate,
+            endDate: e.endDate,
+            location: e.location,
+            type: e.type
+          }))
+        });
+      } catch (error) {
+        console.error('Get events error:', error);
+        return res.status(500).json({ error: 'Failed to fetch events' });
+      }
+      
+    } else if (action === 'log-hours' && req.method === 'POST') {
+      // Temporary hours logging functionality
+      const { projectId, hours, date, description, organizationId } = req.body;
+      
+      if (!hours || !date) {
+        return res.status(400).json({ error: 'Hours and date are required' });
+      }
+      
+      try {
+        // Create a simple hour log model
+        const HourLog = mongoose.model('HourLog', new mongoose.Schema({
+          projectId: mongoose.Schema.Types.ObjectId,
+          userId: mongoose.Schema.Types.ObjectId,
+          hours: Number,
+          date: Date,
+          description: String,
+          organizationId: mongoose.Schema.Types.ObjectId,
+          createdAt: { type: Date, default: Date.now }
+        }));
+        
+        const hourLog = new HourLog({
+          projectId,
+          userId: req.user?.userId,
+          hours: parseFloat(hours),
+          date: new Date(date),
+          description,
+          organizationId: organizationId || req.user?.userId
+        });
+
+        await hourLog.save();
+
+        return res.status(201).json({ 
+          message: 'Hours logged successfully',
+          hourLog: {
+            _id: hourLog._id,
+            hours: hourLog.hours,
+            date: hourLog.date,
+            description: hourLog.description
+          }
+        });
+      } catch (error) {
+        console.error('Log hours error:', error);
+        return res.status(500).json({ error: 'Failed to log hours: ' + error.message });
+      }
+      
+    } else if (action === 'get-hours' && req.method === 'GET') {
+      // Temporary get hours functionality
+      try {
+        const HourLog = mongoose.model('HourLog', new mongoose.Schema({
+          projectId: mongoose.Schema.Types.ObjectId,
+          userId: mongoose.Schema.Types.ObjectId,
+          hours: Number,
+          date: Date,
+          description: String,
+          organizationId: mongoose.Schema.Types.ObjectId,
+          createdAt: { type: Date, default: Date.now }
+        }));
+        
+        const hourLogs = await HourLog.find({ 
+          userId: req.user?.userId,
+          organizationId: req.query.organizationId || req.user?.userId 
+        }).sort({ date: -1 });
+
+        const totalHours = hourLogs.reduce((sum, log) => sum + log.hours, 0);
+
+        return res.status(200).json({ 
+          success: true, 
+          hourLogs: hourLogs.map(h => ({
+            _id: h._id,
+            hours: h.hours,
+            date: h.date,
+            description: h.description,
+            projectId: h.projectId
+          })),
+          totalHours
+        });
+      } catch (error) {
+        console.error('Get hours error:', error);
+        return res.status(500).json({ error: 'Failed to fetch hours' });
+      }
+      
+    } else if (action === 'get-stats' && req.method === 'GET') {
+      // Temporary stats functionality
+      try {
+        const HourLog = mongoose.model('HourLog', new mongoose.Schema({
+          projectId: mongoose.Schema.Types.ObjectId,
+          userId: mongoose.Schema.Types.ObjectId,
+          hours: Number,
+          date: Date,
+          description: String,
+          organizationId: mongoose.Schema.Types.ObjectId,
+          createdAt: { type: Date, default: Date.now }
+        }));
+        
+        const Project = mongoose.model('Project', new mongoose.Schema({
+          name: String,
+          description: String,
+          startDate: Date,
+          endDate: Date,
+          status: String,
+          organizationId: mongoose.Schema.Types.ObjectId,
+          createdBy: mongoose.Schema.Types.ObjectId,
+          members: [mongoose.Schema.Types.ObjectId]
+        }));
+        
+        const hourLogs = await HourLog.find({ 
+          userId: req.user?.userId,
+          organizationId: req.query.organizationId || req.user?.userId 
+        });
+        
+        const projects = await Project.find({ 
+          organizationId: req.query.organizationId || req.user?.userId 
+        });
+
+        const totalHours = hourLogs.reduce((sum, log) => sum + log.hours, 0);
+        const thisMonth = new Date();
+        thisMonth.setDate(1);
+        thisMonth.setHours(0, 0, 0, 0);
+        
+        const monthlyHours = hourLogs
+          .filter(log => log.date >= thisMonth)
+          .reduce((sum, log) => sum + log.hours, 0);
+
+        return res.status(200).json({ 
+          success: true, 
+          stats: {
+            totalHours,
+            monthlyHours,
+            totalProjects: projects.length,
+            activeProjects: projects.filter(p => p.status === 'active').length
+          }
+        });
+      } catch (error) {
+        console.error('Get stats error:', error);
+        return res.status(500).json({ error: 'Failed to fetch stats' });
+      }
+      
+    } else if (action === 'create-announcement' && req.method === 'POST') {
+      // Temporary announcement creation functionality
+      const { title, content, priority, organizationId } = req.body;
+      
+      if (!title || !content) {
+        return res.status(400).json({ error: 'Title and content are required' });
+      }
+      
+      try {
+        // Create a simple announcement model
+        const Announcement = mongoose.model('Announcement', new mongoose.Schema({
+          title: String,
+          content: String,
+          priority: { type: String, default: 'normal' },
+          organizationId: mongoose.Schema.Types.ObjectId,
+          createdBy: mongoose.Schema.Types.ObjectId,
+          readBy: [mongoose.Schema.Types.ObjectId],
+          createdAt: { type: Date, default: Date.now }
+        }));
+        
+        const announcement = new Announcement({
+          title,
+          content,
+          priority: priority || 'normal',
+          organizationId: organizationId || req.user?.userId,
+          createdBy: req.user?.userId,
+          readBy: []
+        });
+
+        await announcement.save();
+
+        return res.status(201).json({ 
+          message: 'Announcement created successfully',
+          announcement: {
+            _id: announcement._id,
+            title: announcement.title,
+            content: announcement.content,
+            priority: announcement.priority,
+            createdAt: announcement.createdAt
+          }
+        });
+      } catch (error) {
+        console.error('Create announcement error:', error);
+        return res.status(500).json({ error: 'Failed to create announcement: ' + error.message });
+      }
+      
+    } else if (action === 'get-announcements' && req.method === 'GET') {
+      // Temporary get announcements functionality
+      try {
+        const Announcement = mongoose.model('Announcement', new mongoose.Schema({
+          title: String,
+          content: String,
+          priority: String,
+          organizationId: mongoose.Schema.Types.ObjectId,
+          createdBy: mongoose.Schema.Types.ObjectId,
+          readBy: [mongoose.Schema.Types.ObjectId],
+          createdAt: { type: Date, default: Date.now }
+        }));
+        
+        const announcements = await Announcement.find({ 
+          organizationId: req.query.organizationId || req.user?.userId 
+        }).sort({ createdAt: -1 });
+
+        return res.status(200).json({ 
+          success: true, 
+          announcements: announcements.map(a => ({
+            _id: a._id,
+            title: a.title,
+            content: a.content,
+            priority: a.priority,
+            createdAt: a.createdAt,
+            isRead: a.readBy.includes(req.user?.userId)
+          }))
+        });
+      } catch (error) {
+        console.error('Get announcements error:', error);
+        return res.status(500).json({ error: 'Failed to fetch announcements' });
+      }
+      
     } else {
       return res.status(405).json({ error: 'Method not allowed' });
     }

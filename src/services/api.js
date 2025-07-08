@@ -200,14 +200,16 @@ class ApiService {
   
   // Announcements
   async createAnnouncement(announcementData) {
-    return this.request('/announcements', {
+    // Temporary: use auth endpoint since announcements endpoint is not working
+    return this.request('/auth?action=create-announcement', {
       method: 'POST',
       body: JSON.stringify(announcementData)
     });
   }
   
   async getAnnouncements() {
-    return this.request('/announcements');
+    // Temporary: use auth endpoint since announcements endpoint is not working
+    return this.request('/auth?action=get-announcements');
   }
   
   async markAnnouncementRead(announcementId) {
@@ -242,11 +244,13 @@ class ApiService {
   
   // Projects
   async getProjects() {
-    return this.request('/projects');
+    // Temporary: use auth endpoint since projects endpoint is not working
+    return this.request('/auth?action=get-projects');
   }
   
   async createProject(projectData) {
-    return this.request('/projects', {
+    // Temporary: use auth endpoint since projects endpoint is not working
+    return this.request('/auth?action=create-project', {
       method: 'POST',
       body: JSON.stringify(projectData)
     });
@@ -267,11 +271,13 @@ class ApiService {
   
   // Events
   async getEvents() {
-    return this.request('/events');
+    // Temporary: use auth endpoint since events endpoint is not working
+    return this.request('/auth?action=get-events');
   }
   
   async createEvent(eventData) {
-    return this.request('/events', {
+    // Temporary: use auth endpoint since events endpoint is not working
+    return this.request('/auth?action=create-event', {
       method: 'POST',
       body: JSON.stringify(eventData)
     });
@@ -292,11 +298,13 @@ class ApiService {
   
   // Hours
   async getHours() {
-    return this.request('/hours');
+    // Temporary: use auth endpoint since hours endpoint is not working
+    return this.request('/auth?action=get-hours');
   }
   
   async logHours(hoursData) {
-    return this.request('/hours', {
+    // Temporary: use auth endpoint since hours endpoint is not working
+    return this.request('/auth?action=log-hours', {
       method: 'POST',
       body: JSON.stringify(hoursData)
     });
@@ -316,7 +324,8 @@ class ApiService {
   
   // Stats
   async getStats() {
-    return this.request('/stats');
+    // Temporary: use auth endpoint since stats endpoint is not working
+    return this.request('/auth?action=get-stats');
   }
   
   // User Activity
