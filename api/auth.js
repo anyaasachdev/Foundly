@@ -2,7 +2,136 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-const User = require('./models/User');
+// Define User model inline
+const User = mongoose.model('User', new mongoose.Schema({
+  email: {
+    type: String,
+    required: true,
+    lowercase: true
+  },
+  password: {
+    type: String,
+    required: true,
+    minlength: 8
+  },
+  name: {
+    type: String,
+    required: true
+  },
+  avatar: {
+    type: String,
+    default: '👤'
+  },
+  organizations: [{
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization'
+    },
+    role: {
+      type: String,
+      enum: ['admin', 'moderator', 'member'],
+      default: 'member'
+    },
+    joinedAt: {
+      type: Date,
+      default: Date.now
+    },
+    isActive: {
+      type: Boolean,
+      default: true
+    }
+  }],
+  currentOrganization: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization'
+  },
+  profile: {
+    bio: String,
+    skills: [String],
+    interests: [String],
+    socialLinks: {
+      linkedin: String,
+      twitter: String,
+      website: String
+    }
+  },
+  notifications: {
+    email: { type: Boolean, default: true },
+    push: { type: Boolean, default: true },
+    inApp: { type: Boolean, default: true }
+  },
+  gsp: {
+    type: Number,
+    default: 0
+  },
+  badges: [{
+    name: String,
+    icon: String,
+    earnedAt: Date
+  }],
+  isOnline: {
+    type: Boolean,
+    default: false
+  },
+  lastSeen: {
+    type: Date,
+    default: Date.now
+  },
+  stats: {
+    projectsCompleted: { type: Number, default: 0 },
+    hoursVolunteered: { type: Number, default: 0 },
+    eventsAttended: { type: Number, default: 0 },
+    impactScore: { type: Number, default: 0 }
+  },
+  loginAttempts: {
+    type: Number,
+    default: 0
+  },
+  lockUntil: Date,
+  refreshToken: String,
+  passwordChangedAt: {
+    type: Date,
+    default: Date.now
+  },
+  lastLogin: {
+    type: Date,
+    default: Date.now
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+}, {
+  timestamps: true
+}));
+
+// Add methods to User model
+User.prototype.comparePassword = async function(candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
+
+User.prototype.incLoginAttempts = function() {
+  if (this.lockUntil && this.lockUntil < Date.now()) {
+    return this.updateOne({
+      $unset: { lockUntil: 1 },
+      $set: { loginAttempts: 1 }
+    });
+  }
+  
+  const updates = { $inc: { loginAttempts: 1 } };
+  
+  if (this.loginAttempts + 1 >= 5 && !this.isLocked) {
+    updates.$set = {
+      lockUntil: Date.now() + 2 * 60 * 60 * 1000 // 2 hours
+    };
+  }
+  
+  return this.updateOne(updates);
+};
+
+User.prototype.isLocked = function() {
+  return !!(this.lockUntil && this.lockUntil > Date.now());
+};
 
 const connectDB = async () => {
   if (mongoose.connections[0].readyState) return;
@@ -47,7 +176,7 @@ export default async function handler(req, res) {
         }
         return res.status(401).json({ error: 'Invalid credentials' });
       }
-      if (user.isLocked) {
+      if (user.isLocked()) {
         return res.status(423).json({ error: 'Account temporarily locked due to too many failed login attempts' });
       }
       if (user.loginAttempts > 0) {
@@ -144,9 +273,10 @@ export default async function handler(req, res) {
       });
       // --- End refresh.js logic ---
     } else {
-      res.status(405).json({ error: 'Method not allowed' });
+      return res.status(405).json({ error: 'Method not allowed' });
     }
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error', details: error.message });
+    console.error('Auth API error:', error);
+    return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 } 
