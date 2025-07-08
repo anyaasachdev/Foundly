@@ -76,7 +76,7 @@ const ProjectsScreen = ({ user }) => {
     try {
       setLoading(true);
       const response = await ApiService.getProjects();
-      setProjects(response.data || []);
+      setProjects(response.projects || []);
     } catch (error) {
       console.error('Failed to load projects:', error);
       setProjects([]);
@@ -94,7 +94,8 @@ const ProjectsScreen = ({ user }) => {
         dueDate: newProject.dueDate,
         priority: newProject.priority,
         category: newProject.category,
-        status: 'active'
+        status: 'active',
+        organizationId: localStorage.getItem('currentOrganization') || 'default'
       };
       
       const response = await ApiService.createProject(projectData);

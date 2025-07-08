@@ -197,10 +197,7 @@ const HomeScreen = ({ user }) => {
     e.preventDefault();
     try {
       // Add organization context to the announcement
-      const currentOrgId = localStorage.getItem('currentOrganization');
-      if (!currentOrgId) {
-        throw new Error('No organization selected');
-      }
+      const currentOrgId = localStorage.getItem('currentOrganization') || 'default';
       
       const announcementWithOrg = {
         ...newAnnouncement,
@@ -228,19 +225,12 @@ const HomeScreen = ({ user }) => {
         hours: parseFloat(hourLogData.hours),
         description: hourLogData.description,
         date: hourLogData.date,
-        category: 'volunteer'
+        category: 'volunteer',
+        organizationId: localStorage.getItem('currentOrganization') || 'default'
       };
       
-      // Try to save to API
-      try {
-        await ApiService.logHours(hourEntry);
-      } catch (apiError) {
-        console.warn('API unavailable, using local storage:', apiError);
-        // Fallback to local storage for offline mode
-        const existingHours = JSON.parse(localStorage.getItem('hourLogs') || '[]');
-        existingHours.push({ ...hourEntry, id: Date.now(), timestamp: new Date().toISOString() });
-        localStorage.setItem('hourLogs', JSON.stringify(existingHours));
-      }
+      // Save to API only - no fallback to localStorage
+      await ApiService.logHours(hourEntry);
       
       // Emit via socket for real-time updates
       if (socket) {

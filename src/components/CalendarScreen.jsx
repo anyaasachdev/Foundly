@@ -62,7 +62,7 @@ const CalendarScreen = ({ user }) => {
   const loadEvents = async () => {
     try {
       const response = await ApiService.getEvents();
-      setEvents(response.data || []);
+      setEvents(response.events || []);
     } catch (error) {
       console.error('Failed to load events:', error);
       setEvents([]);
@@ -96,7 +96,8 @@ const CalendarScreen = ({ user }) => {
       }
       const eventData = {
         ...newEvent,
-        attendees: newEvent.attendees.filter(email => email.trim())
+        attendees: newEvent.attendees.filter(email => email.trim()),
+        organizationId: localStorage.getItem('currentOrganization') || 'default'
       };
       await ApiService.createEvent(eventData);
       await loadEvents();
