@@ -191,9 +191,9 @@ const Navbar = ({ user, onLogout }) => {
 
   // Truncate name to fit in navbar
   const truncateName = (name, maxLength = 15) => {
-    if (!name) return 'User';
-    if (name.length <= maxLength) return name;
-    return name.substring(0, maxLength - 3) + '...';
+    const safeName = name || 'User';
+    if (safeName.length <= maxLength) return safeName;
+    return safeName.substring(0, maxLength - 3) + '...';
   };
 
   return (
@@ -323,7 +323,7 @@ const Navbar = ({ user, onLogout }) => {
                   fontSize: '0.875rem',
                   fontWeight: 'bold'
                 }}>
-                  {truncateName(user.name)?.[0]?.toUpperCase() || '👤'}
+                  {(truncateName(user.name) || 'U')[0]?.toUpperCase() || '👤'}
                 </span>
                 <span className="user-name" style={{
                   maxWidth: '120px',
