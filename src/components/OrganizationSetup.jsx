@@ -629,7 +629,7 @@ const OrganizationSetup = ({ onComplete }) => {
                 type="text"
                 value={joinCode}
                 onChange={(e) => {
-                  const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+                  const value = ((e.target.value || '') + '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
                   setJoinCode(value);
                   setJoinCodeError('');
                 }}
