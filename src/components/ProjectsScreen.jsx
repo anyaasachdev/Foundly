@@ -96,11 +96,9 @@ const ProjectsScreen = ({ user }) => {
     e.preventDefault();
     try {
       const projectData = {
-        name: newProject.title, // API expects 'name' not 'title'
+        title: newProject.title, // Use title for working endpoint
+        name: newProject.title,  // Also include name for compatibility
         description: newProject.description,
-        startDate: new Date().toISOString(), // API expects 'startDate'
-        endDate: newProject.dueDate, // API expects 'endDate'
-        status: 'active',
         organizationId: localStorage.getItem('currentOrganization') || 'default'
       };
       
@@ -295,23 +293,6 @@ const ProjectsScreen = ({ user }) => {
       paddingTop: '90px',
       fontFamily: 'Poppins, sans-serif'
     }}>
-      {/* Organization Header */}
-      {organization && (
-        <div style={{
-          background: 'linear-gradient(135deg, #374151 0%, #1f2937 100%)',
-          borderRadius: '15px',
-          padding: '25px',
-          marginBottom: '30px',
-          color: 'white'
-        }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '10px', fontFamily: 'Poppins, sans-serif' }}>
-            {organization.name} Projects
-          </h1>
-          <p style={{ opacity: 0.9, fontFamily: 'Poppins, sans-serif' }}>
-            Manage and track all organization projects
-          </p>
-        </div>
-      )}
       
       {/* Header */}
       <div className="projects-header" style={{
