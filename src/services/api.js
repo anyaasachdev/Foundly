@@ -64,7 +64,8 @@ class ApiService {
   }
 
   async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}?_v=${this.version}`;
+    const separator = endpoint.includes('?') ? '&' : '?';
+    const url = `${this.baseURL}${endpoint}${separator}_v=${this.version}`;
     const token = this.token;
     
     const config = {
@@ -200,7 +201,7 @@ class ApiService {
   async createAnnouncement(announcementData) {
     // Use working endpoint with correct action
     console.log('Calling working endpoint with data:', announcementData);
-    return this.request('/working?action=create-announcement', {
+    return this.request('/working?action=announcements', {
       method: 'POST',
       body: JSON.stringify(announcementData)
     });
@@ -208,7 +209,7 @@ class ApiService {
   
   async getAnnouncements() {
     // Use working endpoint with correct action
-    return this.request('/working?action=get-announcements');
+    return this.request('/working?action=announcements');
   }
   
   async markAnnouncementRead(announcementId) {
@@ -252,12 +253,12 @@ class ApiService {
   // Projects
   async getProjects() {
     // Use working endpoint with correct action
-    return this.request('/working?action=get-projects');
+    return this.request('/working?action=projects');
   }
   
   async createProject(projectData) {
     // Use working endpoint with correct action
-    return this.request('/working?action=create-project', {
+    return this.request('/working?action=projects', {
       method: 'POST',
       body: JSON.stringify(projectData)
     });
@@ -279,12 +280,12 @@ class ApiService {
   // Events
   async getEvents() {
     // Use working endpoint with correct action
-    return this.request('/working?action=get-events');
+    return this.request('/working?action=events');
   }
   
   async createEvent(eventData) {
     // Use working endpoint with correct action
-    return this.request('/working?action=create-event', {
+    return this.request('/working?action=events', {
       method: 'POST',
       body: JSON.stringify(eventData)
     });
@@ -307,7 +308,7 @@ class ApiService {
   
   async logHours(hoursData) {
     // Use working endpoint with correct action
-    return this.request('/working?action=log-hours', {
+    return this.request('/working?action=hours', {
       method: 'POST',
       body: JSON.stringify(hoursData)
     });
@@ -315,13 +316,13 @@ class ApiService {
   
   async getHours() {
     // Use working endpoint with correct action
-    return this.request('/working?action=get-hours');
+    return this.request('/working?action=hours');
   }
   
   // Analytics - use stats instead
   async getAnalytics(timeRange = 'month') {
     // Use stats endpoint instead of analytics
-    const statsResponse = await this.request('/working?action=get-stats');
+    const statsResponse = await this.request('/working?action=stats');
     return { 
       data: {
         overview: {
@@ -349,7 +350,7 @@ class ApiService {
   // Stats
   async getStats() {
     // Use working endpoint with correct action
-    return this.request('/working?action=get-stats');
+    return this.request('/working?action=stats');
   }
   
   // User Activity - not implemented yet

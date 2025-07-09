@@ -123,12 +123,12 @@ async function handleEvents(req, res) {
       return res.status(200).json({ success: true, events: userEvents });
 
     case 'POST':
-      const { title, description, startTime, endTime, location } = req.body;
+      const { title, description, startDate, endDate, location } = req.body;
       const newEvent = {
         title,
         description: description || '',
-        startTime: new Date(startTime),
-        endTime: new Date(endTime),
+        startTime: new Date(startDate),
+        endTime: new Date(endDate),
         location: location || '',
         createdBy: decoded.userId,
         createdAt: new Date(),
