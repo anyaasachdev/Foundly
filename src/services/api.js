@@ -3,6 +3,7 @@ class ApiService {
     // Use Vercel deployment URL for API calls
     this.baseURL = process.env.REACT_APP_API_URL || 'https://foundly-olive.vercel.app/api';
     this.refreshPromise = null;
+    this.version = Date.now(); // Force cache refresh
   }
   
   // Add a getter to always get the current token
@@ -63,7 +64,7 @@ class ApiService {
   }
 
   async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
+    const url = `${this.baseURL}${endpoint}?_v=${this.version}`;
     const token = this.token;
     
     const config = {
@@ -347,6 +348,11 @@ class ApiService {
   
   getAuthToken() {
     return this.token;
+  }
+  
+  // Test method to verify endpoints are working
+  async testWorking() {
+    return this.request('/test-working');
   }
 }
 
