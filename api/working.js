@@ -6,6 +6,9 @@ const connectDB = async () => {
   try {
     if (isConnected) return;
     
+    console.log('Attempting to connect to MongoDB...');
+    console.log('MONGODB_URI exists:', !!process.env.MONGODB_URI);
+    
     if (!process.env.MONGODB_URI) {
       throw new Error('MONGODB_URI environment variable is not set');
     }
@@ -13,7 +16,7 @@ const connectDB = async () => {
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000, // Increased timeout
       socketTimeoutMS: 45000,
     });
     
@@ -21,6 +24,7 @@ const connectDB = async () => {
     console.log('MongoDB connected successfully');
   } catch (error) {
     console.error('DB connection error:', error);
+    isConnected = false;
     throw error;
   }
 };
@@ -38,44 +42,58 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    console.log('Working endpoint called:', req.method, req.url);
+    console.log('Request body:', req.body);
+    console.log('Request query:', req.query);
+    
     await connectDB();
     
     const action = req.query.action || req.body.action || 'test';
-    console.log('Working endpoint called with action:', action);
+    console.log('Action:', action);
 
     if (action === 'create-announcement' && req.method === 'POST') {
       const { title, content, organizationId } = req.body;
+      
+      console.log('Creating announcement with:', { title, content, organizationId });
       
       if (!title || !content) {
         return res.status(400).json({ error: 'Title and content are required' });
       }
       
-      const Announcement = mongoose.model('Announcement', new mongoose.Schema({
-        title: String,
-        content: String,
-        organizationId: String,
-        createdAt: { type: Date, default: Date.now }
-      }));
-      
-      const announcement = new Announcement({
-        title,
-        content,
-        organizationId: organizationId || 'default'
-      });
+      try {
+        const Announcement = mongoose.model('Announcement', new mongoose.Schema({
+          title: String,
+          content: String,
+          organizationId: String,
+          createdAt: { type: Date, default: Date.now }
+        }));
+        
+        const announcement = new Announcement({
+          title,
+          content,
+          organizationId: organizationId || 'default'
+        });
 
-      await announcement.save();
-      console.log('Announcement saved:', announcement);
+        await announcement.save();
+        console.log('Announcement saved successfully:', announcement._id);
 
-      return res.status(201).json({ 
-        success: true,
-        message: 'Announcement created successfully',
-        announcement: {
-          _id: announcement._id,
-          title: announcement.title,
-          content: announcement.content,
-          createdAt: announcement.createdAt
-        }
-      });
+        return res.status(201).json({ 
+          success: true,
+          message: 'Announcement created successfully',
+          announcement: {
+            _id: announcement._id,
+            title: announcement.title,
+            content: announcement.content,
+            createdAt: announcement.createdAt
+          }
+        });
+      } catch (dbError) {
+        console.error('Database error creating announcement:', dbError);
+        return res.status(500).json({ 
+          error: 'Database error', 
+          details: dbError.message 
+        });
+      }
     }
     
     if (action === 'get-announcements' && req.method === 'GET') {
