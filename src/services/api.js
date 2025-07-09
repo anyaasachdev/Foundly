@@ -202,17 +202,17 @@ class ApiService {
   
   // Announcements
   async createAnnouncement(announcementData) {
-    // Use working endpoint
+    // Use working endpoint with correct action
     console.log('Calling working endpoint with data:', announcementData);
-    return this.request('/working?action=announcements', {
+    return this.request('/working?action=create-announcement', {
       method: 'POST',
       body: JSON.stringify(announcementData)
     });
   }
   
   async getAnnouncements() {
-    // Use working endpoint
-    return this.request('/working?action=announcements');
+    // Use working endpoint with correct action
+    return this.request('/working?action=get-announcements');
   }
   
   async markAnnouncementRead(announcementId) {
@@ -247,13 +247,13 @@ class ApiService {
   
   // Projects
   async getProjects() {
-    // Use working endpoint
-    return this.request('/working?action=projects');
+    // Use working endpoint with correct action
+    return this.request('/working?action=get-projects');
   }
   
   async createProject(projectData) {
-    // Use working endpoint
-    return this.request('/working?action=projects', {
+    // Use working endpoint with correct action
+    return this.request('/working?action=create-project', {
       method: 'POST',
       body: JSON.stringify(projectData)
     });
@@ -274,13 +274,13 @@ class ApiService {
   
   // Events
   async getEvents() {
-    // Use working endpoint
-    return this.request('/working?action=events');
+    // Use working endpoint with correct action
+    return this.request('/working?action=get-events');
   }
   
   async createEvent(eventData) {
-    // Use working endpoint
-    return this.request('/working?action=events', {
+    // Use working endpoint with correct action
+    return this.request('/working?action=create-event', {
       method: 'POST',
       body: JSON.stringify(eventData)
     });
@@ -302,16 +302,16 @@ class ApiService {
 
   
   async logHours(hoursData) {
-    // Use working endpoint
-    return this.request('/working?action=hours', {
+    // Use working endpoint with correct action
+    return this.request('/working?action=log-hours', {
       method: 'POST',
       body: JSON.stringify(hoursData)
     });
   }
   
   async getHours() {
-    // Use working endpoint
-    return this.request('/working?action=hours');
+    // Use working endpoint with correct action
+    return this.request('/working?action=get-hours');
   }
   
   // Analytics
@@ -328,8 +328,8 @@ class ApiService {
   
   // Stats
   async getStats() {
-    // Use working endpoint
-    return this.request('/working?action=stats');
+    // Use working endpoint with correct action
+    return this.request('/working?action=get-stats');
   }
   
   // User Activity

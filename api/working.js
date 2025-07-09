@@ -177,11 +177,69 @@ module.exports = async function handler(req, res) {
       });
     }
     
-    if (action === 'create-project' && req.method === 'POST') {
-      const { title, description, organizationId } = req.body;
+    if (action === 'get-stats' && req.method === 'GET') {
+      const organizationId = req.query.organizationId || 'default';
       
-      if (!title || !description) {
-        return res.status(400).json({ error: 'Title and description are required' });
+      // Get all models
+      const HourLog = mongoose.model('HourLog', new mongoose.Schema({
+        hours: Number,
+        description: String,
+        date: Date,
+        organizationId: String,
+        createdAt: { type: Date, default: Date.now }
+      }));
+      
+      const Project = mongoose.model('Project', new mongoose.Schema({
+        name: String,
+        description: String,
+        organizationId: String,
+        status: String,
+        createdAt: { type: Date, default: Date.now }
+      }));
+      
+      const Organization = mongoose.model('Organization', new mongoose.Schema({
+        name: String,
+        description: String,
+        joinCode: String,
+        createdBy: String,
+        members: [{
+          user: String,
+          role: { type: String, default: 'member' },
+          joinedAt: { type: Date, default: Date.now }
+        }],
+        createdAt: { type: Date, default: Date.now }
+      }));
+      
+      // Get data from all sources
+      const [hourLogs, projects, organization] = await Promise.all([
+        HourLog.find({ organizationId }),
+        Project.find({ organizationId }),
+        Organization.findById(organizationId).catch(() => null)
+      ]);
+      
+      // Calculate stats
+      const totalHours = hourLogs.reduce((sum, log) => sum + log.hours, 0);
+      const activeProjects = projects.filter(p => p.status === 'active').length;
+      const completedTasks = projects.filter(p => p.status === 'completed').length;
+      const totalMembers = organization?.members?.length || 1;
+      
+      return res.status(200).json({ 
+        success: true,
+        stats: {
+          totalHours,
+          activeProjects,
+          completedTasks,
+          totalMembers,
+          totalProjects: projects.length
+        }
+      });
+    }
+    
+    if (action === 'create-project' && req.method === 'POST') {
+      const { title, name, description, organizationId } = req.body;
+      
+      if (!title && !name) {
+        return res.status(400).json({ error: 'Title or name is required' });
       }
       
       const Project = mongoose.model('Project', new mongoose.Schema({
@@ -193,7 +251,7 @@ module.exports = async function handler(req, res) {
       }));
       
       const project = new Project({
-        name: title,
+        name: title || name,
         description,
         organizationId: organizationId || 'default',
         status: 'active'
@@ -303,6 +361,121 @@ module.exports = async function handler(req, res) {
         timestamp: new Date().toISOString(),
         dbConnected: isConnected
       });
+    }
+    
+    // Organization actions
+    if (action === 'organizations' && req.method === 'GET') {
+      // Get user's organizations
+      const Organization = mongoose.model('Organization', new mongoose.Schema({
+        name: String,
+        description: String,
+        joinCode: String,
+        createdBy: String,
+        members: [{
+          user: String,
+          role: { type: String, default: 'member' },
+          joinedAt: { type: Date, default: Date.now }
+        }],
+        createdAt: { type: Date, default: Date.now }
+      }));
+      
+      // For now, return a default organization since we don't have user auth in this endpoint
+      const defaultOrg = {
+        _id: 'default-org-id',
+        name: 'Default Organization',
+        description: 'Your default organization',
+        role: 'admin'
+      };
+      
+      return res.status(200).json({ 
+        success: true, 
+        organizations: [defaultOrg]
+      });
+    }
+    
+    if (action === 'organizations' && req.method === 'POST') {
+      const { name, description, inviteCode } = req.body;
+      
+      if (inviteCode) {
+        // Joining an organization
+        const Organization = mongoose.model('Organization', new mongoose.Schema({
+          name: String,
+          description: String,
+          joinCode: String,
+          createdBy: String,
+          members: [{
+            user: String,
+            role: { type: String, default: 'member' },
+            joinedAt: { type: Date, default: Date.now }
+          }],
+          createdAt: { type: Date, default: Date.now }
+        }));
+        
+        // Find organization by join code
+        const organization = await Organization.findOne({ joinCode: inviteCode });
+        
+        if (!organization) {
+          return res.status(404).json({ error: 'Invalid join code' });
+        }
+        
+        return res.status(200).json({ 
+          success: true,
+          message: 'Successfully joined organization',
+          organization: {
+            _id: organization._id,
+            name: organization.name,
+            description: organization.description,
+            role: 'member'
+          }
+        });
+      } else {
+        // Creating a new organization
+        if (!name) {
+          return res.status(400).json({ error: 'Organization name is required' });
+        }
+        
+        const Organization = mongoose.model('Organization', new mongoose.Schema({
+          name: String,
+          description: String,
+          joinCode: String,
+          createdBy: String,
+          members: [{
+            user: String,
+            role: { type: String, default: 'member' },
+            joinedAt: { type: Date, default: Date.now }
+          }],
+          createdAt: { type: Date, default: Date.now }
+        }));
+        
+        const joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        
+        const organization = new Organization({
+          name,
+          description: description || '',
+          joinCode,
+          createdBy: 'default-user',
+          members: [{
+            user: 'default-user',
+            role: 'admin',
+            joinedAt: new Date()
+          }]
+        });
+
+        await organization.save();
+        console.log('Organization created:', organization);
+
+        return res.status(201).json({ 
+          success: true,
+          message: 'Organization created successfully',
+          organization: {
+            _id: organization._id,
+            name: organization.name,
+            description: organization.description,
+            joinCode: organization.joinCode,
+            role: 'admin'
+          }
+        });
+      }
     }
     
     // Socket.io actions

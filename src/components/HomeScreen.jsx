@@ -105,18 +105,18 @@ const HomeScreen = ({ user }) => {
         // Load real stats
         const [projectsResponse, statsResponse] = await Promise.all([
           ApiService.getProjects().catch(() => ({ projects: [] })),
-          ApiService.getStats().catch(() => ({ totalHours: 0, totalMembers: 1 }))
+          ApiService.getStats().catch(() => ({ stats: { totalHours: 0, totalMembers: 1, activeProjects: 0, completedTasks: 0 } }))
         ]);
         
         // Get member count from organization or stats
-        const memberCount = currentOrg.members?.length || statsResponse.totalMembers || 1;
+        const memberCount = currentOrg.members?.length || statsResponse.stats?.totalMembers || 1;
         const projects = projectsResponse.projects || projectsResponse.data || [];
         
         setStats({
           totalMembers: memberCount,
-          activeProjects: projects.filter(p => p.status === 'active').length || 0,
-          hoursLogged: statsResponse.totalHours || 0,
-          completedTasks: projects.filter(p => p.status === 'completed').length || 0
+          activeProjects: statsResponse.stats?.activeProjects || projects.filter(p => p.status === 'active').length || 0,
+          hoursLogged: statsResponse.stats?.totalHours || 0,
+          completedTasks: statsResponse.stats?.completedTasks || projects.filter(p => p.status === 'completed').length || 0
         });
         
         setLoading(false);
