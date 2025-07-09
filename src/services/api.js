@@ -382,6 +382,18 @@ class ApiService {
   async testWorkingEndpoint() {
     return this.request('/working?action=test');
   }
+
+  // Quick test to verify API connectivity
+  async quickTest() {
+    try {
+      const response = await this.request('/working?action=test');
+      console.log('API Test Result:', response);
+      return response;
+    } catch (error) {
+      console.error('API Test Failed:', error);
+      throw error;
+    }
+  }
 }
 
 export default new ApiService();

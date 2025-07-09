@@ -23,6 +23,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [needsOrgSetup, setNeedsOrgSetup] = useState(false);
+  const [version] = useState('2.2 - CACHE REFRESH REQUIRED - ' + Date.now());
 
   // Token refresh mechanism
   useEffect(() => {
@@ -84,6 +85,14 @@ function App() {
 
   const checkOrganizationStatus = async (userData) => {
     try {
+      // Test API connectivity first
+      try {
+        await ApiService.quickTest();
+        console.log('✅ API is working correctly');
+      } catch (apiError) {
+        console.error('❌ API test failed:', apiError);
+      }
+
       // Check if user has organizations in their data first
       if (userData.organizations && userData.organizations.length > 0) {
         console.log('Found organizations in user data:', userData.organizations.length);
@@ -199,8 +208,8 @@ function App() {
     );
   }
 
-  console.log('App state - user:', !!user, 'needsOrgSetup:', needsOrgSetup, 'loading:', loading);
-  console.log('App version: 2.1 - Full app restored - CACHE REFRESH REQUIRED');
+      console.log('App state - user:', !!user, 'needsOrgSetup:', needsOrgSetup, 'loading:', loading);
+    console.log('App version:', version);
 
   return (
     <ErrorBoundary>
