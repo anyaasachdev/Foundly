@@ -91,6 +91,11 @@ function App() {
         return;
       }
       
+      // TEMPORARY: Skip API call to avoid homepage loading issues
+      console.log('Skipping organization API check to fix homepage loading');
+      setNeedsOrgSetup(false);
+      return;
+      
       // If no organizations in user data, try to fetch from API
       const response = await ApiService.getMyOrganizations();
       console.log('Organization check response:', response);
@@ -245,6 +250,10 @@ function App() {
                 <Route 
                   path="/debug" 
                   element={user ? <DebugInfo /> : <Navigate to="/login" />} 
+                />
+                <Route 
+                  path="/test" 
+                  element={<SimpleTest />} 
                 />
                 <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
               </Routes>
