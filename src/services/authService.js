@@ -1,7 +1,11 @@
 class AuthService {
-  // Get the API base URL from environment or fallback to Vercel deployment
+  // Get the API base URL from environment
   getApiUrl() {
-    return process.env.REACT_APP_API_URL || 'https://foundly-olive.vercel.app/api';
+    const apiUrl = process.env.REACT_APP_API_URL;
+    if (!apiUrl) {
+      throw new Error('REACT_APP_API_URL environment variable is not set');
+    }
+    return apiUrl;
   }
 
   // Register a new user

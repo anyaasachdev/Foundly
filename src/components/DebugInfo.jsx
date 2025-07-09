@@ -104,7 +104,7 @@ const DebugInfo = () => {
 
       <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#e2e3e5' }}>
         <strong>Environment Info:</strong>
-        <div>API URL: {process.env.REACT_APP_API_URL || 'https://foundly-olive.vercel.app/api'}</div>
+        <div>API URL: {process.env.REACT_APP_API_URL || 'Not set'}</div>
         <div>Node Env: {process.env.NODE_ENV}</div>
         <div>Timestamp: {new Date().toISOString()}</div>
       </div>
