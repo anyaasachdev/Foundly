@@ -8,11 +8,10 @@ const rooms = new Map();
 
 // Model definitions - only create if they don't exist
 const getModel = (modelName, schema) => {
-  try {
-    return mongoose.model(modelName);
-  } catch (error) {
-    return mongoose.model(modelName, schema);
+  if (mongoose.models[modelName]) {
+    return mongoose.models[modelName];
   }
+  return mongoose.model(modelName, schema);
 };
 
 const connectDB = async () => {
