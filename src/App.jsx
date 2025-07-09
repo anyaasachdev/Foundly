@@ -15,6 +15,7 @@ import CollapsibleDisclaimer from './components/CollapsibleDisclaimer';
 
 import { NotificationProvider } from './contexts/NotificationContext';
 import ApiService from './services/api';
+import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 
 function App() {
@@ -200,56 +201,58 @@ function App() {
   console.log('App state - user:', !!user, 'needsOrgSetup:', needsOrgSetup, 'loading:', loading);
 
   return (
-    <NotificationProvider user={user}>
-      <Router>
-        <div className="app">
-          {user && <Navbar user={user} onLogout={handleLogout} />}
-          <main className={user ? 'main-content' : 'main-content-full'}>
-            <Routes>
-              <Route 
-                path="/login" 
-                element={!user ? <LoginScreen onLogin={handleLogin} /> : <Navigate to="/" />} 
-              />
-              <Route 
-                path="/" 
-                element={user ? <HomeScreen user={user} /> : <Navigate to="/login" />} 
-              />
-              <Route 
-                path="/projects" 
-                element={user ? <ProjectsScreen user={user} /> : <Navigate to="/login" />} 
-              />
-              <Route 
-                path="/calendar" 
-                element={user ? <CalendarScreen user={user} /> : <Navigate to="/login" />} 
-              />
-              <Route 
-                path="/stats" 
-                element={user ? <StatsScreen user={user} /> : <Navigate to="/login" />} 
-              />
-              <Route 
-                path="/profile" 
-                element={user ? <ProfileScreen user={user} /> : <Navigate to="/login" />} 
-              />
-              <Route 
-                path="/organization/create" 
-                element={user ? <OrganizationSetup onComplete={handleOrganizationSetup} /> : <Navigate to="/login" />} 
-              />
-              <Route 
-                path="/api-test" 
-                element={user ? <ApiTest /> : <Navigate to="/login" />} 
-              />
-              <Route 
-                path="/debug" 
-                element={user ? <DebugInfo /> : <Navigate to="/login" />} 
-              />
-              <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
-            </Routes>
-          </main>
-          <ToastNotification />
-          <CollapsibleDisclaimer />
-        </div>
-      </Router>
-    </NotificationProvider>
+    <ErrorBoundary>
+      <NotificationProvider user={user}>
+        <Router>
+          <div className="app">
+            {user && <Navbar user={user} onLogout={handleLogout} />}
+            <main className={user ? 'main-content' : 'main-content-full'}>
+              <Routes>
+                <Route 
+                  path="/login" 
+                  element={!user ? <LoginScreen onLogin={handleLogin} /> : <Navigate to="/" />} 
+                />
+                <Route 
+                  path="/" 
+                  element={user ? <HomeScreen user={user} /> : <Navigate to="/login" />} 
+                />
+                <Route 
+                  path="/projects" 
+                  element={user ? <ProjectsScreen user={user} /> : <Navigate to="/login" />} 
+                />
+                <Route 
+                  path="/calendar" 
+                  element={user ? <CalendarScreen user={user} /> : <Navigate to="/login" />} 
+                />
+                <Route 
+                  path="/stats" 
+                  element={user ? <StatsScreen user={user} /> : <Navigate to="/login" />} 
+                />
+                <Route 
+                  path="/profile" 
+                  element={user ? <ProfileScreen user={user} /> : <Navigate to="/login" />} 
+                />
+                <Route 
+                  path="/organization/create" 
+                  element={user ? <OrganizationSetup onComplete={handleOrganizationSetup} /> : <Navigate to="/login" />} 
+                />
+                <Route 
+                  path="/api-test" 
+                  element={user ? <ApiTest /> : <Navigate to="/login" />} 
+                />
+                <Route 
+                  path="/debug" 
+                  element={user ? <DebugInfo /> : <Navigate to="/login" />} 
+                />
+                <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
+              </Routes>
+            </main>
+            <ToastNotification />
+            <CollapsibleDisclaimer />
+          </div>
+        </Router>
+      </NotificationProvider>
+    </ErrorBoundary>
   );
 }
 
