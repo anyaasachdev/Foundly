@@ -16,7 +16,7 @@ const getModel = (modelName, schema) => {
 
 const connectDB = async () => {
   try {
-    if (isConnected) return;
+    if (isConnected && mongoose.connection.readyState === 1) return;
     
     console.log('Attempting to connect to MongoDB...');
     console.log('MONGODB_URI exists:', !!process.env.MONGODB_URI);
@@ -25,11 +25,18 @@ const connectDB = async () => {
       throw new Error('MONGODB_URI environment variable is not set');
     }
     
+    // Close existing connection if it exists
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
+    }
+    
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 10000, // Increased timeout
+      serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
+      maxPoolSize: 10,
+      bufferCommands: false,
     });
     
     isConnected = true;
@@ -58,12 +65,13 @@ module.exports = async function handler(req, res) {
     console.log('Request body:', req.body);
     console.log('Request query:', req.query);
     
+    // Ensure database connection
     await connectDB();
     
     const action = req.query.action || req.body.action || 'test';
     console.log('Action:', action);
 
-    if (action === 'create-announcement' && req.method === 'POST') {
+    if ((action === 'create-announcement' || action === 'announcements') && req.method === 'POST') {
       const { title, content, organizationId } = req.body;
       
       console.log('Creating announcement with:', { title, content, organizationId });
@@ -74,41 +82,41 @@ module.exports = async function handler(req, res) {
       
       try {
         const Announcement = getModel('Announcement', new mongoose.Schema({
-          title: String,
-          content: String,
-          organizationId: String,
+          title: { type: String, required: true },
+          content: { type: String, required: true },
+          organizationId: { type: String, default: 'default' },
           createdAt: { type: Date, default: Date.now }
         }));
         
         const announcement = new Announcement({
-          title,
-          content,
+          title: title.trim(),
+          content: content.trim(),
           organizationId: organizationId || 'default'
         });
 
-        await announcement.save();
-        console.log('Announcement saved successfully:', announcement._id);
+        const savedAnnouncement = await announcement.save();
+        console.log('Announcement saved successfully:', savedAnnouncement._id);
 
         return res.status(201).json({ 
           success: true,
           message: 'Announcement created successfully',
           announcement: {
-            _id: announcement._id,
-            title: announcement.title,
-            content: announcement.content,
-            createdAt: announcement.createdAt
+            _id: savedAnnouncement._id,
+            title: savedAnnouncement.title,
+            content: savedAnnouncement.content,
+            createdAt: savedAnnouncement.createdAt
           }
         });
       } catch (dbError) {
         console.error('Database error creating announcement:', dbError);
         return res.status(500).json({ 
-          error: 'Database error', 
+          error: 'Failed to create announcement', 
           details: dbError.message 
         });
       }
     }
     
-    if (action === 'get-announcements' && req.method === 'GET') {
+    if ((action === 'get-announcements' || action === 'announcements') && req.method === 'GET') {
       const Announcement = getModel('Announcement', new mongoose.Schema({
         title: String,
         content: String,
@@ -126,7 +134,7 @@ module.exports = async function handler(req, res) {
       });
     }
     
-    if (action === 'log-hours' && req.method === 'POST') {
+    if ((action === 'log-hours' || action === 'hours') && req.method === 'POST') {
       const { hours, description, date, organizationId } = req.body;
       
       if (!hours || !date) {
@@ -134,36 +142,41 @@ module.exports = async function handler(req, res) {
       }
       
       const HourLog = getModel('HourLog', new mongoose.Schema({
-        hours: Number,
-        description: String,
-        date: Date,
-        organizationId: String,
+        hours: { type: Number, required: true, min: 0.1, max: 24 },
+        description: { type: String, default: '' },
+        date: { type: Date, required: true },
+        organizationId: { type: String, default: 'default' },
         createdAt: { type: Date, default: Date.now }
       }));
       
+      const parsedHours = parseFloat(hours);
+      if (isNaN(parsedHours) || parsedHours <= 0) {
+        return res.status(400).json({ error: 'Hours must be a positive number' });
+      }
+      
       const hourLog = new HourLog({
-        hours: parseFloat(hours),
+        hours: parsedHours,
         description: description || '',
         date: new Date(date),
         organizationId: organizationId || 'default'
       });
 
-      await hourLog.save();
-      console.log('Hours logged:', hourLog);
+      const savedHourLog = await hourLog.save();
+      console.log('Hours logged successfully:', savedHourLog._id);
 
       return res.status(201).json({ 
         success: true,
         message: 'Hours logged successfully',
         hourLog: {
-          _id: hourLog._id,
-          hours: hourLog.hours,
-          date: hourLog.date,
-          description: hourLog.description
+          _id: savedHourLog._id,
+          hours: savedHourLog.hours,
+          date: savedHourLog.date,
+          description: savedHourLog.description
         }
       });
     }
     
-    if (action === 'get-hours' && req.method === 'GET') {
+    if ((action === 'get-hours' || action === 'hours') && req.method === 'GET') {
       const HourLog = getModel('HourLog', new mongoose.Schema({
         hours: Number,
         description: String,
@@ -185,7 +198,7 @@ module.exports = async function handler(req, res) {
       });
     }
     
-    if (action === 'get-stats' && req.method === 'GET') {
+    if ((action === 'get-stats' || action === 'stats') && req.method === 'GET') {
       const organizationId = req.query.organizationId || 'default';
       
       // Get all models
@@ -243,7 +256,7 @@ module.exports = async function handler(req, res) {
       });
     }
     
-    if (action === 'create-project' && req.method === 'POST') {
+    if ((action === 'create-project' || action === 'projects') && req.method === 'POST') {
       const { title, name, description, organizationId } = req.body;
       
       if (!title && !name) {
@@ -251,36 +264,36 @@ module.exports = async function handler(req, res) {
       }
       
       const Project = getModel('Project', new mongoose.Schema({
-        name: String,
-        description: String,
-        organizationId: String,
+        name: { type: String, required: true },
+        description: { type: String, default: '' },
+        organizationId: { type: String, default: 'default' },
         status: { type: String, default: 'active' },
         createdAt: { type: Date, default: Date.now }
       }));
       
       const project = new Project({
-        name: title || name,
-        description,
+        name: (title || name).trim(),
+        description: description ? description.trim() : '',
         organizationId: organizationId || 'default',
         status: 'active'
       });
 
-      await project.save();
-      console.log('Project saved:', project);
+      const savedProject = await project.save();
+      console.log('Project saved successfully:', savedProject._id);
 
       return res.status(201).json({ 
         success: true,
         message: 'Project created successfully',
         project: {
-          _id: project._id,
-          title: project.name,
-          description: project.description,
-          status: project.status
+          _id: savedProject._id,
+          title: savedProject.name,
+          description: savedProject.description,
+          status: savedProject.status
         }
       });
     }
     
-    if (action === 'get-projects' && req.method === 'GET') {
+    if ((action === 'get-projects' || action === 'projects') && req.method === 'GET') {
       const Project = getModel('Project', new mongoose.Schema({
         name: String,
         description: String,
@@ -304,7 +317,7 @@ module.exports = async function handler(req, res) {
       });
     }
     
-    if (action === 'create-event' && req.method === 'POST') {
+    if ((action === 'create-event' || action === 'events') && req.method === 'POST') {
       const { title, description, startDate, organizationId } = req.body;
       
       if (!title || !startDate) {
@@ -312,36 +325,36 @@ module.exports = async function handler(req, res) {
       }
       
       const Event = getModel('Event', new mongoose.Schema({
-        title: String,
-        description: String,
-        startDate: Date,
-        organizationId: String,
+        title: { type: String, required: true },
+        description: { type: String, default: '' },
+        startDate: { type: Date, required: true },
+        organizationId: { type: String, default: 'default' },
         createdAt: { type: Date, default: Date.now }
       }));
       
       const event = new Event({
-        title,
-        description: description || '',
+        title: title.trim(),
+        description: description ? description.trim() : '',
         startDate: new Date(startDate),
         organizationId: organizationId || 'default'
       });
 
-      await event.save();
-      console.log('Event saved:', event);
+      const savedEvent = await event.save();
+      console.log('Event saved successfully:', savedEvent._id);
 
       return res.status(201).json({ 
         success: true,
         message: 'Event created successfully',
         event: {
-          _id: event._id,
-          title: event.title,
-          description: event.description,
-          startDate: event.startDate
+          _id: savedEvent._id,
+          title: savedEvent.title,
+          description: savedEvent.description,
+          startDate: savedEvent.startDate
         }
       });
     }
     
-    if (action === 'get-events' && req.method === 'GET') {
+    if ((action === 'get-events' || action === 'events') && req.method === 'GET') {
       const Event = getModel('Event', new mongoose.Schema({
         title: String,
         description: String,
