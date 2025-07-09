@@ -1,11 +1,7 @@
 class ApiService {
   constructor() {
-    // Use environment variable for API URL - no hardcoded fallback
-    this.baseURL = process.env.REACT_APP_API_URL;
-    if (!this.baseURL) {
-      console.error('REACT_APP_API_URL environment variable is not set!');
-      throw new Error('REACT_APP_API_URL environment variable is required');
-    }
+    // Use environment variable for API URL with fallback
+    this.baseURL = process.env.REACT_APP_API_URL || 'https://foundly-olive.vercel.app/api';
     this.refreshPromise = null;
     this.version = Date.now() + Math.random(); // Force cache refresh with random
   }

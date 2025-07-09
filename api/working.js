@@ -6,6 +6,15 @@ let isConnected = false;
 const connectedUsers = new Map();
 const rooms = new Map();
 
+// Model definitions - only create if they don't exist
+const getModel = (modelName, schema) => {
+  try {
+    return mongoose.model(modelName);
+  } catch (error) {
+    return mongoose.model(modelName, schema);
+  }
+};
+
 const connectDB = async () => {
   try {
     if (isConnected) return;
@@ -65,7 +74,7 @@ module.exports = async function handler(req, res) {
       }
       
       try {
-        const Announcement = mongoose.model('Announcement', new mongoose.Schema({
+        const Announcement = getModel('Announcement', new mongoose.Schema({
           title: String,
           content: String,
           organizationId: String,
@@ -101,7 +110,7 @@ module.exports = async function handler(req, res) {
     }
     
     if (action === 'get-announcements' && req.method === 'GET') {
-      const Announcement = mongoose.model('Announcement', new mongoose.Schema({
+      const Announcement = getModel('Announcement', new mongoose.Schema({
         title: String,
         content: String,
         organizationId: String,
@@ -125,7 +134,7 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Hours and date are required' });
       }
       
-      const HourLog = mongoose.model('HourLog', new mongoose.Schema({
+      const HourLog = getModel('HourLog', new mongoose.Schema({
         hours: Number,
         description: String,
         date: Date,
@@ -156,7 +165,7 @@ module.exports = async function handler(req, res) {
     }
     
     if (action === 'get-hours' && req.method === 'GET') {
-      const HourLog = mongoose.model('HourLog', new mongoose.Schema({
+      const HourLog = getModel('HourLog', new mongoose.Schema({
         hours: Number,
         description: String,
         date: Date,
@@ -181,7 +190,7 @@ module.exports = async function handler(req, res) {
       const organizationId = req.query.organizationId || 'default';
       
       // Get all models
-      const HourLog = mongoose.model('HourLog', new mongoose.Schema({
+      const HourLog = getModel('HourLog', new mongoose.Schema({
         hours: Number,
         description: String,
         date: Date,
@@ -189,7 +198,7 @@ module.exports = async function handler(req, res) {
         createdAt: { type: Date, default: Date.now }
       }));
       
-      const Project = mongoose.model('Project', new mongoose.Schema({
+      const Project = getModel('Project', new mongoose.Schema({
         name: String,
         description: String,
         organizationId: String,
@@ -197,7 +206,7 @@ module.exports = async function handler(req, res) {
         createdAt: { type: Date, default: Date.now }
       }));
       
-      const Organization = mongoose.model('Organization', new mongoose.Schema({
+      const Organization = getModel('Organization', new mongoose.Schema({
         name: String,
         description: String,
         joinCode: String,
@@ -242,7 +251,7 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Title or name is required' });
       }
       
-      const Project = mongoose.model('Project', new mongoose.Schema({
+      const Project = getModel('Project', new mongoose.Schema({
         name: String,
         description: String,
         organizationId: String,
@@ -273,7 +282,7 @@ module.exports = async function handler(req, res) {
     }
     
     if (action === 'get-projects' && req.method === 'GET') {
-      const Project = mongoose.model('Project', new mongoose.Schema({
+      const Project = getModel('Project', new mongoose.Schema({
         name: String,
         description: String,
         organizationId: String,
@@ -303,7 +312,7 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Title and start date are required' });
       }
       
-      const Event = mongoose.model('Event', new mongoose.Schema({
+      const Event = getModel('Event', new mongoose.Schema({
         title: String,
         description: String,
         startDate: Date,
@@ -334,7 +343,7 @@ module.exports = async function handler(req, res) {
     }
     
     if (action === 'get-events' && req.method === 'GET') {
-      const Event = mongoose.model('Event', new mongoose.Schema({
+      const Event = getModel('Event', new mongoose.Schema({
         title: String,
         description: String,
         startDate: Date,
@@ -366,7 +375,7 @@ module.exports = async function handler(req, res) {
     // Organization actions
     if (action === 'organizations' && req.method === 'GET') {
       // Get user's organizations
-      const Organization = mongoose.model('Organization', new mongoose.Schema({
+      const Organization = getModel('Organization', new mongoose.Schema({
         name: String,
         description: String,
         joinCode: String,
@@ -398,7 +407,7 @@ module.exports = async function handler(req, res) {
       
       if (inviteCode) {
         // Joining an organization
-        const Organization = mongoose.model('Organization', new mongoose.Schema({
+        const Organization = getModel('Organization', new mongoose.Schema({
           name: String,
           description: String,
           joinCode: String,
@@ -434,7 +443,7 @@ module.exports = async function handler(req, res) {
           return res.status(400).json({ error: 'Organization name is required' });
         }
         
-        const Organization = mongoose.model('Organization', new mongoose.Schema({
+        const Organization = getModel('Organization', new mongoose.Schema({
           name: String,
           description: String,
           joinCode: String,
