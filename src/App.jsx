@@ -246,10 +246,6 @@ function App() {
                   path="/debug" 
                   element={user ? <DebugInfo /> : <Navigate to="/login" />} 
                 />
-                <Route 
-                  path="/test" 
-                  element={<SimpleTest />} 
-                />
                 <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
               </Routes>
             </main>
