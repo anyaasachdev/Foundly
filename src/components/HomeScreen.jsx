@@ -196,7 +196,7 @@ const HomeScreen = ({ user }) => {
     try {
       await ApiService.markAnnouncementRead(announcementId);
       setAnnouncements(prev => 
-        prev.map(ann => 
+        (prev || []).map(ann => 
           ann._id === announcementId 
             ? { ...ann, readBy: [...(ann.readBy || []), user.id] }
             : ann
