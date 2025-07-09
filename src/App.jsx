@@ -221,23 +221,35 @@ function App() {
                 />
                 <Route 
                   path="/" 
-                  element={user ? <HomeScreen user={user} /> : <Navigate to="/login" />} 
+                  element={user ? <div style={{padding: '20px', textAlign: 'center'}}>
+                    <h1>Homepage Loading...</h1>
+                    <p>User: {user.name}</p>
+                    <p>Email: {user.email}</p>
+                  </div> : <Navigate to="/login" />} 
                 />
                 <Route 
                   path="/projects" 
-                  element={user ? <ProjectsScreen user={user} /> : <Navigate to="/login" />} 
+                  element={user ? <div style={{padding: '20px', textAlign: 'center'}}>
+                    <h1>Projects Loading...</h1>
+                  </div> : <Navigate to="/login" />} 
                 />
                 <Route 
                   path="/calendar" 
-                  element={user ? <CalendarScreen user={user} /> : <Navigate to="/login" />} 
+                  element={user ? <div style={{padding: '20px', textAlign: 'center'}}>
+                    <h1>Calendar Loading...</h1>
+                  </div> : <Navigate to="/login" />} 
                 />
                 <Route 
                   path="/stats" 
-                  element={user ? <StatsScreen user={user} /> : <Navigate to="/login" />} 
+                  element={user ? <div style={{padding: '20px', textAlign: 'center'}}>
+                    <h1>Stats Loading...</h1>
+                  </div> : <Navigate to="/login" />} 
                 />
                 <Route 
                   path="/profile" 
-                  element={user ? <ProfileScreen user={user} /> : <Navigate to="/login" />} 
+                  element={user ? <div style={{padding: '20px', textAlign: 'center'}}>
+                    <h1>Profile Loading...</h1>
+                  </div> : <Navigate to="/login" />} 
                 />
                 <Route 
                   path="/organization/create" 

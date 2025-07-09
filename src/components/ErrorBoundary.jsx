@@ -11,7 +11,10 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
+    console.error('ErrorBoundary caught an error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Component stack:', errorInfo.componentStack);
+    
     this.setState({
       error: error,
       errorInfo: errorInfo
@@ -21,23 +24,62 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ 
-          padding: '20px', 
-          margin: '20px', 
-          border: '2px solid red', 
+        <div style={{
+          padding: '20px',
+          margin: '20px',
+          border: '2px solid #ef4444',
           borderRadius: '8px',
-          backgroundColor: '#fff5f5',
-          fontFamily: 'monospace'
+          backgroundColor: '#fef2f2',
+          fontFamily: 'monospace',
+          fontSize: '14px'
         }}>
-          <h2>Something went wrong!</h2>
-          <details style={{ whiteSpace: 'pre-wrap' }}>
-            <summary>Error Details</summary>
-            <p><strong>Error:</strong> {this.state.error && this.state.error.toString()}</p>
-            <p><strong>Stack:</strong></p>
-            <pre>{this.state.errorInfo && this.state.errorInfo.componentStack}</pre>
-          </details>
-          <button 
-            onClick={() => window.location.reload()} 
+          <h2 style={{ color: '#dc2626', marginBottom: '10px' }}>
+            🚨 Something went wrong!
+          </h2>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <strong>Error Details:</strong>
+            <pre style={{ 
+              background: '#f3f4f6', 
+              padding: '10px', 
+              borderRadius: '4px',
+              overflow: 'auto',
+              maxHeight: '200px'
+            }}>
+              {this.state.error && this.state.error.toString()}
+            </pre>
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <strong>Error Stack:</strong>
+            <pre style={{ 
+              background: '#f3f4f6', 
+              padding: '10px', 
+              borderRadius: '4px',
+              overflow: 'auto',
+              maxHeight: '200px',
+              fontSize: '12px'
+            }}>
+              {this.state.error && this.state.error.stack}
+            </pre>
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <strong>Component Stack:</strong>
+            <pre style={{ 
+              background: '#f3f4f6', 
+              padding: '10px', 
+              borderRadius: '4px',
+              overflow: 'auto',
+              maxHeight: '200px',
+              fontSize: '12px'
+            }}>
+              {this.state.errorInfo && this.state.errorInfo.componentStack}
+            </pre>
+          </div>
+
+          <button
+            onClick={() => window.location.reload()}
             style={{
               padding: '10px 20px',
               backgroundColor: '#dc2626',
@@ -45,7 +87,7 @@ class ErrorBoundary extends React.Component {
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
-              marginTop: '10px'
+              fontSize: '14px'
             }}
           >
             Reload Page
