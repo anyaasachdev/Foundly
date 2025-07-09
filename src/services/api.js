@@ -200,16 +200,16 @@ class ApiService {
   
   // Announcements
   async createAnnouncement(announcementData) {
-    // Temporary: use debug endpoint to see what's happening
-    return this.request('/debug?action=create-announcement', {
+    // Use working endpoint
+    return this.request('/working?action=create-announcement', {
       method: 'POST',
       body: JSON.stringify(announcementData)
     });
   }
   
   async getAnnouncements() {
-    // Temporary: use auth endpoint since announcements endpoint is not working
-    return this.request('/auth?action=get-announcements');
+    // Use working endpoint
+    return this.request('/working?action=get-announcements');
   }
   
   async markAnnouncementRead(announcementId) {
@@ -244,13 +244,13 @@ class ApiService {
   
   // Projects
   async getProjects() {
-    // Temporary: use auth endpoint since projects endpoint is not working
-    return this.request('/auth?action=get-projects');
+    // Use working endpoint
+    return this.request('/working?action=get-projects');
   }
   
   async createProject(projectData) {
-    // Temporary: use debug endpoint to see what's happening
-    return this.request('/debug?action=create-project', {
+    // Use working endpoint
+    return this.request('/working?action=create-project', {
       method: 'POST',
       body: JSON.stringify(projectData)
     });
@@ -271,13 +271,13 @@ class ApiService {
   
   // Events
   async getEvents() {
-    // Temporary: use auth endpoint since events endpoint is not working
-    return this.request('/auth?action=get-events');
+    // Use working endpoint
+    return this.request('/working?action=get-events');
   }
   
   async createEvent(eventData) {
-    // Temporary: use debug endpoint to see what's happening
-    return this.request('/debug?action=create-event', {
+    // Use working endpoint
+    return this.request('/working?action=create-event', {
       method: 'POST',
       body: JSON.stringify(eventData)
     });
@@ -296,18 +296,19 @@ class ApiService {
     });
   }
   
-  // Hours
-  async getHours() {
-    // Temporary: use auth endpoint since hours endpoint is not working
-    return this.request('/auth?action=get-hours');
-  }
+
   
   async logHours(hoursData) {
-    // Temporary: use debug endpoint to see what's happening
-    return this.request('/debug?action=log-hours', {
+    // Use working endpoint
+    return this.request('/working?action=log-hours', {
       method: 'POST',
       body: JSON.stringify(hoursData)
     });
+  }
+  
+  async getHours() {
+    // Use working endpoint
+    return this.request('/working?action=get-hours');
   }
   
   // Analytics
@@ -324,8 +325,8 @@ class ApiService {
   
   // Stats
   async getStats() {
-    // Temporary: use auth endpoint since stats endpoint is not working
-    return this.request('/auth?action=get-stats');
+    // Use working endpoint
+    return this.request('/working?action=get-stats');
   }
   
   // User Activity
