@@ -54,6 +54,8 @@ export default async function handler(req, res) {
         return await handleStats(req, res);
       case 'announcements':
         return await handleAnnouncements(req, res);
+      case 'organizations':
+        return await handleOrganizations(req, res);
       case 'test':
         return res.status(200).json({ success: true, message: 'Working endpoint is functional' });
       default:
@@ -269,4 +271,64 @@ async function handleAnnouncements(req, res) {
     default:
       return res.status(405).json({ error: 'Method not allowed' });
   }
+}
+
+// Organizations handlers
+async function handleOrganizations(req, res) {
+  const decoded = verifyToken(req);
+  const db = await connectDB();
+  const organizations = db.collection('organizations');
+
+  switch (req.method) {
+    case 'GET':
+      // Get user's organizations
+      const userOrgs = await organizations.find({
+        'members.userId': decoded.userId
+      }).toArray();
+      return res.status(200).json({ success: true, organizations: userOrgs });
+
+    case 'POST':
+      const { name, description, inviteCode } = req.body;
+      
+      // Check if organization with this invite code already exists
+      if (inviteCode) {
+        const existingOrg = await organizations.findOne({ inviteCode });
+        if (existingOrg) {
+          // Join existing organization
+          await organizations.updateOne(
+            { _id: existingOrg._id },
+            { $push: { members: { userId: decoded.userId, role: 'member' } } }
+          );
+          return res.status(200).json({ 
+            success: true, 
+            organization: existingOrg,
+            type: 'joined'
+          });
+        }
+      }
+
+      // Create new organization
+      const newOrg = {
+        name,
+        description: description || '',
+        inviteCode: inviteCode || generateInviteCode(),
+        createdBy: decoded.userId,
+        createdAt: new Date(),
+        members: [{ userId: decoded.userId, role: 'admin' }]
+      };
+      
+      const result = await organizations.insertOne(newOrg);
+      return res.status(201).json({ 
+        success: true, 
+        organization: { ...newOrg, _id: result.insertedId },
+        type: 'created'
+      });
+
+    default:
+      return res.status(405).json({ error: 'Method not allowed' });
+  }
+}
+
+function generateInviteCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
 } 

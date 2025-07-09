@@ -170,24 +170,21 @@ class ApiService {
   
   // Organizations
   async createOrganization(organizationData) {
-    // Temporary: use auth endpoint since organizations endpoint is not working
-    return this.request('/auth?action=create-org', {
+    return this.request('/working?action=organizations', {
       method: 'POST',
       body: JSON.stringify(organizationData)
     });
   }
   
   async joinOrganization(joinCode) {
-    // Temporary: use auth endpoint since organizations endpoint is not working
-    return this.request('/auth?action=join-org', {
+    return this.request('/working?action=organizations', {
       method: 'POST',
-      body: JSON.stringify({ joinCode })
+      body: JSON.stringify({ inviteCode: joinCode })
     });
   }
   
   async getMyOrganizations() {
-    // Temporary: use auth endpoint since organizations endpoint is not working
-    return this.request('/auth?action=get-orgs');
+    return this.request('/working?action=organizations');
   }
   
   async switchOrganization(organizationId) {
@@ -251,7 +248,7 @@ class ApiService {
   // Projects
   async getProjects() {
     // Use working endpoint
-    return this.request('/working?action=get-projects');
+    return this.request('/working?action=projects');
   }
   
   async createProject(projectData) {
@@ -278,7 +275,7 @@ class ApiService {
   // Events
   async getEvents() {
     // Use working endpoint
-    return this.request('/working?action=get-events');
+    return this.request('/working?action=events');
   }
   
   async createEvent(eventData) {
@@ -314,7 +311,7 @@ class ApiService {
   
   async getHours() {
     // Use working endpoint
-    return this.request('/working?action=get-hours');
+    return this.request('/working?action=hours');
   }
   
   // Analytics
@@ -332,7 +329,7 @@ class ApiService {
   // Stats
   async getStats() {
     // Use working endpoint
-    return this.request('/working?action=get-stats');
+    return this.request('/working?action=stats');
   }
   
   // User Activity
