@@ -89,18 +89,19 @@ const ProjectsScreen = ({ user }) => {
     e.preventDefault();
     try {
       const projectData = {
-        title: newProject.title,
+        name: newProject.title, // API expects 'name' not 'title'
         description: newProject.description,
-        dueDate: newProject.dueDate,
-        priority: newProject.priority,
-        category: newProject.category,
+        startDate: new Date().toISOString(), // API expects 'startDate'
+        endDate: newProject.dueDate, // API expects 'endDate'
         status: 'active',
         organizationId: localStorage.getItem('currentOrganization') || 'default'
       };
       
+      console.log('Creating project with data:', projectData);
       const response = await ApiService.createProject(projectData);
+      console.log('Project creation response:', response);
       
-      if (response.success) {
+      if (response.success || response.message) {
         // Reload projects to get the updated list
         await loadProjects();
         setShowCreateModal(false);
@@ -112,10 +113,11 @@ const ProjectsScreen = ({ user }) => {
           category: 'community',
           assignedTo: []
         });
+        toast.success('Project created successfully!');
       }
     } catch (error) {
       console.error('Failed to create project:', error);
-      alert('Failed to create project. Please try again.');
+      toast.error('Failed to create project. Please try again.');
     }
   };
   

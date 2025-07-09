@@ -61,8 +61,13 @@ const CalendarScreen = ({ user }) => {
 
   const loadEvents = async () => {
     try {
+      console.log('Loading events...');
       const response = await ApiService.getEvents();
-      setEvents(response.events || []);
+      console.log('Events response:', response);
+      
+      // Handle different response formats
+      const events = response.events || response.data || [];
+      setEvents(events);
     } catch (error) {
       console.error('Failed to load events:', error);
       setEvents([]);
@@ -90,23 +95,40 @@ const CalendarScreen = ({ user }) => {
 
   const handleCreateEvent = async () => {
     try {
-      if (!newEvent.title || !newEvent.startDate || !newEvent.startTime) {
-        alert('Please fill in all required fields.');
+      if (!newEvent.title || !newEvent.startDate) {
+        alert('Please fill in title and start date.');
         return;
       }
+      
+      // Combine date and time for start date
+      let startDateTime = newEvent.startDate;
+      if (newEvent.startTime) {
+        startDateTime = `${newEvent.startDate}T${newEvent.startTime}`;
+      }
+      
       const eventData = {
-        ...newEvent,
-        attendees: newEvent.attendees.filter(email => email.trim()),
+        title: newEvent.title,
+        description: newEvent.description || '',
+        startDate: startDateTime,
+        endDate: newEvent.endDate || newEvent.startDate,
+        location: newEvent.location || '',
+        type: newEvent.type || 'meeting',
         organizationId: localStorage.getItem('currentOrganization') || 'default'
       };
-      await ApiService.createEvent(eventData);
-      await loadEvents();
-      setShowEventModal(false);
-      resetEventForm();
-      showToast('Event created successfully!', 'success');
+      
+      console.log('Creating event with data:', eventData);
+      const response = await ApiService.createEvent(eventData);
+      console.log('Event creation response:', response);
+      
+      if (response.success || response.message) {
+        await loadEvents();
+        setShowEventModal(false);
+        resetEventForm();
+        showToast('Event created successfully!', 'success');
+      }
     } catch (error) {
       console.error('Failed to create event:', error);
-      showToast('Failed to create event', 'error');
+      showToast('Failed to create event: ' + error.message, 'error');
     }
   };
 

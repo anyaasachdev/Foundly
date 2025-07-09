@@ -89,67 +89,46 @@ const HomeScreen = ({ user }) => {
     setLoading(true);
     try {
       const response = await ApiService.getMyOrganizations();
-      if (response && response.length > 0) {
-        let currentOrg = response.find(org => 
-          (org.organizationId?._id || org._id) === localStorage.getItem('currentOrganization')
+      console.log('Organization response:', response);
+      
+      // Handle the new API response format
+      const organizations = response?.organizations || response || [];
+      
+      if (organizations && organizations.length > 0) {
+        let currentOrg = organizations.find(org => 
+          org._id === localStorage.getItem('currentOrganization')
         );
         
         if (!currentOrg) {
-          currentOrg = response[0];
-          localStorage.setItem('currentOrganization', currentOrg.organizationId?._id || currentOrg._id);
+          currentOrg = organizations[0];
+          localStorage.setItem('currentOrganization', currentOrg._id);
         }
         
-        // Ensure proper organization data structure
-        const orgData = currentOrg.organizationId || currentOrg;
-        setOrganization(orgData);
+        // Set organization data
+        setOrganization(currentOrg);
         setIsAdmin(['admin', 'owner'].includes(currentOrg.role));
         
         // Load real stats
         const [projectsResponse, statsResponse] = await Promise.all([
-          ApiService.getProjects().catch(() => ({ data: [] })),
-          ApiService.getStats().catch(() => ({ data: {} }))
+          ApiService.getProjects().catch(() => ({ projects: [] })),
+          ApiService.getStats().catch(() => ({ totalHours: 0, totalMembers: 1 }))
         ]);
         
-        // Fix: Get member count from organization's members array or stats
-        const memberCount = orgData.members?.length || statsResponse.data?.totalMembers || 1;
+        // Get member count from organization or stats
+        const memberCount = currentOrg.members?.length || statsResponse.totalMembers || 1;
+        const projects = projectsResponse.projects || projectsResponse.data || [];
         
         setStats({
           totalMembers: memberCount,
-          activeProjects: projectsResponse.data?.filter(p => p.status === 'active').length || 0,
-          hoursLogged: statsResponse.data?.totalHours || 0,
-          completedTasks: projectsResponse.data?.filter(p => p.status === 'completed').length || 0
+          activeProjects: projects.filter(p => p.status === 'active').length || 0,
+          hoursLogged: statsResponse.totalHours || 0,
+          completedTasks: projects.filter(p => p.status === 'completed').length || 0
         });
         
         setLoading(false);
       } else {
-        // User has no organizations - check localStorage as fallback
-        console.log('No organizations found in API response, checking localStorage');
-        const savedUser = localStorage.getItem('user');
-        if (savedUser) {
-          try {
-            const userData = JSON.parse(savedUser);
-            if (userData.organizations && userData.organizations.length > 0) {
-              console.log('Found organizations in localStorage, using fallback data');
-              const fallbackOrg = userData.organizations[0];
-              const orgData = fallbackOrg.organizationId || fallbackOrg;
-              setOrganization(orgData);
-              setIsAdmin(['admin', 'owner'].includes(fallbackOrg.role));
-              setStats({
-                totalMembers: 1,
-                activeProjects: 0,
-                hoursLogged: 0,
-                completedTasks: 0
-              });
-              setLoading(false);
-              return;
-            }
-          } catch (parseError) {
-            console.error('Error parsing saved user data:', parseError);
-          }
-        }
-        
-        // If no organizations found anywhere, redirect to create one
-        console.log('No organizations found anywhere, redirecting to create');
+        // User has no organizations - redirect to create one
+        console.log('No organizations found, redirecting to create');
         window.location.href = '/organization/create';
       }
     } catch (error) {
