@@ -19,7 +19,12 @@ function verifyToken(req) {
   if (!token) {
     throw new Error('No token provided');
   }
-  return jwt.verify(token, JWT_SECRET);
+  const decoded = jwt.verify(token, JWT_SECRET);
+  // Convert userId to ObjectId if it's a string
+  if (decoded.userId && typeof decoded.userId === 'string') {
+    decoded.userId = new ObjectId(decoded.userId);
+  }
+  return decoded;
 }
 
 export default async function handler(req, res) {

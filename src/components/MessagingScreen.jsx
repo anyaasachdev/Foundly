@@ -523,7 +523,7 @@ const MessagingScreen = () => {
                     {chat.type === 'channel' ? (
                       <Hash className="w-5 h-5" />
                     ) : (
-                      chat.name.charAt(0).toUpperCase()
+                      (chat.name || '').charAt(0).toUpperCase()
                     )}
                     {chat.unreadCount > 0 && (
                       <div style={{
@@ -653,7 +653,7 @@ const MessagingScreen = () => {
                   {selectedChat.type === 'channel' ? (
                     <Hash className="w-5 h-5" />
                   ) : (
-                    selectedChat.name.charAt(0).toUpperCase()
+                    (selectedChat.name || '').charAt(0).toUpperCase()
                   )}
                 </div>
                 <div>
@@ -763,7 +763,7 @@ const MessagingScreen = () => {
                           fontWeight: 'bold',
                           visibility: showAvatar ? 'visible' : 'hidden'
                         }}>
-                          {message.senderName?.charAt(0).toUpperCase()}
+                          {(message.senderName || '').charAt(0).toUpperCase()}
                         </div>
                       )}
                       

@@ -207,7 +207,7 @@ class ApiService {
   async createAnnouncement(announcementData) {
     // Use working endpoint
     console.log('Calling working endpoint with data:', announcementData);
-    return this.request('/working?action=create-announcement', {
+    return this.request('/working?action=announcements', {
       method: 'POST',
       body: JSON.stringify(announcementData)
     });
@@ -215,7 +215,7 @@ class ApiService {
   
   async getAnnouncements() {
     // Use working endpoint
-    return this.request('/working?action=get-announcements');
+    return this.request('/working?action=announcements');
   }
   
   async markAnnouncementRead(announcementId) {
@@ -256,7 +256,7 @@ class ApiService {
   
   async createProject(projectData) {
     // Use working endpoint
-    return this.request('/working?action=create-project', {
+    return this.request('/working?action=projects', {
       method: 'POST',
       body: JSON.stringify(projectData)
     });
@@ -283,7 +283,7 @@ class ApiService {
   
   async createEvent(eventData) {
     // Use working endpoint
-    return this.request('/working?action=create-event', {
+    return this.request('/working?action=events', {
       method: 'POST',
       body: JSON.stringify(eventData)
     });
@@ -306,7 +306,7 @@ class ApiService {
   
   async logHours(hoursData) {
     // Use working endpoint
-    return this.request('/working?action=log-hours', {
+    return this.request('/working?action=hours', {
       method: 'POST',
       body: JSON.stringify(hoursData)
     });

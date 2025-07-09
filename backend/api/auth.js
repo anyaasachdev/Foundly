@@ -122,8 +122,8 @@ async function handleLogin(req, res) {
   }
 
   // Generate tokens
-  const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
-  const refreshToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+  const token = jwt.sign({ userId: user._id.toString() }, JWT_SECRET, { expiresIn: '1h' });
+  const refreshToken = jwt.sign({ userId: user._id.toString() }, JWT_SECRET, { expiresIn: '7d' });
 
   // Remove password from response
   const userResponse = { ...user };

@@ -915,7 +915,7 @@ const ProjectsScreen = ({ user }) => {
                               fontSize: '0.75rem',
                               fontWeight: '600'
                             }}>
-                              {member.name.charAt(0).toUpperCase()}
+                              {(member.name || '').charAt(0).toUpperCase()}
                             </div>
                             <span>{member.name}</span>
                             <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>
@@ -1103,7 +1103,7 @@ const ProjectsScreen = ({ user }) => {
                   fontWeight: '500',
                   color: getPriorityColor(selectedProject.priority)
                 }}>
-                  {selectedProject.priority.charAt(0).toUpperCase() + selectedProject.priority.slice(1)}
+                  {(selectedProject.priority || '').charAt(0).toUpperCase() + (selectedProject.priority || '').slice(1)}
                 </div>
               </div>
               
@@ -1124,7 +1124,7 @@ const ProjectsScreen = ({ user }) => {
                   fontWeight: '500',
                   color: '#374151'
                 }}>
-                  {selectedProject.status.charAt(0).toUpperCase() + selectedProject.status.slice(1)}
+                  {(selectedProject.status || '').charAt(0).toUpperCase() + (selectedProject.status || '').slice(1)}
                 </div>
               </div>
               
