@@ -10,10 +10,24 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  return res.status(200).json({ 
-    message: 'Test working endpoint is accessible',
-    timestamp: new Date().toISOString(),
-    method: req.method,
-    url: req.url
-  });
+  try {
+    console.log('Test working endpoint called:', req.method, req.url);
+    console.log('Request body:', req.body);
+    console.log('Request query:', req.query);
+    
+    return res.status(200).json({ 
+      success: true,
+      message: 'Test working endpoint is accessible',
+      method: req.method,
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+    
+  } catch (error) {
+    console.error('Test working endpoint error:', error);
+    return res.status(500).json({ 
+      error: 'Internal server error', 
+      details: error.message
+    });
+  }
 }; 

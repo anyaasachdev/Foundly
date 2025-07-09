@@ -289,6 +289,17 @@ module.exports = async function handler(req, res) {
         events: events
       });
     }
+    
+    if (action === 'test') {
+      return res.status(200).json({ 
+        success: true,
+        message: 'Working endpoint is accessible',
+        action: action,
+        method: req.method,
+        timestamp: new Date().toISOString(),
+        dbConnected: isConnected
+      });
+    }
 
     return res.status(200).json({ 
       message: 'Working endpoint - no action specified',

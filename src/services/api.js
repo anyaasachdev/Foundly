@@ -201,17 +201,17 @@ class ApiService {
   
   // Announcements
   async createAnnouncement(announcementData) {
-    // Temporary: use simple test endpoint
-    console.log('Calling simple-test endpoint with data:', announcementData);
-    return this.request('/simple-test', {
+    // Use working endpoint
+    console.log('Calling working endpoint with data:', announcementData);
+    return this.request('/working?action=create-announcement', {
       method: 'POST',
       body: JSON.stringify(announcementData)
     });
   }
   
   async getAnnouncements() {
-    // Temporary: use simple test endpoint
-    return this.request('/simple-test');
+    // Use working endpoint
+    return this.request('/working?action=get-announcements');
   }
   
   async markAnnouncementRead(announcementId) {
@@ -354,6 +354,11 @@ class ApiService {
   // Test method to verify endpoints are working
   async testWorking() {
     return this.request('/test-working');
+  }
+  
+  // Test the working endpoint specifically
+  async testWorkingEndpoint() {
+    return this.request('/working?action=test');
   }
 }
 

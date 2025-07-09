@@ -1,144 +1,113 @@
 import React, { useState, useEffect } from 'react';
 import ApiService from '../services/api';
 
-const DebugInfo = ({ user }) => {
-  const [debugData, setDebugData] = useState(null);
+const DebugInfo = () => {
+  const [testResults, setTestResults] = useState({});
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
 
-  const runDebug = async () => {
+  const runTests = async () => {
     setLoading(true);
-    setMessage('');
+    const results = {};
+
     try {
-      const currentOrgId = localStorage.getItem('currentOrganization');
-      
-      // Get organizations
-      const orgs = await ApiService.getMyOrganizations();
-      
-      // Get stats
-      const stats = await ApiService.getStats();
-      
-      // Get analytics
-      const analytics = await ApiService.getAnalytics();
-      
-      // Debug current organization if available
-      let orgDebug = null;
-      if (currentOrgId) {
-        try {
-          orgDebug = await ApiService.debugOrganization(currentOrgId);
-        } catch (error) {
-          orgDebug = { error: error.message };
-        }
-      }
-      
-      setDebugData({
-        currentOrgId,
-        organizations: orgs,
-        stats,
-        analytics,
-        orgDebug,
-        localStorage: {
-          authToken: localStorage.getItem('authToken') ? 'Present' : 'Missing',
-          user: localStorage.getItem('user') ? 'Present' : 'Missing',
-          currentOrganization: localStorage.getItem('currentOrganization')
-        }
-      });
+      // Test basic connectivity
+      console.log('Testing basic connectivity...');
+      const basicTest = await ApiService.testWorking();
+      results.basic = { success: true, data: basicTest };
     } catch (error) {
-      setMessage('Debug failed: ' + error.message);
-    } finally {
-      setLoading(false);
+      results.basic = { success: false, error: error.message };
     }
+
+    try {
+      // Test working endpoint
+      console.log('Testing working endpoint...');
+      const workingTest = await ApiService.testWorkingEndpoint();
+      results.working = { success: true, data: workingTest };
+    } catch (error) {
+      results.working = { success: false, error: error.message };
+    }
+
+    try {
+      // Test announcements
+      console.log('Testing announcements...');
+      const announcementsTest = await ApiService.getAnnouncements();
+      results.announcements = { success: true, data: announcementsTest };
+    } catch (error) {
+      results.announcements = { success: false, error: error.message };
+    }
+
+    try {
+      // Test projects
+      console.log('Testing projects...');
+      const projectsTest = await ApiService.getProjects();
+      results.projects = { success: true, data: projectsTest };
+    } catch (error) {
+      results.projects = { success: false, error: error.message };
+    }
+
+    setTestResults(results);
+    setLoading(false);
   };
 
-  const fixOrganizations = async () => {
-    setLoading(true);
-    setMessage('');
-    try {
-      const result = await ApiService.fixOrganizations();
-      setMessage(`Fixed ${result.totalFixed} organization issues`);
-      await runDebug(); // Refresh debug data
-    } catch (error) {
-      setMessage('Fix failed: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    runTests();
+  }, []);
 
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-      <h2>Debug Information</h2>
-      
-      <div style={{ marginBottom: '20px' }}>
-        <button 
-          onClick={runDebug}
-          disabled={loading}
-          style={{
-            padding: '10px 20px',
-            marginRight: '10px',
-            background: '#3B82F6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}
-        >
-          {loading ? 'Loading...' : 'Run Debug'}
-        </button>
-        
-        <button 
-          onClick={fixOrganizations}
-          disabled={loading}
-          style={{
-            padding: '10px 20px',
-            background: '#10B981',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}
-        >
-          Fix Organizations
-        </button>
-      </div>
-      
-      {message && (
-        <div style={{
-          padding: '10px',
+    <div style={{ 
+      padding: '20px', 
+      backgroundColor: '#f5f5f5', 
+      margin: '20px',
+      borderRadius: '8px',
+      fontFamily: 'monospace',
+      fontSize: '14px'
+    }}>
+      <h3>Debug Information</h3>
+      <button 
+        onClick={runTests} 
+        disabled={loading}
+        style={{ 
+          padding: '10px 20px', 
           marginBottom: '20px',
-          background: '#FEF3C7',
-          border: '1px solid #F59E0B',
-          borderRadius: '5px',
-          color: '#92400E'
-        }}>
-          {message}
-        </div>
-      )}
-      
-      {debugData && (
-        <div style={{ textAlign: 'left' }}>
-          <h3>Current Organization ID</h3>
-          <pre>{debugData.currentOrgId || 'None'}</pre>
-          
-          <h3>Local Storage</h3>
-          <pre>{JSON.stringify(debugData.localStorage, null, 2)}</pre>
-          
-          <h3>Organizations ({debugData.organizations?.length || 0})</h3>
-          <pre>{JSON.stringify(debugData.organizations, null, 2)}</pre>
-          
-          <h3>Stats</h3>
-          <pre>{JSON.stringify(debugData.stats, null, 2)}</pre>
-          
-          <h3>Analytics Overview</h3>
-          <pre>{JSON.stringify(debugData.analytics?.data?.overview, null, 2)}</pre>
-          
-          {debugData.orgDebug && (
-            <>
-              <h3>Organization Debug</h3>
-              <pre>{JSON.stringify(debugData.orgDebug, null, 2)}</pre>
-            </>
-          )}
-        </div>
-      )}
+          backgroundColor: '#007bff',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer'
+        }}
+      >
+        {loading ? 'Testing...' : 'Run Tests'}
+      </button>
+
+      <div>
+        {Object.entries(testResults).map(([testName, result]) => (
+          <div key={testName} style={{ 
+            marginBottom: '15px',
+            padding: '10px',
+            backgroundColor: result.success ? '#d4edda' : '#f8d7da',
+            border: `1px solid ${result.success ? '#c3e6cb' : '#f5c6cb'}`,
+            borderRadius: '4px'
+          }}>
+            <strong>{testName}:</strong> {result.success ? '✅ SUCCESS' : '❌ FAILED'}
+            {result.success ? (
+              <pre style={{ marginTop: '5px', fontSize: '12px' }}>
+                {JSON.stringify(result.data, null, 2)}
+              </pre>
+            ) : (
+              <div style={{ marginTop: '5px', color: '#721c24' }}>
+                Error: {result.error}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#e2e3e5' }}>
+        <strong>Environment Info:</strong>
+        <div>API URL: {process.env.REACT_APP_API_URL || 'https://foundly-olive.vercel.app/api'}</div>
+        <div>Node Env: {process.env.NODE_ENV}</div>
+        <div>Timestamp: {new Date().toISOString()}</div>
+      </div>
     </div>
   );
 };
