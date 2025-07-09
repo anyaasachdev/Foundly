@@ -52,7 +52,7 @@ const HomeScreen = ({ user }) => {
   useEffect(() => {
     if (socket) {
       socket.on('new_announcement', (announcement) => {
-        setAnnouncements(prev => [announcement, ...prev]);
+        setAnnouncements(prev => [announcement, ...(prev || [])]);
         // Show notification
         if (Notification.permission === 'granted') {
           new Notification('New Announcement', {
@@ -494,7 +494,7 @@ const HomeScreen = ({ user }) => {
           )}
         </div>
         
-        {announcements.length === 0 ? (
+        {(announcements || []).length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', background: '#F9FAFB', borderRadius: '10px', border: '2px dashed #E5E7EB' }}>
             <div style={{ fontSize: '3rem', marginBottom: '15px' }}>📢</div>
             <h4 style={{ color: '#1F2937', marginBottom: '10px' }}>No announcements yet</h4>
@@ -519,7 +519,7 @@ const HomeScreen = ({ user }) => {
           </div>
         ) : (
           <div className="announcements-list" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-            {announcements.slice(0, 5).map((announcement) => {
+            {(announcements || []).slice(0, 5).map((announcement) => {
               const isRead = announcement.readBy?.some(readEntry => 
                 readEntry.user === user.id || readEntry.user === user._id
               );
