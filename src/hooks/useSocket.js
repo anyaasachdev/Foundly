@@ -17,7 +17,7 @@ export const useSocket = (token, organizationId) => {
         
         async connect() {
           try {
-            const response = await ApiService.request('/socket?action=connect', {
+            const response = await ApiService.request('/working?action=socket-connect', {
               method: 'POST',
               body: JSON.stringify({ token, organizationId })
             });
@@ -36,7 +36,7 @@ export const useSocket = (token, organizationId) => {
         async disconnect() {
           if (this.sessionId) {
             try {
-              await ApiService.request('/socket?action=disconnect', {
+              await ApiService.request('/working?action=socket-disconnect', {
                 method: 'POST',
                 body: JSON.stringify({ sessionId: this.sessionId })
               });
@@ -54,7 +54,7 @@ export const useSocket = (token, organizationId) => {
           if (!this.sessionId) return;
           
           try {
-            await ApiService.request('/socket?action=emit', {
+            await ApiService.request('/working?action=socket-emit', {
               method: 'POST',
               body: JSON.stringify({
                 sessionId: this.sessionId,
@@ -72,7 +72,7 @@ export const useSocket = (token, organizationId) => {
           if (!this.sessionId) return;
           
           try {
-            const data = await ApiService.request('/socket?action=listen', {
+            const data = await ApiService.request('/working?action=socket-listen', {
               method: 'POST',
               body: JSON.stringify({
                 sessionId: this.sessionId,

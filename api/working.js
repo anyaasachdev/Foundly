@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 
 let isConnected = false;
 
+// In-memory storage for socket connections (not ideal for production but works for Vercel)
+const connectedUsers = new Map();
+const rooms = new Map();
+
 const connectDB = async () => {
   try {
     if (isConnected) return;
@@ -298,6 +302,93 @@ module.exports = async function handler(req, res) {
         method: req.method,
         timestamp: new Date().toISOString(),
         dbConnected: isConnected
+      });
+    }
+    
+    // Socket.io actions
+    if (action === 'socket-connect') {
+      const { token, organizationId } = req.body || {};
+      
+      if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+      }
+      
+      // Generate a session ID
+      const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Store user connection
+      connectedUsers.set(sessionId, {
+        token,
+        organizationId,
+        connectedAt: new Date(),
+        lastSeen: new Date()
+      });
+      
+      return res.status(200).json({
+        success: true,
+        sessionId,
+        message: 'Connected to socket server'
+      });
+    }
+    
+    if (action === 'socket-disconnect') {
+      const { sessionId } = req.body || {};
+      
+      if (sessionId && connectedUsers.has(sessionId)) {
+        connectedUsers.delete(sessionId);
+      }
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Disconnected from socket server'
+      });
+    }
+    
+    if (action === 'socket-emit') {
+      const { sessionId, event, data, room } = req.body || {};
+      
+      if (!sessionId || !event) {
+        return res.status(400).json({ error: 'Session ID and event required' });
+      }
+      
+      // Store the event to be picked up by other clients
+      if (room) {
+        if (!rooms.has(room)) {
+          rooms.set(room, []);
+        }
+        rooms.get(room).push({
+          event,
+          data,
+          timestamp: new Date(),
+          from: sessionId
+        });
+      }
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Event emitted'
+      });
+    }
+    
+    if (action === 'socket-listen') {
+      const { sessionId, room } = req.body || {};
+      
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID required' });
+      }
+      
+      // Get events for the room
+      const roomEvents = room ? rooms.get(room) || [] : [];
+      
+      // Update last seen
+      if (connectedUsers.has(sessionId)) {
+        connectedUsers.get(sessionId).lastSeen = new Date();
+      }
+      
+      return res.status(200).json({
+        success: true,
+        events: roomEvents,
+        connectedUsers: connectedUsers.size
       });
     }
 
