@@ -1,6 +1,6 @@
 {
   "name": "foundly-web",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "All-in-one platform for youth-led organizations",
   "main": "src/index.js",
   "scripts": {
