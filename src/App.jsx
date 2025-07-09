@@ -209,72 +209,24 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <NotificationProvider user={user}>
-        <Router>
-          <div className="app">
-            {user && <Navbar user={user} onLogout={handleLogout} />}
-            <main className={user ? 'main-content' : 'main-content-full'}>
-              <Routes>
-                <Route 
-                  path="/login" 
-                  element={!user ? <LoginScreen onLogin={handleLogin} /> : <Navigate to="/" />} 
-                />
-                <Route 
-                  path="/" 
-                  element={user ? <div style={{padding: '20px', textAlign: 'center'}}>
-                    <h1>Homepage Loading...</h1>
-                    <p>User: {user.name}</p>
-                    <p>Email: {user.email}</p>
-                  </div> : <Navigate to="/login" />} 
-                />
-                <Route 
-                  path="/projects" 
-                  element={user ? <div style={{padding: '20px', textAlign: 'center'}}>
-                    <h1>Projects Loading...</h1>
-                  </div> : <Navigate to="/login" />} 
-                />
-                <Route 
-                  path="/calendar" 
-                  element={user ? <div style={{padding: '20px', textAlign: 'center'}}>
-                    <h1>Calendar Loading...</h1>
-                  </div> : <Navigate to="/login" />} 
-                />
-                <Route 
-                  path="/stats" 
-                  element={user ? <div style={{padding: '20px', textAlign: 'center'}}>
-                    <h1>Stats Loading...</h1>
-                  </div> : <Navigate to="/login" />} 
-                />
-                <Route 
-                  path="/profile" 
-                  element={user ? <div style={{padding: '20px', textAlign: 'center'}}>
-                    <h1>Profile Loading...</h1>
-                  </div> : <Navigate to="/login" />} 
-                />
-                <Route 
-                  path="/organization/create" 
-                  element={user ? <OrganizationSetup onComplete={handleOrganizationSetup} /> : <Navigate to="/login" />} 
-                />
-                <Route 
-                  path="/api-test" 
-                  element={user ? <ApiTest /> : <Navigate to="/login" />} 
-                />
-                <Route 
-                  path="/debug" 
-                  element={user ? <DebugInfo /> : <Navigate to="/login" />} 
-                />
-                <Route 
-                  path="/test" 
-                  element={<SimpleTest />} 
-                />
-                <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
-              </Routes>
-            </main>
-            <ToastNotification />
-            <CollapsibleDisclaimer />
-          </div>
-        </Router>
-      </NotificationProvider>
+      <div className="app">
+        <main className="main-content-full">
+          {!user ? (
+            <div style={{padding: '20px', textAlign: 'center'}}>
+              <h1>Login Required</h1>
+              <button onClick={() => setUser({name: 'Test User', email: 'test@example.com'})}>
+                Test Login
+              </button>
+            </div>
+          ) : (
+            <div style={{padding: '20px', textAlign: 'center'}}>
+              <h1>Welcome {user.name}!</h1>
+              <p>Email: {user.email}</p>
+              <button onClick={() => setUser(null)}>Logout</button>
+            </div>
+          )}
+        </main>
+      </div>
     </ErrorBoundary>
   );
 }
