@@ -227,20 +227,64 @@ module.exports = async function handler(req, res) {
       }
       
     } else if (action === 'join-org' && req.method === 'POST') {
-      // Temporary organization join functionality in auth endpoint
+      // Organization join functionality
       const { joinCode } = req.body;
       if (!joinCode) {
         return res.status(400).json({ error: 'Join code is required' });
       }
       
       try {
+        // Get user from token
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        if (!token) {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
+        const user = await User.findById(decoded.userId);
+        if (!user) {
+          return res.status(401).json({ error: 'User not found' });
+        }
+        
         // Find organization by join code
         const organization = await Organization.findOne({ joinCode: joinCode.trim().toUpperCase() });
         if (!organization) {
           return res.status(404).json({ error: 'Invalid join code. Please verify with your organization admin.' });
         }
         
-        // For now, return success with organization data
+        // Check if user is already a member
+        const existingMembership = user.organizations.find(org => 
+          org.organizationId.toString() === organization._id.toString()
+        );
+        
+        if (existingMembership) {
+          return res.status(400).json({ error: 'You are already a member of this organization' });
+        }
+        
+        // Add user to organization
+        user.organizations.push({
+          organizationId: organization._id,
+          role: 'member',
+          joinedAt: new Date(),
+          isActive: true
+        });
+        
+        // Set as current organization if user has none
+        if (!user.currentOrganization) {
+          user.currentOrganization = organization._id;
+        }
+        
+        await user.save();
+        
+        // Add user to organization's members list
+        organization.members.push({
+          user: user._id,
+          role: 'member',
+          joinedAt: new Date()
+        });
+        
+        await organization.save();
+        
         return res.status(200).json({ 
           message: 'Successfully joined organization',
           organization: {
@@ -249,15 +293,22 @@ module.exports = async function handler(req, res) {
             description: organization.description,
             category: organization.category,
             joinCode: organization.joinCode
+          },
+          user: {
+            id: user._id,
+            email: user.email,
+            name: user.name,
+            currentOrganization: user.currentOrganization,
+            organizations: user.organizations
           }
         });
       } catch (error) {
         console.error('Join org error:', error);
-        return res.status(500).json({ error: 'Failed to join organization' });
+        return res.status(500).json({ error: 'Failed to join organization: ' + error.message });
       }
       
     } else if (action === 'create-org' && req.method === 'POST') {
-      // Temporary organization creation functionality in auth endpoint
+      // Organization creation functionality
       const { name, description, category, location, website, customJoinCode } = req.body;
       
       if (!name || !description || !customJoinCode) {
@@ -265,13 +316,25 @@ module.exports = async function handler(req, res) {
       }
       
       try {
+        // Get user from token
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        if (!token) {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
+        const user = await User.findById(decoded.userId);
+        if (!user) {
+          return res.status(401).json({ error: 'User not found' });
+        }
+        
         // Check if join code already exists
         const existingOrg = await Organization.findOne({ joinCode: customJoinCode.toUpperCase() });
         if (existingOrg) {
           return res.status(400).json({ error: 'Join code already exists. Please choose a different one.' });
         }
         
-        // Create new organization (temporarily without user for testing)
+        // Create new organization
         const organization = new Organization({
           name,
           description,
@@ -279,16 +342,28 @@ module.exports = async function handler(req, res) {
           location,
           website,
           joinCode: customJoinCode.toUpperCase(),
-          createdBy: req.user ? req.user.userId : null,
-          admins: req.user ? [req.user.userId] : [],
-          members: req.user ? [{
-            user: req.user.userId,
+          createdBy: user._id,
+          members: [{
+            user: user._id,
             role: 'admin',
             joinedAt: new Date()
-          }] : []
+          }]
         });
 
         await organization.save();
+        
+        // Add organization to user's organizations
+        user.organizations.push({
+          organizationId: organization._id,
+          role: 'admin',
+          joinedAt: new Date(),
+          isActive: true
+        });
+        
+        // Set as current organization
+        user.currentOrganization = organization._id;
+        
+        await user.save();
 
         return res.status(201).json({ 
           message: 'Organization created successfully',
@@ -298,6 +373,13 @@ module.exports = async function handler(req, res) {
             description: organization.description,
             category: organization.category,
             joinCode: organization.joinCode
+          },
+          user: {
+            id: user._id,
+            email: user.email,
+            name: user.name,
+            currentOrganization: user.currentOrganization,
+            organizations: user.organizations
           }
         });
       } catch (error) {
@@ -306,18 +388,45 @@ module.exports = async function handler(req, res) {
       }
       
     } else if (action === 'get-orgs' && req.method === 'GET') {
-      // Temporary get organizations functionality in auth endpoint
+      // Get user's organizations
       try {
-        // For now, return empty organizations to avoid authentication issues
-        // This will allow users to proceed to organization setup
+        // Get user from token
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        if (!token) {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
+        const user = await User.findById(decoded.userId).populate('organizations.organizationId');
+        if (!user) {
+          return res.status(401).json({ error: 'User not found' });
+        }
+        
+        // Get organizations with full details
+        const organizations = await Promise.all(
+          user.organizations.map(async (orgRef) => {
+            const org = await Organization.findById(orgRef.organizationId);
+            return {
+              _id: orgRef.organizationId,
+              name: org?.name || 'Unknown Organization',
+              description: org?.description || '',
+              category: org?.category || 'community',
+              joinCode: org?.joinCode || '',
+              role: orgRef.role,
+              joinedAt: orgRef.joinedAt,
+              isActive: orgRef.isActive
+            };
+          })
+        );
+        
         return res.status(200).json({ 
           success: true, 
-          organizations: [],
-          currentOrganization: null
+          organizations: organizations,
+          currentOrganization: user.currentOrganization
         });
       } catch (error) {
         console.error('Get orgs error:', error);
-        return res.status(500).json({ error: 'Failed to fetch organizations' });
+        return res.status(500).json({ error: 'Failed to fetch organizations: ' + error.message });
       }
       
     } else if (action === 'create-project' && req.method === 'POST') {
