@@ -205,7 +205,7 @@ function App() {
   }
 
   console.log('App state - user:', !!user, 'needsOrgSetup:', needsOrgSetup, 'loading:', loading);
-  console.log('App version: 2.0 - Normal app restored');
+  console.log('App version: 2.1 - Full app restored - CACHE REFRESH REQUIRED');
 
   return (
     <ErrorBoundary>
