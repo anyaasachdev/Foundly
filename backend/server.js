@@ -937,7 +937,7 @@ app.post('/api/hours', authenticateToken, async (req, res) => {
     if (isNaN(hours) || hours <= 0) {
       return res.status(400).json({ error: 'Hours must be a positive number' });
     }
-
+    
     const hourLog = new HourLog({
       user: req.user.userId,
       organization: user.currentOrganization,
