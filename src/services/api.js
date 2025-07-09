@@ -201,16 +201,16 @@ class ApiService {
   
   // Announcements
   async createAnnouncement(announcementData) {
-    // Use working endpoint
-    return this.request('/working?action=create-announcement', {
+    // Temporary: use simple test endpoint
+    return this.request('/simple-test', {
       method: 'POST',
       body: JSON.stringify(announcementData)
     });
   }
   
   async getAnnouncements() {
-    // Use working endpoint
-    return this.request('/working?action=get-announcements');
+    // Temporary: use simple test endpoint
+    return this.request('/simple-test');
   }
   
   async markAnnouncementRead(announcementId) {
