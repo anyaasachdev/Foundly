@@ -128,38 +128,30 @@ const ProjectsScreen = ({ user }) => {
   
   const loadMembers = async () => {
     try {
-      const response = await ApiService.getUsers();
-      const allMembers = response.users || [];
-      
-      // Ensure current user is included
-      const currentUserIncluded = allMembers.some(member => 
-        member._id === user._id || member._id === user.id
-      );
-      
-      if (!currentUserIncluded && user) {
-        // Add current user if not already in the list
-        allMembers.unshift({
-          _id: user._id || user.id,
-          name: user.name,
-          email: user.email,
-          color: user.color || '#667eea'
-        });
-      }
-      
-      setMembers(allMembers);
-    } catch (error) {
-      console.error('Failed to load members:', error);
-      // Fallback: at least include current user
-      if (user) {
+      // Use members from the current organization
+      if (organization && Array.isArray(organization.members)) {
+        setMembers(organization.members.map(m => ({
+          _id: m.user || m.userId || m._id,
+          name: m.name || '',
+          email: m.email || '',
+          color: m.color || '#667eea',
+          role: m.role || 'member'
+        })));
+      } else if (user) {
+        // Fallback: at least include current user
         setMembers([{
           _id: user._id || user.id,
           name: user.name,
           email: user.email,
-          color: user.color || '#667eea'
+          color: user.color || '#667eea',
+          role: 'admin'
         }]);
       } else {
         setMembers([]);
       }
+    } catch (error) {
+      console.error('Failed to load members:', error);
+      setMembers([]);
     }
   };
   

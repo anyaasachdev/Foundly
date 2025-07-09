@@ -14,13 +14,13 @@ const StatsScreen = ({ user }) => {
   const [exportFormat, setExportFormat] = useState('pdf');
   
   useEffect(() => {
-    loadAnalyticsData();
+    loadAnalytics();
   }, [timeRange]);
   
   // Refresh data periodically to ensure syncing
   useEffect(() => {
     const interval = setInterval(() => {
-      loadAnalyticsData();
+      loadAnalytics();
     }, 30000); // Refresh every 30 seconds
 
     return () => clearInterval(interval);
@@ -52,56 +52,23 @@ const StatsScreen = ({ user }) => {
     projects: { performance: [] }
   });
 
-  const loadAnalyticsData = async () => {
-    const currentOrgId = localStorage.getItem('currentOrganization');
-    if (!currentOrgId) {
-      setAnalyticsData(getDefaultData());
-      setLoading(false);
-      return;
-    }
-    
+  const loadAnalytics = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      
-      // Load analytics data from backend
-      const analyticsResponse = await ApiService.getAnalytics(timeRange).catch(() => ({ data: getDefaultData() }));
-      const analyticsData = analyticsResponse.data || getDefaultData();
-      
-      // Load organization data for member count
-      const orgsResponse = await ApiService.getMyOrganizations().catch(() => ({ organizations: [] }));
-      const currentOrg = orgsResponse.find(org => 
-        (org.organizationId?._id || org._id) === currentOrgId
-      );
-      
-      // Update member count from organization data
-      if (currentOrg?.organizationId?.members) {
-        analyticsData.overview.membersRecruited = currentOrg.organizationId.members.length;
-      } else if (currentOrg?.members) {
-        analyticsData.overview.membersRecruited = currentOrg.members.length;
-      } else if (analyticsData.overview?.membersRecruited) {
-        // Use the count from analytics if available
-        analyticsData.overview.membersRecruited = analyticsData.overview.membersRecruited;
-      } else {
-        // Fallback to 1 if no data available
-        analyticsData.overview.membersRecruited = 1;
-      }
-      
-      // Ensure trends data is properly formatted
-      if (analyticsData.trends?.projectProgress) {
-        // The backend now provides real historical data
-        // No need to calculate fake trends
-        analyticsData.trends.projectProgress = analyticsData.trends.projectProgress.map(month => ({
-          ...month,
-          impact: month.impact || ((month.projects * 10) + (month.hours * 2) + (month.members * 5))
-        }));
-      }
-      
-      setAnalyticsData(analyticsData);
-      setOrganization(currentOrg?.organizationId || currentOrg);
+      // Use the working endpoint for stats
+      const statsResponse = await ApiService.getStats();
+      const stats = statsResponse.stats || {};
+      setAnalyticsData({
+        totalHours: stats.totalHours || 0,
+        activeProjects: stats.activeProjects || 0,
+        completedTasks: stats.completedTasks || 0,
+        totalMembers: stats.totalMembers || 0,
+        totalProjects: stats.totalProjects || 0
+      });
+      setLoading(false);
     } catch (error) {
       console.error('Failed to load analytics:', error);
       setAnalyticsData(getDefaultData());
-    } finally {
       setLoading(false);
     }
   };
@@ -656,39 +623,39 @@ const StatsScreen = ({ user }) => {
           }}>
             <StatCard
               title="Total Hours"
-              value={data.overview?.totalHours?.toLocaleString() || '0'}
-              change={data.overview?.hoursGrowth || 0}
+              value={data.totalHours?.toLocaleString() || '0'}
+              change={undefined}
               icon={Clock}
               color="#374151"
               subtitle="Hours contributed"
-              trend={(data.trends?.projectProgress || []).map(p => p.hours)}
+              trend={[]}
             />
             <StatCard
               title="Active Projects"
-              value={data.overview?.projectsActive || 0}
+              value={data.activeProjects || 0}
               change={undefined}
               icon={Target}
               color="#10B981"
-              subtitle={`${data.overview?.projectsCompleted || 0} completed`}
-              trend={(data.trends?.projectProgress || []).map(p => p.projects)}
+              subtitle={`${data.completedTasks || 0} completed`}
+              trend={[]}
             />
             <StatCard
               title="Team Members"
-              value={data.overview?.membersRecruited || 0}
-              change={data.overview?.memberGrowth || 0}
+              value={data.totalMembers || 0}
+              change={undefined}
               icon={Users}
               color="#F59E0B"
               subtitle="Active contributors"
-              trend={(data.trends?.memberActivity || []).map(p => p.members)}
+              trend={[]}
             />
             <StatCard
               title="Impact Score"
-              value={((data.overview?.projectsActive || 0) * 10 + (data.overview?.totalHours || 0) * 2 + (data.overview?.membersRecruited || 0) * 5).toLocaleString()}
-              change={data.overview?.impactGrowth || 0}
+              value={((data.activeProjects || 0) * 10 + (data.totalHours || 0) * 2 + (data.totalMembers || 0) * 5).toLocaleString()}
+              change={undefined}
               icon={Award}
               color="#8B5CF6"
               subtitle="Community impact"
-              trend={(data.trends?.projectProgress || []).map(p => p.impact)}
+              trend={[]}
               infoTooltip="Impact Score is calculated as: (Active Projects × 10) + (Total Hours × 2) + (Team Members × 5)"
               isHighlighted={true}
             />
@@ -702,7 +669,7 @@ const StatsScreen = ({ user }) => {
             marginBottom: '32px'
           }}>
             <MetricChart
-              data={(data.trends?.projectProgress || [])}
+              data={[]}
               metric={selectedMetric}
               title="Performance Trends"
             />
@@ -729,8 +696,8 @@ const StatsScreen = ({ user }) => {
           }}>
             <h3 style={{ margin: '0 0 20px 0', color: '#1F2937' }}>Team Performance</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {data.trends?.memberActivity?.map((member, index) => (
-                <div key={member.user?._id || index} style={{
+              {[]?.map((member, index) => (
+                <div key={index} style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '16px',
@@ -783,7 +750,7 @@ const StatsScreen = ({ user }) => {
                   </div>
                 </div>
               ))}
-              {(!data.trends?.memberActivity || data.trends.memberActivity.length === 0) && (
+              {(![] || [].length === 0) && (
                 <div style={{
                   textAlign: 'center',
                   padding: '40px',
