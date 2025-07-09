@@ -289,7 +289,7 @@ const CalendarScreen = ({ user }) => {
               >
                 <span className="day-number">{day.getDate()}</span>
                 <div className="day-events">
-                  {(dayEvents || []).slice(0, 3).map(event => {
+                  {(Array.isArray(dayEvents) ? dayEvents : []).slice(0, 3).map(event => {
                     const typeData = getEventTypeData(event.type);
                     return (
                       <div 

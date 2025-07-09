@@ -550,7 +550,7 @@ const ProjectsScreen = ({ user }) => {
                     Recent Tasks
                   </h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {(project.tasks || []).slice(0, 3).map((task) => (
+                    {(Array.isArray(project.tasks) ? project.tasks : []).slice(0, 3).map((task) => (
                       <div key={task.id} style={{
                         display: 'flex',
                         alignItems: 'center',

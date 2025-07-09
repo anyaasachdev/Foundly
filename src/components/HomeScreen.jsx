@@ -519,7 +519,7 @@ const HomeScreen = ({ user }) => {
           </div>
         ) : (
           <div className="announcements-list" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-            {(announcements || []).slice(0, 5).map((announcement) => {
+            {(Array.isArray(announcements) ? announcements : []).slice(0, 5).map((announcement) => {
               const isRead = announcement.readBy?.some(readEntry => 
                 readEntry.user === user.id || readEntry.user === user._id
               );
