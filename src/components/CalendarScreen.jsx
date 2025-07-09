@@ -218,10 +218,11 @@ const CalendarScreen = ({ user }) => {
     return filteredEvents.filter(event => {
       // Handle different date formats
       let eventDate;
-      if (typeof event.startDate === 'string') {
-        eventDate = event.startDate.split('T')[0];
-      } else if (event.startDate instanceof Date) {
-        eventDate = event.startDate.toISOString().split('T')[0];
+      const dateField = event.startDate || event.startTime;
+      if (typeof dateField === 'string') {
+        eventDate = dateField.split('T')[0];
+      } else if (dateField instanceof Date) {
+        eventDate = dateField.toISOString().split('T')[0];
       } else {
         return false;
       }

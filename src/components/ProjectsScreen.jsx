@@ -76,7 +76,14 @@ const ProjectsScreen = ({ user }) => {
     try {
       setLoading(true);
       const response = await ApiService.getProjects();
-      setProjects(response.projects || []);
+      const projects = (response.projects || []).map(project => ({
+        ...project,
+        title: project.title || project.name,
+        priority: project.priority || 'medium',
+        status: project.status || 'active',
+        color: project.color || '#8B5CF6'
+      }));
+      setProjects(projects);
     } catch (error) {
       console.error('Failed to load projects:', error);
       setProjects([]);
@@ -495,17 +502,17 @@ const ProjectsScreen = ({ user }) => {
                         fontSize: '0.75rem',
                         fontWeight: '500'
                       }}>
-                        {project.priority.toUpperCase()}
+                        {(project.priority || 'medium').toUpperCase()}
                       </span>
                       <span style={{
                         padding: '2px 8px',
-                        background: project.color + '20',
-                        color: project.color,
+                        background: (project.color || '#8B5CF6') + '20',
+                        color: project.color || '#8B5CF6',
                         borderRadius: '12px',
                         fontSize: '0.75rem',
                         fontWeight: '500'
                       }}>
-                        {project.status.toUpperCase()}
+                        {(project.status || 'active').toUpperCase()}
                       </span>
                     </div>
                   </div>
