@@ -10,18 +10,18 @@ const DebugInfo = () => {
     const results = {};
 
     try {
-      // Test basic connectivity
+      // Test basic connectivity with simple endpoint
       console.log('Testing basic connectivity...');
-      const basicTest = await ApiService.testWorking();
+      const basicTest = await ApiService.request('/simple-test');
       results.basic = { success: true, data: basicTest };
     } catch (error) {
       results.basic = { success: false, error: error.message };
     }
 
     try {
-      // Test working endpoint
+      // Test working endpoint directly
       console.log('Testing working endpoint...');
-      const workingTest = await ApiService.testWorkingEndpoint();
+      const workingTest = await ApiService.request('/working?action=test');
       results.working = { success: true, data: workingTest };
     } catch (error) {
       results.working = { success: false, error: error.message };
