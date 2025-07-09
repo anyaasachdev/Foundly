@@ -73,7 +73,7 @@ export const NotificationProvider = ({ children }) => {
           showToast({
             type: 'info',
             title: 'New Message',
-            message: `${message.senderName}: ${message.content.substring(0, 50)}...`,
+            message: `${message.senderName}: ${(message.content || '').substring(0, 50)}...`,
             duration: 3000
           });
         }
