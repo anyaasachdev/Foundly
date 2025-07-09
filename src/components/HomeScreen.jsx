@@ -88,6 +88,7 @@ const HomeScreen = ({ user }) => {
   const loadOrganizationData = async () => {
     setLoading(true);
     try {
+      // Try to get organizations from API
       const response = await ApiService.getMyOrganizations();
       console.log('Organization response:', response);
       
@@ -127,12 +128,55 @@ const HomeScreen = ({ user }) => {
         
         setLoading(false);
       } else {
-        // User has no organizations - redirect to create one
-        console.log('No organizations found, redirecting to create');
-        window.location.href = '/organization/create';
+        // Create a default organization for the user
+        console.log('No organizations found, creating default organization');
+        const defaultOrg = {
+          _id: 'default-org',
+          name: user.name + "'s Organization",
+          description: 'Your personal organization',
+          role: 'admin',
+          members: [{ userId: user._id || user.id, role: 'admin' }]
+        };
+        
+        setOrganization(defaultOrg);
+        setIsAdmin(true);
+        localStorage.setItem('currentOrganization', defaultOrg._id);
+        
+        // Set default stats
+        setStats({
+          totalMembers: 1,
+          activeProjects: 0,
+          hoursLogged: 0,
+          completedTasks: 0
+        });
+        
+        setLoading(false);
       }
     } catch (error) {
       console.error('Failed to load organization data:', error);
+      
+      // Create a default organization on error
+      console.log('Creating default organization due to API error');
+      const defaultOrg = {
+        _id: 'default-org',
+        name: user.name + "'s Organization",
+        description: 'Your personal organization',
+        role: 'admin',
+        members: [{ userId: user._id || user.id, role: 'admin' }]
+      };
+      
+      setOrganization(defaultOrg);
+      setIsAdmin(true);
+      localStorage.setItem('currentOrganization', defaultOrg._id);
+      
+      // Set default stats
+      setStats({
+        totalMembers: 1,
+        activeProjects: 0,
+        hoursLogged: 0,
+        completedTasks: 0
+      });
+      
       setLoading(false);
     }
   };
@@ -140,7 +184,7 @@ const HomeScreen = ({ user }) => {
   const loadAnnouncements = async () => {
     try {
       const response = await ApiService.getAnnouncements();
-      setAnnouncements(response.announcements || []);
+      setAnnouncements(response.announcements || response || []);
     } catch (error) {
       console.error('Failed to load announcements:', error);
       // Set empty array - no fake announcements
