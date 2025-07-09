@@ -3,7 +3,7 @@ class ApiService {
     // Use Vercel deployment URL for API calls
     this.baseURL = process.env.REACT_APP_API_URL || 'https://foundly-olive.vercel.app/api';
     this.refreshPromise = null;
-    this.version = Date.now(); // Force cache refresh
+    this.version = Date.now() + Math.random(); // Force cache refresh with random
   }
   
   // Add a getter to always get the current token
@@ -202,6 +202,7 @@ class ApiService {
   // Announcements
   async createAnnouncement(announcementData) {
     // Temporary: use simple test endpoint
+    console.log('Calling simple-test endpoint with data:', announcementData);
     return this.request('/simple-test', {
       method: 'POST',
       body: JSON.stringify(announcementData)
