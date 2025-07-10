@@ -390,7 +390,7 @@ async function handleGetStats(req, res) {
       joinCode: String,
       createdBy: String,
       members: [{
-        userId: String,
+        user: String,
         role: { type: String, default: 'member' },
         joinedAt: { type: Date, default: Date.now },
         isActive: { type: Boolean, default: true }
@@ -405,7 +405,7 @@ async function handleGetStats(req, res) {
       Organization.findById(organizationId).catch(() => null),
       // Get all organizations the user is part of
       Organization.find({
-        'members.userId': decoded.userId.toString()
+        'members.user': decoded.userId.toString()
       }).catch(() => [])
     ]);
     
@@ -418,10 +418,10 @@ async function handleGetStats(req, res) {
     const uniqueActiveMembers = (organization?.members || [])
       .filter((member, index, arr) => {
         // Ensure member has a valid user ID
-        if (!member.userId) return false;
+        if (!member.user) return false;
         
         // Check if this is the first occurrence of this user ID (remove duplicates)
-        const firstIndex = arr.findIndex(m => m.userId.toString() === member.userId.toString());
+        const firstIndex = arr.findIndex(m => m.user.toString() === member.user.toString());
         if (firstIndex !== index) return false;
         
         // Check if member is active
