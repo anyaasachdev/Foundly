@@ -594,7 +594,7 @@ const StatsScreen = ({ user }) => {
         </div>
       </div>
       
-      {/* Navigation Tabs */}
+      {/* Navigation Tabs - Only Overview now */}
       <div style={{
         display: 'flex',
         gap: '4px',
@@ -602,10 +602,7 @@ const StatsScreen = ({ user }) => {
         borderBottom: '1px solid #E5E7EB'
       }}>
         {[
-          { id: 'overview', label: 'Overview', icon: BarChart3 },
-          { id: 'projects', label: 'Projects', icon: Target },
-          { id: 'team', label: 'Team', icon: Users }
-          // Removed reports tab
+          { id: 'overview', label: 'Overview', icon: BarChart3 }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -684,96 +681,7 @@ const StatsScreen = ({ user }) => {
         </>
       )}
       
-      {activeTab === 'projects' && (
-        <>
-          <ProjectPerformanceTable projects={(data.projects?.performance || [])} />
-          
-
-        </>
-      )}
-      
-      {activeTab === 'team' && (
-        <>
-          <div style={{
-            background: '#FFFFFF',
-            borderRadius: '16px',
-            padding: '24px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-            marginBottom: '20px'
-          }}>
-            <h3 style={{ margin: '0 0 20px 0', color: '#1F2937' }}>Team Performance</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {[]?.map((member, index) => (
-                <div key={index} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '16px',
-                  padding: '16px',
-                  borderRadius: '12px',
-                  background: index < 3 ? '#F8FAFC' : 'transparent',
-                  border: index < 3 ? '1px solid #E2E8F0' : 'none'
-                }}>
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    background: `linear-gradient(135deg, ${['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'][index % 5]} 0%, ${['#1E40AF', '#059669', '#D97706', '#DC2626', '#7C3AED'][index % 5]} 100%)`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    fontSize: '1rem'
-                  }}>
-                    {member.user?.name?.[0]?.toUpperCase() || 'M'}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: '600', color: '#1F2937', marginBottom: '2px' }}>
-                      {member.user?.name || 'Member'}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>
-                      {member.role || 'Member'}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1F2937' }}>
-                        {member.hours || 0}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#6B7280' }}>Hours</div>
-                    </div>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1F2937' }}>
-                        {member.projects || 0}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#6B7280' }}>Projects</div>
-                    </div>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1F2937' }}>
-                        {member.impact || 0}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#6B7280' }}>Impact</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {(![] || [].length === 0) && (
-                <div style={{
-                  textAlign: 'center',
-                  padding: '40px',
-                  color: '#6B7280'
-                }}>
-                  <Users size={48} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
-                  <h4 style={{ margin: '0 0 8px 0', color: '#374151' }}>No team members yet</h4>
-                  <p style={{ margin: 0, fontSize: '0.875rem' }}>
-                    Team performance data will appear as members join and become active.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </>
-      )}
+      {/* Projects and Teams sections removed as requested */}
       
       {activeTab === 'reports' && (
         <div style={{

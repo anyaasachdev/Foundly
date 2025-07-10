@@ -196,16 +196,31 @@ class ApiService {
   
   // Organizations
   async createOrganization(organizationData) {
+    // Add user information to organization data
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const dataWithUser = {
+      ...organizationData,
+      userEmail: user.email || 'unknown@email.com',
+      userName: user.name || 'Unknown User'
+    };
+    
     return this.request('/working?action=organizations', {
       method: 'POST',
-      body: JSON.stringify(organizationData)
+      body: JSON.stringify(dataWithUser)
     });
   }
   
   async joinOrganization(joinCode) {
+    // Add user information when joining
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
     return this.request('/working?action=organizations', {
       method: 'POST',
-      body: JSON.stringify({ inviteCode: joinCode })
+      body: JSON.stringify({ 
+        inviteCode: joinCode,
+        userEmail: user.email || 'unknown@email.com',
+        userName: user.name || 'Unknown User'
+      })
     });
   }
   

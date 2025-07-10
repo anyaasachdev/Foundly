@@ -471,34 +471,51 @@ module.exports = async function handler(req, res) {
     // Organization actions
     if (action === 'organizations' && req.method === 'GET') {
       try {
-        // Get user's organizations
+        // Get user ID from token (for now we'll use a placeholder)
+        const userId = req.headers.authorization?.replace('Bearer ', '') || 'current-user';
+        
         const Organization = getModel('Organization', new mongoose.Schema({
           name: String,
           description: String,
           joinCode: String,
           createdBy: String,
           members: [{
-            user: String,
+            userId: String,
+            userEmail: String,
+            userName: String,
             role: { type: String, default: 'member' },
             joinedAt: { type: Date, default: Date.now }
           }],
           createdAt: { type: Date, default: Date.now }
         }));
         
-        // Get all organizations (in a real app, you'd filter by user)
-        const organizations = await Organization.find({}).sort({ createdAt: -1 });
+        // Find organizations where user is a member OR created by user
+        const organizations = await Organization.find({
+          $or: [
+            { createdBy: userId },
+            { 'members.userId': userId }
+          ]
+        }).sort({ createdAt: -1 });
         
-        console.log(`Found ${organizations.length} organizations`);
+        console.log(`Found ${organizations.length} organizations for user ${userId}`);
         
-        // Format organizations for frontend
-        const formattedOrgs = organizations.map(org => ({
-          _id: org._id,
-          name: org.name,
-          description: org.description,
-          joinCode: org.joinCode,
-          role: 'admin', // For now, assume admin role
-          members: org.members || []
-        }));
+        // Format organizations for frontend with proper role detection
+        const formattedOrgs = organizations.map(org => {
+          const isCreator = org.createdBy === userId;
+          const memberRecord = org.members.find(m => m.userId === userId);
+          const role = isCreator ? 'admin' : (memberRecord?.role || 'member');
+          
+          return {
+            _id: org._id,
+            name: org.name,
+            description: org.description,
+            joinCode: org.joinCode,
+            role: role,
+            members: org.members || [],
+            memberCount: org.members?.length || 0,
+            isCreator: isCreator
+          };
+        });
         
         return res.status(200).json({ 
           success: true, 
@@ -514,7 +531,8 @@ module.exports = async function handler(req, res) {
     }
     
     if (action === 'organizations' && req.method === 'POST') {
-      const { name, description, inviteCode, customJoinCode } = req.body;
+      const { name, description, inviteCode, customJoinCode, userEmail, userName } = req.body;
+      const userId = req.headers.authorization?.replace('Bearer ', '') || 'current-user';
       
       if (inviteCode) {
         // Joining an organization
@@ -524,7 +542,9 @@ module.exports = async function handler(req, res) {
           joinCode: String,
           createdBy: String,
           members: [{
-            user: String,
+            userId: String,
+            userEmail: String,
+            userName: String,
             role: { type: String, default: 'member' },
             joinedAt: { type: Date, default: Date.now }
           }],
@@ -538,6 +558,34 @@ module.exports = async function handler(req, res) {
           return res.status(404).json({ error: 'Invalid join code' });
         }
         
+        // Check if user is already a member
+        const existingMember = organization.members.find(m => m.userId === userId);
+        if (existingMember) {
+          return res.status(200).json({ 
+            success: true,
+            message: 'Already a member of this organization',
+            organization: {
+              _id: organization._id,
+              name: organization.name,
+              description: organization.description,
+              role: existingMember.role,
+              memberCount: organization.members.length
+            }
+          });
+        }
+        
+        // Add user to organization members
+        organization.members.push({
+          userId: userId,
+          userEmail: userEmail || 'unknown@email.com',
+          userName: userName || 'Unknown User',
+          role: 'member',
+          joinedAt: new Date()
+        });
+        
+        await organization.save();
+        console.log('User joined organization:', organization.name, 'Total members:', organization.members.length);
+        
         return res.status(200).json({ 
           success: true,
           message: 'Successfully joined organization',
@@ -545,7 +593,8 @@ module.exports = async function handler(req, res) {
             _id: organization._id,
             name: organization.name,
             description: organization.description,
-            role: 'member'
+            role: 'member',
+            memberCount: organization.members.length
           }
         });
       } else {
@@ -569,7 +618,9 @@ module.exports = async function handler(req, res) {
           joinCode: String,
           createdBy: String,
           members: [{
-            user: String,
+            userId: String,
+            userEmail: String,
+            userName: String,
             role: { type: String, default: 'member' },
             joinedAt: { type: Date, default: Date.now }
           }],
@@ -589,16 +640,18 @@ module.exports = async function handler(req, res) {
           name,
           description: description || '',
           joinCode,
-          createdBy: 'default-user',
+          createdBy: userId,
           members: [{
-            user: 'default-user',
+            userId: userId,
+            userEmail: userEmail || 'admin@email.com',
+            userName: userName || 'Admin User',
             role: 'admin',
             joinedAt: new Date()
           }]
         });
 
         await organization.save();
-        console.log('Organization created with custom join code:', organization);
+        console.log('Organization created with custom join code:', organization.name, 'Creator:', userId);
 
         return res.status(201).json({ 
           success: true,
@@ -608,7 +661,8 @@ module.exports = async function handler(req, res) {
             name: organization.name,
             description: organization.description,
             joinCode: organization.joinCode,
-            role: 'admin'
+            role: 'admin',
+            memberCount: 1
           }
         });
       }

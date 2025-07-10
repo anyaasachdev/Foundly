@@ -104,10 +104,12 @@ const HomeScreen = ({ user }) => {
           stats: statsResponse.stats
         });
         
-        // Get member count from organization or stats
-        const memberCount = currentOrg.members?.length || statsResponse.stats?.totalMembers || 1;
+        // Get accurate member count from organization
+        const memberCount = currentOrg.memberCount || currentOrg.members?.length || 1;
         const projects = projectsResponse.projects || projectsResponse.data || [];
         const actualHours = hoursResponse.totalHours || statsResponse.stats?.totalHours || 0;
+        
+        console.log('Organization member count:', memberCount, 'from org:', currentOrg.name);
         
         setStats({
           totalMembers: memberCount,
