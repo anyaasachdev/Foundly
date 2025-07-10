@@ -236,6 +236,24 @@ const HomeScreen = ({ user }) => {
     }
   };
 
+  // Add a refresh function for live stats
+  const refreshStats = async () => {
+    setLoading(true);
+    try {
+      const statsResponse = await ApiService.getStats();
+      const stats = statsResponse.stats || {};
+      setStats({
+        totalMembers: stats.totalMembers || 0,
+        activeProjects: stats.activeProjects || 0,
+        hoursLogged: stats.totalHours || 0,
+        completedTasks: stats.completedTasks || 0
+      });
+    } catch (error) {
+      // Optionally show an error toast
+    }
+    setLoading(false);
+  };
+
   if (loading) {
     return (
       <div className="home-screen">
@@ -327,23 +345,28 @@ const HomeScreen = ({ user }) => {
       background: 'white',
       minHeight: '100vh',
       paddingTop: '90px',
-      width: '100%'
+      width: '100%',
+      boxSizing: 'border-box',
+      paddingLeft: '0',
+      paddingRight: '0',
     }}>
       {/* Dashboard Header */}
       <div className="dashboard-header" style={{
         maxWidth: '1200px',
         margin: '0 auto',
-        padding: '40px 20px 20px 20px',
+        padding: '48px 24px 32px 24px',
         borderBottom: '1px solid #e5e7eb',
         display: 'flex',
         flexWrap: 'wrap',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        gap: '32px',
       }}>
         <div style={{
           flex: 1,
           minWidth: '320px',
-          marginRight: '32px'
+          marginRight: '32px',
+          marginBottom: '16px',
         }}>
           <h1 style={{
             fontSize: '2.8rem',
@@ -351,15 +374,17 @@ const HomeScreen = ({ user }) => {
             margin: 0,
             color: '#111827',
             letterSpacing: '-0.02em',
-            fontFamily: 'Poppins, sans-serif'
+            fontFamily: 'Poppins, sans-serif',
+            marginBottom: '12px',
           }}>{organization?.name || 'Organization Dashboard'}</h1>
           <p style={{
             fontSize: '1.15rem',
             color: '#6B7280',
-            marginTop: '18px',
+            marginTop: '0',
             maxWidth: '500px',
             lineHeight: '1.5',
-            fontFamily: 'Poppins, sans-serif'
+            fontFamily: 'Poppins, sans-serif',
+            marginBottom: 0,
           }}>
             Streamline your organization&apos;s workflow with our comprehensive management platform. Track progress, manage teams, and achieve your goals.
           </p>
@@ -379,7 +404,7 @@ const HomeScreen = ({ user }) => {
           justifyContent: 'center',
           alignItems: 'center',
           marginBottom: '16px',
-          position: 'relative'
+          position: 'relative',
         }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🚀</div>
           <div style={{ fontWeight: 700, fontSize: '1.35rem', marginBottom: '8px', letterSpacing: '-0.01em', textAlign: 'center' }}>
@@ -390,70 +415,98 @@ const HomeScreen = ({ user }) => {
           </div>
         </div>
       </div>
-      {/* Stats Grid */}
-      <div className="stats-grid" style={{
+      {/* Stats Grid + Refresh */}
+      <div style={{
         maxWidth: '1200px',
         margin: '0 auto',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-        gap: '32px',
-        padding: '40px 20px 0 20px'
+        padding: '0 24px',
       }}>
-        <div className="stat-card" style={{
-          background: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
-          color: 'white',
-          borderRadius: '18px',
-          padding: '32px 24px',
+        <div style={{
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          boxShadow: '0 4px 16px rgba(16, 185, 129, 0.10)',
+          justifyContent: 'flex-end',
+          marginBottom: '12px',
         }}>
-          <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>👥</div>
-          <div style={{ fontSize: '2.1rem', fontWeight: 700 }}>{stats.totalMembers}</div>
-          <div style={{ fontSize: '1.1rem', marginTop: '6px', color: '#D1FAE5' }}>Total Members</div>
+          <button
+            onClick={refreshStats}
+            style={{
+              background: 'linear-gradient(135deg, #6366F1 0%, #3730A3 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '8px 18px',
+              fontSize: '1rem',
+              fontWeight: 500,
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(99, 102, 241, 0.08)',
+              transition: 'all 0.2s',
+            }}
+            disabled={loading}
+          >
+            {loading ? 'Refreshing...' : 'Refresh Stats'}
+          </button>
         </div>
-        <div className="stat-card" style={{
-          background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
-          color: 'white',
-          borderRadius: '18px',
-          padding: '32px 24px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          boxShadow: '0 4px 16px rgba(139, 92, 246, 0.10)',
+        <div className="stats-grid" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '32px',
+          marginBottom: '40px',
         }}>
-          <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>🎯</div>
-          <div style={{ fontSize: '2.1rem', fontWeight: 700 }}>{stats.activeProjects}</div>
-          <div style={{ fontSize: '1.1rem', marginTop: '6px', color: '#E0E7FF' }}>Active Projects</div>
-        </div>
-        <div className="stat-card" style={{
-          background: 'linear-gradient(135deg, #EC4899 0%, #F472B6 100%)',
-          color: 'white',
-          borderRadius: '18px',
-          padding: '32px 24px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          boxShadow: '0 4px 16px rgba(236, 72, 153, 0.10)',
-        }}>
-          <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>⏰</div>
-          <div style={{ fontSize: '2.1rem', fontWeight: 700 }}>{stats.hoursLogged}</div>
-          <div style={{ fontSize: '1.1rem', marginTop: '6px', color: '#FCE7F3' }}>Hours Logged</div>
-        </div>
-        <div className="stat-card" style={{
-          background: 'linear-gradient(135deg, #F59E42 0%, #FBBF24 100%)',
-          color: 'white',
-          borderRadius: '18px',
-          padding: '32px 24px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          boxShadow: '0 4px 16px rgba(251, 191, 36, 0.10)',
-        }}>
-          <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>📈</div>
-          <div style={{ fontSize: '2.1rem', fontWeight: 700 }}>{stats.completedTasks}</div>
-          <div style={{ fontSize: '1.1rem', marginTop: '6px', color: '#FEF3C7' }}>Completed Tasks</div>
+          <div className="stat-card" style={{
+            background: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
+            color: 'white',
+            borderRadius: '18px',
+            padding: '32px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            boxShadow: '0 4px 16px rgba(16, 185, 129, 0.10)',
+          }}>
+            <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>👥</div>
+            <div style={{ fontSize: '2.1rem', fontWeight: 700 }}>{stats.totalMembers}</div>
+            <div style={{ fontSize: '1.1rem', marginTop: '6px', color: '#D1FAE5' }}>Total Members</div>
+          </div>
+          <div className="stat-card" style={{
+            background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
+            color: 'white',
+            borderRadius: '18px',
+            padding: '32px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            boxShadow: '0 4px 16px rgba(139, 92, 246, 0.10)',
+          }}>
+            <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>🎯</div>
+            <div style={{ fontSize: '2.1rem', fontWeight: 700 }}>{stats.activeProjects}</div>
+            <div style={{ fontSize: '1.1rem', marginTop: '6px', color: '#E0E7FF' }}>Active Projects</div>
+          </div>
+          <div className="stat-card" style={{
+            background: 'linear-gradient(135deg, #EC4899 0%, #F472B6 100%)',
+            color: 'white',
+            borderRadius: '18px',
+            padding: '32px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            boxShadow: '0 4px 16px rgba(236, 72, 153, 0.10)',
+          }}>
+            <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>⏰</div>
+            <div style={{ fontSize: '2.1rem', fontWeight: 700 }}>{stats.hoursLogged}</div>
+            <div style={{ fontSize: '1.1rem', marginTop: '6px', color: '#FCE7F3' }}>Hours Logged</div>
+          </div>
+          <div className="stat-card" style={{
+            background: 'linear-gradient(135deg, #F59E42 0%, #FBBF24 100%)',
+            color: 'white',
+            borderRadius: '18px',
+            padding: '32px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            boxShadow: '0 4px 16px rgba(251, 191, 36, 0.10)',
+          }}>
+            <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>📈</div>
+            <div style={{ fontSize: '2.1rem', fontWeight: 700 }}>{stats.completedTasks}</div>
+            <div style={{ fontSize: '1.1rem', marginTop: '6px', color: '#FEF3C7' }}>Completed Tasks</div>
+          </div>
         </div>
       </div>
 
