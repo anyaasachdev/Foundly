@@ -194,7 +194,7 @@ async function handleCreateOrganization(req, res) {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    const { name, description } = req.body;
+    const { name, description, customJoinCode } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'Organization name required' });
@@ -204,13 +204,24 @@ async function handleCreateOrganization(req, res) {
     const organizations = db.collection('organizations');
     const users = db.collection('users');
 
+    // Generate join code if not provided
+    const joinCode = customJoinCode || Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    // Check if join code already exists
+    const existingOrg = await organizations.findOne({ joinCode });
+    if (existingOrg) {
+      return res.status(400).json({ error: 'Join code already exists. Please try a different one.' });
+    }
+
     // Create organization
     const organization = {
       name,
       description: description || '',
+      joinCode,
       createdAt: new Date(),
+      memberCount: 1,
       members: [{
-        userId: decoded.userId,
+        userId: new ObjectId(decoded.userId),
         role: 'admin',
         joinedAt: new Date()
       }]
@@ -231,6 +242,12 @@ async function handleCreateOrganization(req, res) {
         }
       }
     );
+
+    console.log('✅ Organization created:', {
+      name: newOrg.name,
+      joinCode: newOrg.joinCode,
+      memberCount: newOrg.memberCount
+    });
 
     res.status(201).json({
       success: true,
@@ -261,35 +278,67 @@ async function handleJoinOrganization(req, res) {
     const organizations = db.collection('organizations');
     const users = db.collection('users');
 
-    // Find organization by join code (using name as join code for now)
-    const organization = await organizations.findOne({ name: joinCode });
+    // Find organization by proper join code
+    const organization = await organizations.findOne({ joinCode: joinCode.toUpperCase() });
     if (!organization) {
-      return res.status(404).json({ error: 'Organization not found' });
+      return res.status(404).json({ error: 'Organization not found with that join code' });
     }
 
-    // Check if user is already a member
-    const isMember = organization.members.some(member => member.userId.toString() === decoded.userId.toString());
+    // Check if user is already a member (prevent duplicates)
+    const userId = new ObjectId(decoded.userId);
+    const isMember = organization.members.some(member => 
+      member.userId.toString() === userId.toString()
+    );
+    
     if (isMember) {
-      return res.status(400).json({ error: 'Already a member of this organization' });
+      console.log('⚠️ User already member, returning existing organization');
+      return res.status(200).json({
+        success: true,
+        organization,
+        type: 'already_member',
+        message: 'You are already a member of this organization'
+      });
     }
 
-    // Add user to organization
+    // Check if user is already in any organization (optional business rule)
+    const user = await users.findOne({ _id: userId });
+    const userHasOrganizations = user?.organizations && user.organizations.length > 0;
+    
+    if (userHasOrganizations) {
+      console.log('⚠️ User already has organizations, checking for duplicates');
+      const alreadyInThisOrg = user.organizations.some(org => 
+        org.organizationId.toString() === organization._id.toString()
+      );
+      
+      if (alreadyInThisOrg) {
+        console.log('🚨 DUPLICATE MEMBERSHIP PREVENTED');
+        return res.status(200).json({
+          success: true,
+          organization,
+          type: 'already_member',
+          message: 'You are already a member of this organization'
+        });
+      }
+    }
+
+    // Add user to organization members list
     await organizations.updateOne(
       { _id: organization._id },
       { 
         $push: { 
           members: {
-            userId: decoded.userId,
+            userId: userId,
             role: 'member',
             joinedAt: new Date()
           }
-        }
+        },
+        $inc: { memberCount: 1 }
       }
     );
 
     // Update user with organization
     await users.updateOne(
-      { _id: new ObjectId(decoded.userId) },
+      { _id: userId },
       { 
         $push: { 
           organizations: {
@@ -299,6 +348,12 @@ async function handleJoinOrganization(req, res) {
         }
       }
     );
+
+    console.log('✅ User joined organization:', {
+      user: decoded.userId,
+      organization: organization.name,
+      newMemberCount: (organization.memberCount || 0) + 1
+    });
 
     res.status(200).json({
       success: true,
@@ -321,30 +376,58 @@ async function handleGetOrganizations(req, res) {
     const decoded = jwt.verify(token, JWT_SECRET);
     const db = await connectDB();
     const users = db.collection('users');
+    const organizations = db.collection('organizations');
 
     // Get user with organizations
     const user = await users.findOne(
       { _id: new ObjectId(decoded.userId) },
-      { projection: { organizations: 1 } }
+      { projection: { organizations: 1, email: 1 } }
     );
 
-    if (!user || !user.organizations) {
-      return res.status(200).json({ organizations: [] });
+    if (!user || !user.organizations || user.organizations.length === 0) {
+      console.log('⚠️ No organizations found for user:', user?.email);
+      return res.status(200).json({ 
+        success: true,
+        organizations: [] 
+      });
     }
 
-    // Get organization details
-    const organizations = db.collection('organizations');
+    // Get organization details with member counts
     const orgIds = user.organizations.map(org => org.organizationId);
     
     const orgDetails = await organizations.find({ _id: { $in: orgIds } }).toArray();
     
-    // Combine user org data with org details
+    // Combine user org data with org details and ensure member counts are accurate
     const userOrgs = user.organizations.map(userOrg => {
       const orgDetail = orgDetails.find(org => org._id.toString() === userOrg.organizationId.toString());
+      
+      if (!orgDetail) {
+        console.log('⚠️ Organization not found for user org:', userOrg.organizationId);
+        return null;
+      }
+      
+      // Calculate accurate member count
+      const actualMemberCount = orgDetail.members ? orgDetail.members.length : 0;
+      
       return {
         ...userOrg,
-        organization: orgDetail
+        organization: {
+          ...orgDetail,
+          memberCount: actualMemberCount,
+          // Ensure the member count reflects the actual members array
+          members: orgDetail.members || []
+        }
       };
+    }).filter(Boolean); // Remove null entries
+
+    console.log('✅ Retrieved organizations for user:', {
+      user: user.email,
+      organizationCount: userOrgs.length,
+      organizations: userOrgs.map(org => ({
+        name: org.organization?.name,
+        memberCount: org.organization?.memberCount,
+        role: org.role
+      }))
     });
 
     res.status(200).json({
@@ -355,4 +438,4 @@ async function handleGetOrganizations(req, res) {
     console.error('Get organizations error:', error);
     res.status(500).json({ error: error.message });
   }
-} 
+}
