@@ -315,71 +315,62 @@ const HomeScreen = ({ user }) => {
       paddingTop: '90px',
       width: '100%'
     }}>
-      {/* Hero Section */}
-      <div className="hero-section" style={{
+      {/* Dashboard Header */}
+      <div className="dashboard-header" style={{
         maxWidth: '1200px',
         margin: '0 auto',
-        padding: '60px 20px',
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '60px',
-        alignItems: 'center',
-        color: '#333'
+        padding: '40px 20px 20px 20px',
+        borderBottom: '1px solid #e5e7eb'
       }}>
-        <div className="hero-text">
-          <h1 style={{
-            fontSize: '3.5rem', 
-            fontWeight: '800', 
-            lineHeight: '1.1',
-            marginBottom: '20px',
-            color: '#000000', // Ensure black color
-            fontFamily: 'Poppins, sans-serif',
-            textShadow: 'none' // Remove any text shadow
-          }}>
-            {organization?.name || 'Welcome'}
-          </h1>
-          <p style={{ 
-            fontSize: '1.3rem', 
-            lineHeight: '1.6',
-            marginBottom: '30px',
-            maxWidth: '500px',
-            color: '#000000' // Changed from #6b7280 to black
-          }}>  
-            Streamline your organization's workflow with our comprehensive management platform. Track progress, manage teams, and achieve your goals.
-          </p>
-          {/* Removed Get Started button */}
-        </div>
-        
-        <div className="hero-visual" style={{
-          position: 'relative',
+        <div style={{
           display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px'
         }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%)', // Keep navbar colors
-            borderRadius: '24px',
-            padding: '30px',
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.2)',
-            transform: 'rotate(-5deg)',
-            width: '400px',
-            height: '300px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            color: 'white'
-          }}>
-            <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🚀</div>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '10px', color: 'white' }}>Welcome to Foundly</h3>
-            <p style={{ textAlign: 'center', opacity: 0.9, color: 'white' }}>Your organization's central hub for collaboration and impact</p>
+          <div>
+            <h1 style={{
+              fontSize: '2.5rem', 
+              fontWeight: '700', 
+              lineHeight: '1.1',
+              marginBottom: '10px',
+              color: '#1F2937',
+              fontFamily: 'Poppins, sans-serif'
+            }}>
+              {organization?.name || 'Dashboard'}
+            </h1>
+            <p style={{ 
+              fontSize: '1.1rem', 
+              lineHeight: '1.5',
+              color: '#6B7280',
+              margin: 0
+            }}>  
+              Welcome back! Here's what's happening with your organization.
+            </p>
           </div>
+          
+          {isAdmin && (
+            <div style={{
+              background: 'linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%)',
+              borderRadius: '12px',
+              padding: '15px 20px',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '0.9rem',
+              fontWeight: '500'
+            }}>
+              <UsersIcon size={16} />
+              Admin Dashboard
+            </div>
+          )}
         </div>
       </div>
 
       {/* Content Wrapper */}
       <div className="content-wrapper">
-        {/* Stats Cards - Make text white */}
+        {/* Stats Cards */}
         <div className="stats-grid">
         <div className="stat-card" style={{
           background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
@@ -437,7 +428,6 @@ const HomeScreen = ({ user }) => {
           <p style={{ color: 'white' }}>Completed Tasks</p>
         </div>
         </div>
-
 
         {/* Quick Actions */}
         <div className="section quick-actions" style={{ marginBottom: '30px' }}>
