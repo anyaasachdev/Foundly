@@ -35,6 +35,16 @@ const HomeScreen = ({ user }) => {
     }
   }, [user]);
 
+  useEffect(() => {
+    // Fetch stats on mount
+    refreshStats();
+    // Set up interval for auto-refresh
+    const interval = setInterval(() => {
+      refreshStats();
+    }, 30000); // 30 seconds
+    return () => clearInterval(interval);
+  }, []);
+
   // Removed auto-refresh to prevent excessive API calls
 
   useEffect(() => {
