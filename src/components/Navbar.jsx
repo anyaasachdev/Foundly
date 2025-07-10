@@ -149,11 +149,10 @@ const Navbar = ({ user, onLogout }) => {
         return;
       }
       console.log('✅ Switching to valid org:', orgName, 'ID:', orgId);
+      
       // Update localStorage
       localStorage.setItem('currentOrganization', orgId);
-      // Update state
-      setCurrentOrg(newOrg);
-      setShowOrgDropdown(false);
+      
       // Store organization preference for persistence
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       localStorage.setItem('userOrganizationData', JSON.stringify({
@@ -164,9 +163,39 @@ const Navbar = ({ user, onLogout }) => {
         setAt: new Date().toISOString(),
         source: 'navbar_switch'
       }));
-      console.log('🎯 Organization switch complete, reloading page...');
-      // Force page reload to refresh all data for the new organization
-      window.location.reload();
+      
+      // Update state
+      setCurrentOrg(newOrg);
+      setShowOrgDropdown(false);
+      
+      // Call backend to update current organization
+      try {
+        await ApiService.switchOrganization(orgId);
+        console.log('✅ Backend organization switch successful');
+      } catch (backendError) {
+        console.warn('⚠️ Backend organization switch failed, but continuing with frontend switch:', backendError);
+      }
+      
+      // Clear cached data to force fresh load
+      localStorage.removeItem('cachedProjects');
+      localStorage.removeItem('cachedStats');
+      localStorage.removeItem('cachedHours');
+      
+      console.log('🎯 Organization switch complete, triggering data refresh...');
+      
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new CustomEvent('organizationChanged', {
+        detail: { organizationId: orgId, organization: newOrg }
+      }));
+      
+      // Force a soft refresh of the current page data
+      if (window.location.pathname === '/') {
+        // If on homepage, trigger a refresh
+        window.location.reload();
+      } else {
+        // For other pages, navigate to homepage to show new org data
+        window.location.href = '/';
+      }
     } catch (error) {
       console.error('❌ Failed to switch organization:', error);
       alert('Failed to switch organization. Please try again.');

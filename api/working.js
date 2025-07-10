@@ -134,67 +134,56 @@ module.exports = async function handler(req, res) {
       });
     }
     
-    if ((action === 'log-hours' || action === 'hours') && req.method === 'POST') {
-      try {
-        console.log('log-hours endpoint called with data:', req.body);
-        const { hours, description, date, organizationId } = req.body;
-        
-        console.log('Extracted data:', { hours, description, date, organizationId });
-        
-        if (!hours || !date) {
-          console.log('Missing required fields:', { hours: !!hours, date: !!date });
-          return res.status(400).json({ error: 'Hours and date are required' });
-        }
-        
-        const HourLog = getModel('HourLog', new mongoose.Schema({
-          hours: { type: Number, required: true, min: 0.1, max: 24 },
-          description: { type: String, default: '' },
-          date: { type: Date, required: true },
-          organizationId: { type: String, default: 'default' },
-          createdAt: { type: Date, default: Date.now }
-        }));
-        
-        const parsedHours = parseFloat(hours);
-        console.log('Parsed hours:', parsedHours);
-        
-        if (isNaN(parsedHours) || parsedHours <= 0) {
-          console.log('Invalid hours value:', parsedHours);
-          return res.status(400).json({ error: 'Hours must be a positive number' });
-        }
-        
-        const hourLogData = {
-          hours: parsedHours,
-          description: description || '',
-          date: new Date(date),
-          organizationId: organizationId || 'default'
-        };
-        
-        console.log('Creating hour log with data:', hourLogData);
-        const hourLog = new HourLog(hourLogData);
-
-        console.log('Saving hour log to database...');
-        const savedHourLog = await hourLog.save();
-        console.log('Hours logged successfully:', savedHourLog._id);
-
-        return res.status(201).json({ 
-          success: true,
-          message: 'Hours logged successfully',
-          hourLog: {
-            _id: savedHourLog._id,
-            hours: savedHourLog.hours,
-            date: savedHourLog.date,
-            description: savedHourLog.description
-          }
-        });
-      } catch (hourLogError) {
-        console.error('Error in log-hours endpoint:', hourLogError);
-        console.error('Error stack:', hourLogError.stack);
-        return res.status(500).json({ 
-          error: 'Failed to log hours', 
-          details: hourLogError.message,
-          stack: hourLogError.stack
-        });
+    if (action === 'log-hours' && req.method === 'POST') {
+      const { hours, description, date, organizationId } = req.body;
+      const userId = req.headers.authorization?.replace('Bearer ', '') || 'current-user';
+      
+      if (!hours || !description || !date) {
+        return res.status(400).json({ error: 'Hours, description, and date are required' });
       }
+      
+      if (isNaN(parseFloat(hours)) || parseFloat(hours) <= 0) {
+        return res.status(400).json({ error: 'Hours must be a positive number' });
+      }
+      
+      const HourLog = getModel('HourLog', new mongoose.Schema({
+        hours: Number,
+        description: String,
+        date: Date,
+        organizationId: String,
+        userId: String,
+        createdAt: { type: Date, default: Date.now }
+      }));
+      
+      const hourLog = new HourLog({
+        hours: parseFloat(hours),
+        description: description.trim(),
+        date: new Date(date),
+        organizationId: organizationId || 'default',
+        userId: userId
+      });
+      
+      await hourLog.save();
+      
+      // Calculate new total hours for the organization
+      const totalHours = await HourLog.aggregate([
+        { $match: { organizationId: organizationId || 'default' } },
+        { $group: { _id: null, total: { $sum: '$hours' } } }
+      ]);
+      
+      console.log('Hours logged successfully:', {
+        hours: hourLog.hours,
+        description: hourLog.description,
+        organizationId: hourLog.organizationId,
+        totalHours: totalHours[0]?.total || 0
+      });
+      
+      return res.status(201).json({ 
+        success: true,
+        message: 'Hours logged successfully',
+        data: hourLog,
+        totalHours: totalHours[0]?.total || 0
+      });
     }
     
     if ((action === 'get-hours' || action === 'hours') && req.method === 'GET') {
@@ -271,22 +260,25 @@ module.exports = async function handler(req, res) {
       const completedTasks = projects.filter(p => p.status === 'completed').length;
       
       // Fix: Count unique, active members only
-      const uniqueActiveMembers = (organization?.members || [])
-        .filter((member, index, arr) => {
+      let totalMembers = 0;
+      if (organization && organization.members) {
+        // Create a Set to track unique user IDs
+        const uniqueUserIds = new Set();
+        
+        organization.members.forEach(member => {
           // Ensure member has a valid user ID
-          if (!member.user) return false;
-          
-          // Check if this is the first occurrence of this user ID (remove duplicates)
-          const firstIndex = arr.findIndex(m => m.user.toString() === member.user.toString());
-          if (firstIndex !== index) return false;
-          
-          // Optionally check if member is active (if isActive field exists)
-          if (member.hasOwnProperty('isActive') && member.isActive === false) return false;
-          
-          return true;
+          if (member.user && member.user.toString()) {
+            uniqueUserIds.add(member.user.toString());
+          }
         });
+        
+        totalMembers = uniqueUserIds.size;
+      }
       
-      const totalMembers = uniqueActiveMembers.length || 1;
+      // Ensure minimum of 1 member (the current user)
+      if (totalMembers === 0) {
+        totalMembers = 1;
+      }
       
       return res.status(200).json({ 
         success: true,

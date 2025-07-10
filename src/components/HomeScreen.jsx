@@ -40,6 +40,21 @@ const HomeScreen = ({ user }) => {
     }
   }, [user]);
 
+  // Listen for organization changes
+  useEffect(() => {
+    const handleOrganizationChange = (event) => {
+      console.log('🔄 HomeScreen: Organization changed, refreshing data...', event.detail);
+      loadOrganizationData();
+      refreshStats();
+    };
+
+    window.addEventListener('organizationChanged', handleOrganizationChange);
+    
+    return () => {
+      window.removeEventListener('organizationChanged', handleOrganizationChange);
+    };
+  }, [user]);
+
   // Remove the conflicting useEffect that calls refreshStats independently
   // useEffect(() => {
   //   // Fetch stats on mount
@@ -745,8 +760,8 @@ const HomeScreen = ({ user }) => {
         </div>
       )}
 
-      {/* Admin Join Code Section - Compact */}
-      {isAdmin && organization && (
+      {/* Organization Join Code Section - Show to all members */}
+      {organization && (
         <div style={{
           maxWidth: '1200px',
           margin: '0 auto 30px',
@@ -770,16 +785,18 @@ const HomeScreen = ({ user }) => {
               }}>
                 <UsersIcon className="w-5 h-5" />
                 Organization Join Code
-                <span style={{
-                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                  color: 'white',
-                  fontSize: '0.6rem',
-                  padding: '3px 6px',
-                  borderRadius: '8px',
-                  fontWeight: '600'
-                }}>
-                  ADMIN
-                </span>
+                {isAdmin && (
+                  <span style={{
+                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                    color: 'white',
+                    fontSize: '0.6rem',
+                    padding: '3px 6px',
+                    borderRadius: '8px',
+                    fontWeight: '600'
+                  }}>
+                    ADMIN
+                  </span>
+                )}
               </h3>
             </div>
             
@@ -854,7 +871,10 @@ const HomeScreen = ({ user }) => {
               color: '#6B7280',
               fontStyle: 'italic'
             }}>
-              💡 Share this code with new members to invite them to your organization
+              {isAdmin ? 
+                '💡 Share this code with new members to invite them to your organization' :
+                '💡 Share this code with others to invite them to join your organization'
+              }
             </p>
           </div>
         </div>

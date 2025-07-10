@@ -956,8 +956,19 @@ app.post('/api/hours', authenticateToken, async (req, res) => {
     // Populate user info for response
     await hourLog.populate('user', 'name email');
     
+    // Calculate new total hours for the organization
+    const totalHours = await HourLog.aggregate([
+      { $match: { organization: user.currentOrganization } },
+      { $group: { _id: null, total: { $sum: '$hours' } } }
+    ]);
+    
     console.log('Hours logged successfully:', hourLog);
-    res.status(201).json({ data: hourLog });
+    console.log('New total hours for organization:', totalHours[0]?.total || 0);
+    
+    res.status(201).json({ 
+      data: hourLog,
+      totalHours: totalHours[0]?.total || 0
+    });
   } catch (error) {
     console.error('Error logging hours:', error);
     res.status(500).json({ error: 'Failed to log hours: ' + error.message });
@@ -981,22 +992,20 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
     ]);
     
     // Fix: Get member count from organization's members array - count unique, active members only
-    const uniqueActiveMembers = (organization?.members || [])
-      .filter((member, index, arr) => {
+    let totalMembers = 0;
+    if (organization && organization.members) {
+      // Create a Set to track unique user IDs
+      const uniqueUserIds = new Set();
+      
+      organization.members.forEach(member => {
         // Ensure member has a valid user ID
-        if (!member.user) return false;
-        
-        // Check if this is the first occurrence of this user ID (remove duplicates)
-        const firstIndex = arr.findIndex(m => m.user.toString() === member.user.toString());
-        if (firstIndex !== index) return false;
-        
-        // Optionally check if member is active (if isActive field exists)
-        if (member.hasOwnProperty('isActive') && member.isActive === false) return false;
-        
-        return true;
+        if (member.user && member.user.toString()) {
+          uniqueUserIds.add(member.user.toString());
+        }
       });
-    
-    const totalMembers = uniqueActiveMembers.length || 0;
+      
+      totalMembers = uniqueUserIds.size;
+    }
     
     res.json({
       data: {
@@ -1007,6 +1016,7 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Stats error:', error);
     res.status(500).json({ error: 'Failed to fetch stats' });
   }
 });
@@ -1055,22 +1065,20 @@ app.get('/api/analytics', authenticateToken, async (req, res) => {
     ]);
     
     // Fix: Get member count from organization's members array - count unique, active members only
-    const uniqueActiveMembers = (organization?.members || [])
-      .filter((member, index, arr) => {
+    let totalMembers = 0;
+    if (organization && organization.members) {
+      // Create a Set to track unique user IDs
+      const uniqueUserIds = new Set();
+      
+      organization.members.forEach(member => {
         // Ensure member has a valid user ID
-        if (!member.user) return false;
-        
-        // Check if this is the first occurrence of this user ID (remove duplicates)
-        const firstIndex = arr.findIndex(m => m.user.toString() === member.user.toString());
-        if (firstIndex !== index) return false;
-        
-        // Optionally check if member is active (if isActive field exists)
-        if (member.hasOwnProperty('isActive') && member.isActive === false) return false;
-        
-        return true;
+        if (member.user && member.user.toString()) {
+          uniqueUserIds.add(member.user.toString());
+        }
       });
-    
-    const totalMembers = uniqueActiveMembers.length || 0;
+      
+      totalMembers = uniqueUserIds.size;
+    }
     
     // Calculate member performance data
     const memberPerformance = [];

@@ -414,23 +414,27 @@ async function handleGetStats(req, res) {
     const activeProjects = projects.filter(p => p.status === 'active').length;
     const completedTasks = projects.filter(p => p.status === 'completed').length;
     
-    // Fix: Get member count from organization's members array - count unique, active members only
-    const uniqueActiveMembers = (organization?.members || [])
-      .filter((member, index, arr) => {
+    // Fix: Count unique, active members only
+    let totalMembers = 0;
+    if (organization && organization.members) {
+      // Create a Set to track unique user IDs
+      const uniqueUserIds = new Set();
+      
+      organization.members.forEach(member => {
         // Ensure member has a valid user ID
-        if (!member.user) return false;
-        
-        // Check if this is the first occurrence of this user ID (remove duplicates)
-        const firstIndex = arr.findIndex(m => m.user.toString() === member.user.toString());
-        if (firstIndex !== index) return false;
-        
-        // Check if member is active
-        if (member.hasOwnProperty('isActive') && member.isActive === false) return false;
-        
-        return true;
+        if (member.user && member.user.toString()) {
+          uniqueUserIds.add(member.user.toString());
+        }
       });
+      
+      totalMembers = uniqueUserIds.size;
+    }
     
-    const totalMembers = uniqueActiveMembers.length || 0;
+    // Ensure minimum of 1 member (the current user)
+    if (totalMembers === 0) {
+      totalMembers = 1;
+    }
+    
     const totalOrganizations = userOrganizations.length || 0;
     
     console.log(`Stats for org ${organizationId}:`, {

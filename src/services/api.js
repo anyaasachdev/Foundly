@@ -426,7 +426,33 @@ class ApiService {
   async getStats() {
     // Use working endpoint with correct action
     const organizationId = localStorage.getItem('currentOrganization') || 'default';
-    return this.request(`/working?action=get-stats&organizationId=${organizationId}`);
+    const response = await this.request(`/working?action=get-stats&organizationId=${organizationId}`);
+    
+    // Ensure consistent data structure
+    if (response && response.success) {
+      return {
+        success: true,
+        stats: response.stats || {},
+        data: response.stats || {}
+      };
+    }
+    
+    // Fallback to main server endpoint
+    try {
+      const mainResponse = await this.request('/stats');
+      return {
+        success: true,
+        stats: mainResponse.data || {},
+        data: mainResponse.data || {}
+      };
+    } catch (error) {
+      console.error('Failed to get stats from main endpoint:', error);
+      return {
+        success: false,
+        stats: { totalHours: 0, totalMembers: 1, activeProjects: 0, completedTasks: 0 },
+        data: { totalHours: 0, totalMembers: 1, activeProjects: 0, completedTasks: 0 }
+      };
+    }
   }
   
   // User Activity - not implemented yet
