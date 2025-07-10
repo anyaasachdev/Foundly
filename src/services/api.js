@@ -404,9 +404,8 @@ class ApiService {
   }
   
   async getHours() {
-    // Use working endpoint with correct action
-    const organizationId = localStorage.getItem('currentOrganization') || 'default';
-    return this.request(`/working?action=get-hours&organizationId=${organizationId}`);
+    // Use the correct hours endpoint
+    return this.request('/hours');
   }
   
   // Analytics - use real analytics endpoint
@@ -422,9 +421,8 @@ class ApiService {
   
   // Stats
   async getStats() {
-    // Use working endpoint with correct action
-    const organizationId = localStorage.getItem('currentOrganization') || 'default';
-    return this.request(`/working?action=get-stats&organizationId=${organizationId}`);
+    // Use the correct stats endpoint
+    return this.request('/stats');
   }
   
   // User Activity - not implemented yet
