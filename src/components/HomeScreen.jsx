@@ -197,36 +197,56 @@ const HomeScreen = ({ user }) => {
         console.log('📊 User data organizations:', user?.organizations?.length || 0);
         console.log('📊 API response organizations:', organizations?.length || 0);
         
-        // Do NOT create fake organizations - redirect to org setup
-        console.log('🔄 No valid organizations found, redirecting to org setup...');
+        // Check if user has any organization indicators before redirecting
+        const currentOrgId = localStorage.getItem('currentOrganization');
+        const userOrgData = localStorage.getItem('userOrganizationData');
+        const hasOrgIndicators = user?.organizations?.length > 0 || currentOrgId || userOrgData;
         
-        // Clear any invalid data
-        localStorage.removeItem('currentOrganization');
-        localStorage.removeItem('userOrganizationData');
-        
-        // Force user to org setup
-        window.location.href = '/organization/create';
-        return;
+        if (hasOrgIndicators) {
+          console.log('🔄 User has org indicators but API failed, showing error state instead of redirecting');
+          // Don't redirect - show error state and let user retry
+          setLoading(false);
+          return;
+        } else {
+          console.log('🔄 No org indicators found, redirecting to org setup...');
+          // Clear any invalid data
+          localStorage.removeItem('currentOrganization');
+          localStorage.removeItem('userOrganizationData');
+          
+          // Force user to org setup
+          window.location.href = '/organization/create';
+          return;
+        }
       }
     } catch (error) {
       console.error('❌ Failed to load organization data:', error);
       
-      // Do NOT create fake error organizations - redirect appropriately
-      console.log('🔄 Error loading organizations, redirecting to org setup...');
+      // Check if user has any organization indicators before redirecting
+      const currentOrgId = localStorage.getItem('currentOrganization');
+      const userOrgData = localStorage.getItem('userOrganizationData');
+      const hasOrgIndicators = user?.organizations?.length > 0 || currentOrgId || userOrgData;
       
-      // Clear any invalid data
-      localStorage.removeItem('currentOrganization');
-      localStorage.removeItem('userOrganizationData');
-      
-      // Check if user has valid auth - if not, redirect to login
-      const authToken = localStorage.getItem('authToken');
-      if (!authToken) {
-        window.location.href = '/login';
+      if (hasOrgIndicators) {
+        console.log('🔄 User has org indicators but API failed, showing error state instead of redirecting');
+        // Don't redirect - show error state and let user retry
+        setLoading(false);
+        return;
       } else {
-        // User is authenticated but org data failed to load
-        window.location.href = '/organization/create';
+        console.log('🔄 No org indicators found, redirecting to org setup...');
+        // Clear any invalid data
+        localStorage.removeItem('currentOrganization');
+        localStorage.removeItem('userOrganizationData');
+        
+        // Check if user has valid auth - if not, redirect to login
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) {
+          window.location.href = '/login';
+        } else {
+          // User is authenticated but org data failed to load
+          window.location.href = '/organization/create';
+        }
+        return;
       }
-      return;
     }
   };
 
@@ -300,9 +320,73 @@ const HomeScreen = ({ user }) => {
   if (!organization) {
     return (
       <div className="home-screen">
-        <div className="error-container">
-          <p>Unable to load organization data. Please try refreshing the page.</p>
-          <button onClick={loadOrganizationData}>Retry</button>
+        <div className="error-container" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '60vh',
+          padding: '40px 20px',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            fontSize: '4rem',
+            marginBottom: '20px'
+          }}>⚠️</div>
+          <h2 style={{
+            fontSize: '1.5rem',
+            fontWeight: '600',
+            marginBottom: '15px',
+            color: '#1F2937'
+          }}>Unable to load organization data</h2>
+          <p style={{
+            fontSize: '1rem',
+            color: '#6B7280',
+            marginBottom: '25px',
+            maxWidth: '400px',
+            lineHeight: '1.5'
+          }}>
+            We're having trouble loading your organization information. This might be a temporary issue.
+          </p>
+          <div style={{
+            display: 'flex',
+            gap: '15px',
+            flexWrap: 'wrap',
+            justifyContent: 'center'
+          }}>
+            <button 
+              onClick={loadOrganizationData}
+              style={{
+                background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '1rem',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Try Again
+            </button>
+            <button 
+              onClick={() => window.location.reload()}
+              style={{
+                background: 'white',
+                color: '#6B7280',
+                border: '1px solid #D1D5DB',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '1rem',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Refresh Page
+            </button>
+          </div>
         </div>
       </div>
     );
