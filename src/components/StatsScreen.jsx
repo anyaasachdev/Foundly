@@ -62,15 +62,28 @@ const StatsScreen = ({ user }) => {
   const loadAnalytics = async () => {
     setLoading(true);
     try {
-      // Use the working endpoint for stats
-      const statsResponse = await ApiService.getStats();
+      console.log('Loading analytics for timeRange:', timeRange);
+      
+      // Get both stats and analytics data
+      const [statsResponse, analyticsResponse] = await Promise.all([
+        ApiService.getStats(),
+        ApiService.getAnalytics(timeRange)
+      ]);
+      
+      console.log('Stats response:', statsResponse);
+      console.log('Analytics response:', analyticsResponse);
+      
       const stats = statsResponse.stats || {};
+      const analytics = analyticsResponse.analytics || {};
+      
       setAnalyticsData({
         totalHours: stats.totalHours || 0,
         activeProjects: stats.activeProjects || 0,
         completedTasks: stats.completedTasks || 0,
         totalMembers: stats.totalMembers || 0,
-        totalProjects: stats.totalProjects || 0
+        totalProjects: stats.totalProjects || 0,
+        trends: analytics.trends || [],
+        summary: analytics.summary || {}
       });
       setLoading(false);
     } catch (error) {
@@ -676,7 +689,7 @@ const StatsScreen = ({ user }) => {
             marginBottom: '32px'
           }}>
             <MetricChart
-              data={getDefaultData(data).trends.projectProgress}
+              data={data.trends && data.trends.length > 0 ? data.trends : getDefaultData(data).trends.projectProgress}
               metric={selectedMetric}
               title="Performance Trends"
             />

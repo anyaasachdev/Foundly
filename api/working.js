@@ -206,11 +206,17 @@ module.exports = async function handler(req, res) {
         createdAt: { type: Date, default: Date.now }
       }));
       
+      // Get organization ID from query params
+      const organizationId = req.query.organizationId || 'default';
+      console.log('Getting hours for organization:', organizationId);
+      
       const hourLogs = await HourLog.find({ 
-        organizationId: req.query.organizationId || 'default'
+        organizationId: organizationId
       }).sort({ date: -1 });
 
       const totalHours = hourLogs.reduce((sum, log) => sum + log.hours, 0);
+      
+      console.log(`Found ${hourLogs.length} hour logs with total ${totalHours} hours for org ${organizationId}`);
 
       return res.status(200).json({ 
         success: true, 
@@ -323,9 +329,14 @@ module.exports = async function handler(req, res) {
         createdAt: { type: Date, default: Date.now }
       }));
       
+      const organizationId = req.query.organizationId || 'default';
+      console.log('Getting projects for organization:', organizationId);
+      
       const projects = await Project.find({ 
-        organizationId: req.query.organizationId || 'default'
+        organizationId: organizationId
       }).sort({ createdAt: -1 });
+      
+      console.log(`Found ${projects.length} projects for org ${organizationId}`);
 
       return res.status(200).json({ 
         success: true, 
@@ -336,6 +347,58 @@ module.exports = async function handler(req, res) {
           status: p.status
         }))
       });
+    }
+    
+    if ((action === 'update-project' || action === 'projects') && req.method === 'PUT') {
+      const { projectId, status, title, description } = req.body;
+      
+      if (!projectId) {
+        return res.status(400).json({ error: 'Project ID is required' });
+      }
+      
+      const Project = getModel('Project', new mongoose.Schema({
+        name: String,
+        description: String,
+        organizationId: String,
+        status: String,
+        createdAt: { type: Date, default: Date.now }
+      }));
+      
+      try {
+        const updateData = {};
+        if (status) updateData.status = status;
+        if (title) updateData.name = title;
+        if (description) updateData.description = description;
+        
+        const updatedProject = await Project.findByIdAndUpdate(
+          projectId,
+          updateData,
+          { new: true }
+        );
+        
+        if (!updatedProject) {
+          return res.status(404).json({ error: 'Project not found' });
+        }
+        
+        console.log('Project updated:', updatedProject._id, updateData);
+        
+        return res.status(200).json({ 
+          success: true,
+          message: 'Project updated successfully',
+          project: {
+            _id: updatedProject._id,
+            title: updatedProject.name,
+            description: updatedProject.description,
+            status: updatedProject.status
+          }
+        });
+      } catch (error) {
+        console.error('Error updating project:', error);
+        return res.status(500).json({ 
+          error: 'Failed to update project', 
+          details: error.message 
+        });
+      }
     }
     
     if ((action === 'create-event' || action === 'events') && req.method === 'POST') {
@@ -516,6 +579,131 @@ module.exports = async function handler(req, res) {
             joinCode: organization.joinCode,
             role: 'admin'
           }
+        });
+      }
+    }
+    
+    if (action === 'get-analytics' && req.method === 'GET') {
+      const organizationId = req.query.organizationId || 'default';
+      const timeRange = req.query.timeRange || 'month';
+      
+      try {
+        const HourLog = getModel('HourLog', new mongoose.Schema({
+          hours: Number,
+          description: String,
+          date: Date,
+          organizationId: String,
+          createdAt: { type: Date, default: Date.now }
+        }));
+        
+        const Project = getModel('Project', new mongoose.Schema({
+          name: String,
+          description: String,
+          organizationId: String,
+          status: String,
+          createdAt: { type: Date, default: Date.now }
+        }));
+        
+        // Calculate date range based on timeRange
+        const now = new Date();
+        let startDate = new Date();
+        
+        switch (timeRange) {
+          case 'week':
+            startDate.setDate(now.getDate() - 7);
+            break;
+          case 'month':
+            startDate.setMonth(now.getMonth() - 1);
+            break;
+          case 'quarter':
+            startDate.setMonth(now.getMonth() - 3);
+            break;
+          case 'year':
+            startDate.setFullYear(now.getFullYear() - 1);
+            break;
+        }
+        
+        // Get hour logs in date range
+        const hourLogs = await HourLog.find({
+          organizationId,
+          createdAt: { $gte: startDate }
+        }).sort({ createdAt: 1 });
+        
+        // Get projects in date range
+        const projects = await Project.find({
+          organizationId,
+          createdAt: { $gte: startDate }
+        }).sort({ createdAt: 1 });
+        
+        // Group data by time periods
+        const timeGroups = {};
+        const formatDate = (date) => {
+          switch (timeRange) {
+            case 'week':
+              return date.toLocaleDateString('en-US', { weekday: 'short' });
+            case 'month':
+            case 'quarter':
+              return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            case 'year':
+              return date.toLocaleDateString('en-US', { month: 'short' });
+            default:
+              return date.toLocaleDateString('en-US', { month: 'short' });
+          }
+        };
+        
+        // Initialize time groups
+        const periods = timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : timeRange === 'quarter' ? 90 : 365;
+        for (let i = 0; i < Math.min(periods, 12); i++) {
+          const date = new Date(startDate);
+          date.setDate(startDate.getDate() + (i * Math.floor(periods / 12)));
+          const key = formatDate(date);
+          timeGroups[key] = { hours: 0, projects: 0, members: 1, date };
+        }
+        
+        // Aggregate hour logs
+        hourLogs.forEach(log => {
+          const key = formatDate(log.createdAt);
+          if (timeGroups[key]) {
+            timeGroups[key].hours += log.hours;
+          }
+        });
+        
+        // Aggregate projects
+        projects.forEach(project => {
+          const key = formatDate(project.createdAt);
+          if (timeGroups[key]) {
+            timeGroups[key].projects++;
+          }
+        });
+        
+        // Convert to array and calculate impact
+        const trends = Object.entries(timeGroups)
+          .map(([month, data]) => ({
+            month,
+            hours: data.hours,
+            projects: data.projects,
+            members: data.members,
+            impact: (data.projects * 10) + (data.hours * 2) + (data.members * 5)
+          }))
+          .sort((a, b) => timeGroups[a.month].date - timeGroups[b.month].date);
+        
+        return res.status(200).json({
+          success: true,
+          analytics: {
+            trends,
+            summary: {
+              totalHours: hourLogs.reduce((sum, log) => sum + log.hours, 0),
+              totalProjects: projects.length,
+              activeProjects: projects.filter(p => p.status === 'active').length,
+              completedProjects: projects.filter(p => p.status === 'completed').length
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Error getting analytics:', error);
+        return res.status(500).json({
+          error: 'Failed to get analytics',
+          details: error.message
         });
       }
     }

@@ -282,7 +282,8 @@ class ApiService {
   // Projects
   async getProjects() {
     // Use working endpoint with correct action
-    return this.request('/working?action=get-projects');
+    const organizationId = localStorage.getItem('currentOrganization') || 'default';
+    return this.request(`/working?action=get-projects&organizationId=${organizationId}`);
   }
   
   async createProject(projectData) {
@@ -301,9 +302,19 @@ class ApiService {
   
   async updateProject(projectId, projectData) {
     console.log('updateProject called with:', projectId, projectData);
-    // For now, just return success as the working endpoint doesn't support updates
-    // The frontend will handle the UI update locally
-    return { success: true, message: 'Project updated locally' };
+    try {
+      const result = await this.request('/working?action=update-project', {
+        method: 'PUT',
+        body: JSON.stringify({
+          projectId,
+          ...projectData
+        })
+      });
+      return result;
+    } catch (error) {
+      console.error('updateProject error:', error);
+      throw error;
+    }
   }
   
   async deleteProject(projectId) {
@@ -315,7 +326,8 @@ class ApiService {
   // Events
   async getEvents() {
     // Use working endpoint with correct action
-    return this.request('/working?action=get-events');
+    const organizationId = localStorage.getItem('currentOrganization') || 'default';
+    return this.request(`/working?action=get-events&organizationId=${organizationId}`);
   }
   
   async createEvent(eventData) {
@@ -382,30 +394,14 @@ class ApiService {
   
   async getHours() {
     // Use working endpoint with correct action
-    return this.request('/working?action=get-hours');
+    const organizationId = localStorage.getItem('currentOrganization') || 'default';
+    return this.request(`/working?action=get-hours&organizationId=${organizationId}`);
   }
   
-  // Analytics - use stats instead
+  // Analytics - use real analytics endpoint
   async getAnalytics(timeRange = 'month') {
-    // Use stats endpoint instead of analytics
-    const statsResponse = await this.request('/working?action=get-stats');
-    return { 
-      data: {
-        overview: {
-          totalHours: statsResponse.stats?.totalHours || 0,
-          projectsActive: statsResponse.stats?.activeProjects || 0,
-          projectsCompleted: statsResponse.stats?.completedTasks || 0,
-          membersRecruited: statsResponse.stats?.totalMembers || 0,
-          hoursGrowth: 0,
-          memberGrowth: 0,
-          impactGrowth: 0
-        },
-        trends: {
-          projectProgress: [],
-          memberActivity: []
-        }
-      }
-    };
+    const organizationId = localStorage.getItem('currentOrganization') || 'default';
+    return this.request(`/working?action=get-analytics&organizationId=${organizationId}&timeRange=${timeRange}`);
   }
   
   async exportAnalytics(exportData) {
@@ -416,7 +412,8 @@ class ApiService {
   // Stats
   async getStats() {
     // Use working endpoint with correct action
-    return this.request('/working?action=get-stats');
+    const organizationId = localStorage.getItem('currentOrganization') || 'default';
+    return this.request(`/working?action=get-stats&organizationId=${organizationId}`);
   }
   
   // User Activity - not implemented yet
