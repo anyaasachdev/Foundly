@@ -399,10 +399,14 @@ async function handleGetStats(req, res) {
     }));
     
     // Get data from all sources
-    const [hourLogs, projects, organization] = await Promise.all([
+    const [hourLogs, projects, organization, userOrganizations] = await Promise.all([
       HourLog.find({ organizationId }),
       Project.find({ organizationId }),
-      Organization.findById(organizationId).catch(() => null)
+      Organization.findById(organizationId).catch(() => null),
+      // Get all organizations the user is part of
+      Organization.find({
+        'members.user': decoded.userId.toString()
+      }).catch(() => [])
     ]);
     
     // Calculate stats
@@ -427,13 +431,15 @@ async function handleGetStats(req, res) {
       });
     
     const totalMembers = uniqueActiveMembers.length || 0;
+    const totalOrganizations = userOrganizations.length || 0;
     
     console.log(`Stats for org ${organizationId}:`, {
       totalHours,
       activeProjects,
       completedTasks,
       totalMembers,
-      totalProjects: projects.length
+      totalProjects: projects.length,
+      totalOrganizations
     });
 
     return res.status(200).json({ 
@@ -443,7 +449,8 @@ async function handleGetStats(req, res) {
         activeProjects,
         completedTasks,
         totalMembers,
-        totalProjects: projects.length
+        totalProjects: projects.length,
+        totalOrganizations
       }
     });
   } catch (error) {
