@@ -30,22 +30,34 @@ const HomeScreen = ({ user }) => {
   );
 
   useEffect(() => {
-    if (user) {
+    if (user && user.email) {
+      console.log('👤 HomeScreen: User data available, loading organization data...');
       loadOrganizationData();
+    } else {
+      console.log('⏳ HomeScreen: Waiting for complete user data...');
     }
   }, [user]);
 
-  useEffect(() => {
-    // Fetch stats on mount
-    refreshStats();
-    // Set up interval for auto-refresh
-    const interval = setInterval(() => {
-      refreshStats();
-    }, 30000); // 30 seconds
-    return () => clearInterval(interval);
-  }, []);
+  // Remove the conflicting useEffect that calls refreshStats independently
+  // useEffect(() => {
+  //   // Fetch stats on mount
+  //   refreshStats();
+  //   // Set up interval for auto-refresh
+  //   const interval = setInterval(() => {
+  //     refreshStats();
+  //   }, 30000); // 30 seconds
+  //   return () => clearInterval(interval);
+  // }, []);
 
-  // Removed auto-refresh to prevent excessive API calls
+  // Set up auto-refresh interval only after organization is loaded
+  useEffect(() => {
+    if (organization) {
+      const interval = setInterval(() => {
+        refreshStats();
+      }, 30000); // 30 seconds
+      return () => clearInterval(interval);
+    }
+  }, [organization]);
 
   useEffect(() => {
     if (socket) {
@@ -126,7 +138,15 @@ const HomeScreen = ({ user }) => {
           setIsAdmin(['admin', 'owner'].includes(currentOrg?.role));
           console.log('✅ HomeScreen: Current organization set:', currentOrg.name, 'ID:', currentOrg._id);
           
+          // Ensure organization ID is set in localStorage
+          const orgId = currentOrg._id || currentOrg.organization?._id || currentOrg.organizationId?._id || currentOrg.organizationId;
+          if (orgId) {
+            localStorage.setItem('currentOrganization', orgId);
+            console.log('✅ HomeScreen: Organization ID set in localStorage:', orgId);
+          }
+          
           // Load organization-specific data
+          console.log('🔄 HomeScreen: Loading data for organization:', orgId);
           const [projectsResponse, statsResponse, hoursResponse] = await Promise.all([
             ApiService.getProjects().catch((err) => {
               console.error('Failed to load projects:', err);
@@ -261,6 +281,16 @@ const HomeScreen = ({ user }) => {
     setLoading(true);
     try {
       console.log('🔄 Refreshing stats...');
+      
+      // Check if we have a valid organization ID
+      const currentOrgId = localStorage.getItem('currentOrganization');
+      console.log('🏢 Current organization ID from localStorage:', currentOrgId);
+      
+      if (!currentOrgId) {
+        console.warn('⚠️ No organization ID found in localStorage, using default');
+        localStorage.setItem('currentOrganization', 'default');
+      }
+      
       const statsResponse = await ApiService.getStats();
       console.log('📊 Stats response:', statsResponse);
       
@@ -282,6 +312,7 @@ const HomeScreen = ({ user }) => {
       });
     } catch (error) {
       console.error('❌ Failed to refresh stats:', error);
+      console.error('❌ Error details:', error.message);
       // Optionally show an error toast
     }
     setLoading(false);
