@@ -338,149 +338,168 @@ const HomeScreen = ({ user }) => {
       }}>
         <div style={{
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
           marginBottom: '20px'
         }}>
-          <div>
-            <h1 style={{
-              fontSize: '2.5rem', 
-              fontWeight: '700', 
-              lineHeight: '1.1',
-              marginBottom: '10px',
-              color: '#1F2937',
-              fontFamily: 'Poppins, sans-serif'
-            }}>
-              {organization?.name || 'Dashboard'}
-            </h1>
-            <p style={{ 
-              fontSize: '1.1rem', 
-              lineHeight: '1.5',
-              color: '#6B7280',
-              margin: 0
-            }}>  
-              Welcome back! Here's what's happening with your organization.
-            </p>
-          </div>
-          
-          {isAdmin && (
-            <div style={{
-              background: 'linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%)',
-              borderRadius: '12px',
-              padding: '15px 20px',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '0.9rem',
-              fontWeight: '500'
-            }}>
-              <UsersIcon size={16} />
-              Admin Dashboard
+          <h2 style={{
+            fontSize: '1.2rem',
+            fontWeight: '600',
+            color: '#6366F1',
+            marginBottom: '8px',
+            letterSpacing: '0.02em'
+          }}>Your Org at Work 🚀</h2>
+          <h1 style={{
+            fontSize: '2.5rem',
+            fontWeight: '700',
+            margin: 0,
+            color: '#111827',
+            letterSpacing: '-0.02em'
+          }}>{organization?.name || 'Organization Dashboard'}</h1>
+        </div>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '40px',
+          flexWrap: 'wrap',
+          marginTop: '10px'
+        }}>
+          {/* Angled Card with Rocketship */}
+          <div style={{
+            background: 'linear-gradient(135deg, #3730A3 0%, #6366F1 100%)',
+            color: 'white',
+            borderRadius: '22px',
+            padding: '32px 36px',
+            minWidth: '320px',
+            minHeight: '160px',
+            boxShadow: '0 8px 32px rgba(55, 48, 163, 0.18)',
+            transform: 'rotate(-6deg)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: '24px',
+            marginBottom: '16px',
+            position: 'relative'
+          }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🚀</div>
+            <div style={{ fontWeight: 600, fontSize: '1.3rem', marginBottom: '6px', letterSpacing: '-0.01em' }}>
+              {organization?.name || 'Your Organization'} at a Glance
             </div>
-          )}
+            <div style={{ fontSize: '1.05rem', color: '#E0E7FF', marginBottom: '6px', textAlign: 'center' }}>
+              {stats.totalMembers} members • {stats.activeProjects} active projects
+            </div>
+            <div style={{ fontSize: '0.98rem', color: '#C7D2FE', textAlign: 'center' }}>
+              {stats.hoursLogged} hours logged • {stats.completedTasks} tasks done
+            </div>
+          </div>
+          {/* End Angled Card */}
+        </div>
+      </div>
+      {/* Stats Grid */}
+      <div className="stats-grid" style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        gap: '32px',
+        padding: '40px 20px 0 20px'
+      }}>
+        <div className="stat-card" style={{
+          background: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
+          color: 'white',
+          borderRadius: '18px',
+          padding: '32px 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          boxShadow: '0 4px 16px rgba(16, 185, 129, 0.10)',
+        }}>
+          <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>👥</div>
+          <div style={{ fontSize: '2.1rem', fontWeight: 700 }}>{stats.totalMembers}</div>
+          <div style={{ fontSize: '1.1rem', marginTop: '6px', color: '#D1FAE5' }}>Total Members</div>
+        </div>
+        <div className="stat-card" style={{
+          background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
+          color: 'white',
+          borderRadius: '18px',
+          padding: '32px 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          boxShadow: '0 4px 16px rgba(139, 92, 246, 0.10)',
+        }}>
+          <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>🎯</div>
+          <div style={{ fontSize: '2.1rem', fontWeight: 700 }}>{stats.activeProjects}</div>
+          <div style={{ fontSize: '1.1rem', marginTop: '6px', color: '#E0E7FF' }}>Active Projects</div>
+        </div>
+        <div className="stat-card" style={{
+          background: 'linear-gradient(135deg, #EC4899 0%, #F472B6 100%)',
+          color: 'white',
+          borderRadius: '18px',
+          padding: '32px 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          boxShadow: '0 4px 16px rgba(236, 72, 153, 0.10)',
+        }}>
+          <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>⏰</div>
+          <div style={{ fontSize: '2.1rem', fontWeight: 700 }}>{stats.hoursLogged}</div>
+          <div style={{ fontSize: '1.1rem', marginTop: '6px', color: '#FCE7F3' }}>Hours Logged</div>
+        </div>
+        <div className="stat-card" style={{
+          background: 'linear-gradient(135deg, #F59E42 0%, #FBBF24 100%)',
+          color: 'white',
+          borderRadius: '18px',
+          padding: '32px 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          boxShadow: '0 4px 16px rgba(251, 191, 36, 0.10)',
+        }}>
+          <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>📈</div>
+          <div style={{ fontSize: '2.1rem', fontWeight: 700 }}>{stats.completedTasks}</div>
+          <div style={{ fontSize: '1.1rem', marginTop: '6px', color: '#FEF3C7' }}>Completed Tasks</div>
         </div>
       </div>
 
-      {/* Content Wrapper */}
-      <div className="content-wrapper">
-        {/* Stats Cards */}
-        <div className="stats-grid">
-        <div className="stat-card" style={{
-          background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-          borderRadius: '15px',
-          padding: '25px',
-          color: 'white',
-          textAlign: 'center'
-        }}>
-          <Users className="w-8 h-8 mx-auto mb-3" style={{ color: 'white' }} />
-          <h3 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '5px', color: 'white' }}>
-            {stats.totalMembers}
-          </h3>
-          <p style={{ color: 'white' }}>Total Members</p>
-        </div>
-        
-        <div className="stat-card" style={{
-          background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
-          borderRadius: '15px',
-          padding: '25px',
-          color: 'white',
-          textAlign: 'center'
-        }}>
-          <Target className="w-8 h-8 mx-auto mb-3" style={{ color: 'white' }} />
-          <h3 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '5px', color: 'white' }}>
-            {stats.activeProjects}
-          </h3>
-          <p style={{ color: 'white' }}>Active Projects</p>
-        </div>
-        
-        <div className="stat-card" style={{
-          background: 'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)',
-          borderRadius: '15px',
-          padding: '25px',
-          color: 'white',
-          textAlign: 'center'
-        }}>
-          <Clock className="w-8 h-8 mx-auto mb-3" style={{ color: 'white' }} />
-          <h3 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '5px', color: 'white' }}>
-            {stats.hoursLogged}
-          </h3>
-          <p style={{ color: 'white' }}>Hours Logged</p>
-        </div>
-        
-        <div className="stat-card" style={{
-          background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-          borderRadius: '15px',
-          padding: '25px',
-          color: 'white',
-          textAlign: 'center'
-        }}>
-          <TrendingUp className="w-8 h-8 mx-auto mb-3" style={{ color: 'white' }} />
-          <h3 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '5px', color: 'white' }}>
-            {stats.completedTasks}
-          </h3>
-          <p style={{ color: 'white' }}>Completed Tasks</p>
-        </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="section quick-actions" style={{ marginBottom: '30px' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '20px', color: '#1F2937' }}>
-          Quick Actions
-        </h2>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-          <button
-            onClick={() => setShowHourLog(true)}
-            style={{
-              background: 'linear-gradient(135deg, #374151 0%, #1f2937 100%)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '15px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              fontSize: '1rem',
-              fontWeight: '500',
-              fontFamily: 'Poppins, sans-serif',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'translateY(-1px)';
-              e.target.style.boxShadow = '0 4px 12px rgba(55, 65, 81, 0.3)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = 'none';
-            }}
-          >
-            <Plus className="w-5 h-5" />
-            Log Volunteer Hours
-          </button>
-        </div>
-        </div>
+      {/* Quick Actions */}
+      <div className="section quick-actions" style={{ marginBottom: '30px' }}>
+      <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '20px', color: '#1F2937' }}>
+        Quick Actions
+      </h2>
+      
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+        <button
+          onClick={() => setShowHourLog(true)}
+          style={{
+            background: 'linear-gradient(135deg, #374151 0%, #1f2937 100%)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '10px',
+            padding: '15px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            fontSize: '1rem',
+            fontWeight: '500',
+            fontFamily: 'Poppins, sans-serif',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'translateY(-1px)';
+            e.target.style.boxShadow = '0 4px 12px rgba(55, 65, 81, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = 'none';
+          }}
+        >
+          <Plus className="w-5 h-5" />
+          Log Volunteer Hours
+        </button>
+      </div>
       </div>
 
       {/* Hour Logging Modal */}
