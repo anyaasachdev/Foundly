@@ -97,35 +97,58 @@ function App() {
     console.log('📊 User organizations in data:', userData.organizations?.length || 0);
     console.log('🏢 Current org in localStorage:', localStorage.getItem('currentOrganization'));
     
-    try {
-      // First check if user has organizations in their stored data
-      if (userData.organizations && userData.organizations.length > 0) {
-        console.log('✅ Found organizations in user data:', userData.organizations.length);
-        
-        // Set up the current organization if not already set
-        const currentOrgId = localStorage.getItem('currentOrganization');
-        if (!currentOrgId) {
-          // Set first organization as current
-          const firstOrg = userData.organizations[0];
-          const orgId = firstOrg.organization?._id || firstOrg.organizationId?._id || firstOrg.organizationId;
-          if (orgId) {
-            console.log('🎯 Setting current organization to:', orgId);
-            localStorage.setItem('currentOrganization', orgId);
-          }
+    // CRITICAL: Multiple fallback checks to prevent showing org setup to existing users
+    const currentOrgId = localStorage.getItem('currentOrganization');
+    const hasUserOrganizations = userData.organizations && userData.organizations.length > 0;
+    const hasStoredOrgId = !!currentOrgId;
+    
+    // Check if user has a stored organization preference (most reliable)
+    const userOrgPreference = localStorage.getItem('userOrganizationData');
+    let hasOrgPreference = false;
+    if (userOrgPreference) {
+      try {
+        const orgData = JSON.parse(userOrgPreference);
+        hasOrgPreference = orgData.organizationId && orgData.userEmail === userData.email;
+        if (hasOrgPreference) {
+          console.log('✅ Found stored organization preference for user');
         }
-        
-        console.log('✅ User has organizations, skipping org setup');
-        setNeedsOrgSetup(false);
-        return;
+      } catch (e) {
+        console.log('⚠️ Invalid organization preference data');
+      }
+    }
+    
+    // DEFENSIVE CHECK: If ANY indication of organization membership exists, skip org setup
+    if (hasUserOrganizations || hasStoredOrgId || hasOrgPreference) {
+      console.log('🛡️ DEFENSIVE CHECK: User has organization indicators');
+      console.log('   - User organizations:', hasUserOrganizations);
+      console.log('   - Stored org ID:', hasStoredOrgId);
+      console.log('   - Org preference:', hasOrgPreference);
+      
+      // Set up the current organization if not already set
+      if (!currentOrgId && hasUserOrganizations) {
+        const firstOrg = userData.organizations[0];
+        const orgId = firstOrg.organization?._id || firstOrg.organizationId?._id || firstOrg.organizationId;
+        if (orgId) {
+          console.log('🎯 Setting current organization to:', orgId);
+          localStorage.setItem('currentOrganization', orgId);
+          
+          // Store organization preference for future use
+          localStorage.setItem('userOrganizationData', JSON.stringify({
+            userEmail: userData.email,
+            organizationId: orgId,
+            organizationName: firstOrg.organization?.name || 'Unknown',
+            role: firstOrg.role || 'member',
+            setAt: new Date().toISOString()
+          }));
+        }
       }
       
-      // Also check if there's a currentOrganization set (fallback)
-      const currentOrgId = localStorage.getItem('currentOrganization');
-      if (currentOrgId) {
-        console.log('✅ Found currentOrganization in localStorage, skipping org setup');
-        setNeedsOrgSetup(false);
-        return;
-      }
+      console.log('✅ RESULT: Skipping org setup - user has organizations');
+      setNeedsOrgSetup(false);
+      return;
+    }
+    
+    try {
       
       // Test API connectivity before making requests
       try {
@@ -195,18 +218,30 @@ function App() {
       setUser(null);
       setNeedsOrgSetup(false);
       localStorage.removeItem('refreshToken');
+      localStorage.removeItem('currentOrganization');
+      localStorage.removeItem('userOrganizationData');
     }
   };
 
   const handleOrganizationSetup = (result) => {
-    console.log('Organization setup completed:', result);
+    console.log('🎉 Organization setup completed:', result);
     setNeedsOrgSetup(false);
     
     // Store the organization and navigate properly
     if (result.organization) {
       const orgId = result.organization._id;
-      console.log('Setting current organization to:', orgId, result.organization.name);
+      console.log('🎯 Setting current organization to:', orgId, result.organization.name);
       localStorage.setItem('currentOrganization', orgId);
+      
+      // Store persistent organization preference to prevent future org setup screens
+      localStorage.setItem('userOrganizationData', JSON.stringify({
+        userEmail: user.email,
+        organizationId: orgId,
+        organizationName: result.organization.name,
+        role: result.type === 'created' ? 'admin' : 'member',
+        setAt: new Date().toISOString(),
+        setupType: result.type
+      }));
       
       // Clear any cached data so new org data loads fresh
       localStorage.removeItem('cachedProjects');
