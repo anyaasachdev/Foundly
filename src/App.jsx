@@ -189,27 +189,25 @@ function App() {
           console.log('❌ ORG DETECTION DEBUG: Could not extract org ID from API response');
         }
       } else {
-        console.log('❌ ORG DETECTION DEBUG: No organizations found via API, user needs org setup');
-        setNeedsOrgSetup(true);
-        console.log('❌ ORG DETECTION DEBUG: Setting needsOrgSetup to TRUE');
+        console.log('❌ ORG DETECTION DEBUG: No organizations found via API');
       }
     } catch (error) {
       console.error('❌ ORG DETECTION DEBUG: Error fetching organizations from API:', error);
-      
-      // If API fails but user has any org indicators, don't show org setup
-      const hasAnyOrgData = userData.organizations?.length > 0 || 
-                           localStorage.getItem('currentOrganization') || 
-                           localStorage.getItem('userOrganizationData');
-      
-      if (hasAnyOrgData) {
-        console.log('🔄 ORG DETECTION DEBUG: API failed but user has org data, skipping org setup');
-        setNeedsOrgSetup(false);
-        console.log('✅ ORG DETECTION DEBUG: Setting needsOrgSetup to FALSE');
-      } else {
-        console.log('❌ ORG DETECTION DEBUG: API failed and no org data found, showing org setup');
-        setNeedsOrgSetup(true);
-        console.log('❌ ORG DETECTION DEBUG: Setting needsOrgSetup to TRUE');
-      }
+    }
+    
+    // FINAL CHECK: If we get here, check if user has any organization indicators at all
+    const hasAnyOrgData = userData.organizations?.length > 0 || 
+                         localStorage.getItem('currentOrganization') || 
+                         localStorage.getItem('userOrganizationData');
+    
+    if (hasAnyOrgData) {
+      console.log('🔄 ORG DETECTION DEBUG: User has org indicators, skipping org setup');
+      setNeedsOrgSetup(false);
+      console.log('✅ ORG DETECTION DEBUG: Setting needsOrgSetup to FALSE');
+    } else {
+      console.log('❌ ORG DETECTION DEBUG: No org indicators found, showing org setup');
+      setNeedsOrgSetup(true);
+      console.log('❌ ORG DETECTION DEBUG: Setting needsOrgSetup to TRUE');
     }
   };
 
@@ -309,22 +307,33 @@ function App() {
 
   // Show organization setup if user is logged in but needs org setup
   if (user && needsOrgSetup) {
-    console.log('🚨 RENDERING DEBUG: SHOWING ORG SETUP - User needs organization setup');
-    console.log('🚨 RENDERING DEBUG: User email:', user.email);
-    console.log('🚨 RENDERING DEBUG: User organizations:', user.organizations?.length || 0);
-    console.log('🚨 RENDERING DEBUG: Current org ID:', localStorage.getItem('currentOrganization'));
-    console.log('🚨 RENDERING DEBUG: Needs org setup:', needsOrgSetup);
-    console.log('🚨 RENDERING DEBUG: User data structure:', {
-      hasOrganizations: !!user.organizations,
-      organizationCount: user.organizations?.length || 0,
-      organizations: user.organizations || []
-    });
+    // FINAL SAFEGUARD: Check if user has any organization indicators
+    const hasAnyOrgData = user.organizations?.length > 0 || 
+                         localStorage.getItem('currentOrganization') || 
+                         localStorage.getItem('userOrganizationData');
     
-    return (
-      <div className="app">
-        <OrganizationSetup onComplete={handleOrganizationSetup} />
-      </div>
-    );
+    if (hasAnyOrgData) {
+      console.log('🛡️ FINAL SAFEGUARD: User has org indicators, forcing needsOrgSetup to false');
+      setNeedsOrgSetup(false);
+      // Continue to main app rendering
+    } else {
+      console.log('🚨 RENDERING DEBUG: SHOWING ORG SETUP - User needs organization setup');
+      console.log('🚨 RENDERING DEBUG: User email:', user.email);
+      console.log('🚨 RENDERING DEBUG: User organizations:', user.organizations?.length || 0);
+      console.log('🚨 RENDERING DEBUG: Current org ID:', localStorage.getItem('currentOrganization'));
+      console.log('🚨 RENDERING DEBUG: Needs org setup:', needsOrgSetup);
+      console.log('🚨 RENDERING DEBUG: User data structure:', {
+        hasOrganizations: !!user.organizations,
+        organizationCount: user.organizations?.length || 0,
+        organizations: user.organizations || []
+      });
+      
+      return (
+        <div className="app">
+          <OrganizationSetup onComplete={handleOrganizationSetup} />
+        </div>
+      );
+    }
   }
 
   // Debug output before rendering main app

@@ -63,18 +63,18 @@ const HomeScreen = ({ user }) => {
 
   const loadOrganizationData = async () => {
     try {
-      console.log('🏠 Loading organization data for HomeScreen...');
+      console.log('🏠 HomeScreen: Loading organization data...');
       console.log('👤 User data:', user?.email, 'Organizations in user:', user?.organizations?.length || 0);
       
       // First check if user has organizations in their data
       let organizations = [];
       if (user?.organizations && user.organizations.length > 0) {
-        console.log('✅ Using organizations from user data');
+        console.log('✅ HomeScreen: Using organizations from user data');
         organizations = user.organizations;
       } else {
-        console.log('🌐 Fetching organizations from API...');
+        console.log('🌐 HomeScreen: Fetching organizations from API...');
         const response = await ApiService.getMyOrganizations();
-        console.log('📡 API Organizations response:', response);
+        console.log('📡 HomeScreen: API Organizations response:', response);
         organizations = response?.organizations || [];
       }
       
@@ -92,9 +92,9 @@ const HomeScreen = ({ user }) => {
           });
           
           if (currentOrg) {
-            console.log('✅ Found current organization by ID:', currentOrgId);
+            console.log('✅ HomeScreen: Found current organization by ID:', currentOrgId);
           } else {
-            console.log('⚠️ Current org ID not found in user organizations:', currentOrgId);
+            console.log('⚠️ HomeScreen: Current org ID not found in user organizations:', currentOrgId);
             // Clear invalid org ID
             localStorage.removeItem('currentOrganization');
           }
@@ -102,151 +102,81 @@ const HomeScreen = ({ user }) => {
         
         // If not found, use the first valid organization
         if (!currentOrg && organizations.length > 0) {
-          const firstOrgData = organizations[0];
-          
-          // Extract the actual organization data with validation
-          if (firstOrgData.organization) {
-            // User data format: { role: 'admin', organization: { _id, name, ... } }
-            const orgData = firstOrgData.organization;
-            
-            // Validate this is a real organization
-            if (orgData._id && orgData.name && !orgData.name.includes('Temporary') && !orgData.name.includes('Error')) {
-              currentOrg = {
-                ...orgData,
-                role: firstOrgData.role
-              };
-              
-              const orgId = orgData._id;
-              localStorage.setItem('currentOrganization', orgId);
-              console.log('🎯 Set current organization to first valid org:', orgId, orgData.name);
-            } else {
-              console.log('❌ First organization is invalid/temporary:', orgData.name);
-            }
-          } else if (firstOrgData._id && firstOrgData.name) {
-            // Direct organization format: { _id, name, ... }
-            // Validate this is a real organization
-            if (!firstOrgData.name.includes('Temporary') && !firstOrgData.name.includes('Error') && !firstOrgData.name.includes('Getting Started')) {
-              currentOrg = firstOrgData;
-              localStorage.setItem('currentOrganization', firstOrgData._id);
-              console.log('🎯 Set current organization to first valid org:', firstOrgData._id, firstOrgData.name);
-            } else {
-              console.log('❌ First organization is invalid/temporary:', firstOrgData.name);
-            }
+          currentOrg = organizations[0];
+          const orgId = currentOrg._id || currentOrg.organization?._id || currentOrg.organizationId?._id || currentOrg.organizationId;
+          if (orgId) {
+            localStorage.setItem('currentOrganization', orgId);
+            console.log('✅ HomeScreen: Set current organization to first available:', orgId);
           }
         }
         
-        // Only proceed if we have a valid current organization
-        if (!currentOrg) {
-          console.log('❌ No valid organization found - this should not happen for existing users');
-          console.log('🔄 Redirecting to organization setup or login...');
+        if (currentOrg) {
+          // Set valid organization data
+          setOrganization(currentOrg);
+          setIsAdmin(['admin', 'owner'].includes(currentOrg?.role));
+          console.log('✅ HomeScreen: Current organization set:', currentOrg.name, 'ID:', currentOrg._id);
           
-          // Clear any invalid data
-          localStorage.removeItem('currentOrganization');
-          localStorage.removeItem('userOrganizationData');
+          // Load organization-specific data
+          const [projectsResponse, statsResponse, hoursResponse] = await Promise.all([
+            ApiService.getProjects().catch((err) => {
+              console.error('Failed to load projects:', err);
+              return { projects: [] };
+            }),
+            ApiService.getStats().catch((err) => {
+              console.error('Failed to load stats:', err);
+              return { stats: { totalHours: 0, totalMembers: 1, activeProjects: 0, completedTasks: 0 } };
+            }),
+            ApiService.getHours().catch((err) => {
+              console.error('Failed to load hours:', err);
+              return { hourLogs: [], totalHours: 0 };
+            })
+          ]);
           
-          // Force user to org setup or login
-          window.location.href = '/organization/create';
-          return;
-        }
-        
-        // Set valid organization data
-        setOrganization(currentOrg);
-        setIsAdmin(['admin', 'owner'].includes(currentOrg?.role));
-        console.log('✅ Current organization set:', currentOrg.name, 'ID:', currentOrg._id);
-        
-        // Load organization-specific data
-        const [projectsResponse, statsResponse, hoursResponse] = await Promise.all([
-          ApiService.getProjects().catch((err) => {
-            console.error('Failed to load projects:', err);
-            return { projects: [] };
-          }),
-          ApiService.getStats().catch((err) => {
-            console.error('Failed to load stats:', err);
-            return { stats: { totalHours: 0, totalMembers: 1, activeProjects: 0, completedTasks: 0 } };
-          }),
-          ApiService.getHours().catch((err) => {
-            console.error('Failed to load hours:', err);
-            return { hourLogs: [], totalHours: 0 };
-          })
-        ]);
-        
-        console.log('Loaded organization-specific data:', {
-          org: currentOrg.name,
-          projects: projectsResponse.projects?.length || 0,
-          totalHours: hoursResponse.totalHours || 0,
-          stats: statsResponse.stats
-        });
-        
-        // Get accurate member count from organization
-        const memberCount = currentOrg.memberCount || currentOrg.members?.length || 1;
-        const projects = projectsResponse.projects || projectsResponse.data || [];
-        const actualHours = hoursResponse.totalHours || statsResponse.stats?.totalHours || 0;
-        
-        console.log('Organization member count:', memberCount, 'from org:', currentOrg.name);
-        
-        setStats({
-          totalMembers: memberCount,
-          activeProjects: statsResponse.stats?.activeProjects || projects.filter(p => p.status === 'active').length || 0,
-          hoursLogged: actualHours,
-          completedTasks: statsResponse.stats?.completedTasks || projects.filter(p => p.status === 'completed').length || 0
-        });
-        
-        setLoading(false);
-      } else {
-        console.log('⚠️ No organizations found for user');
-        console.log('📊 User data organizations:', user?.organizations?.length || 0);
-        console.log('📊 API response organizations:', organizations?.length || 0);
-        
-        // Check if user has any organization indicators before redirecting
-        const currentOrgId = localStorage.getItem('currentOrganization');
-        const userOrgData = localStorage.getItem('userOrganizationData');
-        const hasOrgIndicators = user?.organizations?.length > 0 || currentOrgId || userOrgData;
-        
-        if (hasOrgIndicators) {
-          console.log('🔄 User has org indicators but API failed, showing error state instead of redirecting');
-          // Don't redirect - show error state and let user retry
+          console.log('HomeScreen: Loaded organization-specific data:', {
+            org: currentOrg.name,
+            projects: projectsResponse.projects?.length || 0,
+            totalHours: hoursResponse.totalHours || 0,
+            stats: statsResponse.stats
+          });
+          
+          // Get accurate member count from organization
+          const memberCount = currentOrg.memberCount || currentOrg.members?.length || 1;
+          const projects = projectsResponse.projects || projectsResponse.data || [];
+          const actualHours = hoursResponse.totalHours || 0;
+          
+          setProjects(projects);
+          setStats({
+            totalHours: actualHours,
+            totalMembers: memberCount,
+            activeProjects: projects.filter(p => p.status === 'active').length,
+            hoursLogged: actualHours,
+            completedTasks: statsResponse.stats?.completedTasks || projects.filter(p => p.status === 'completed').length || 0
+          });
+          
+          setLoading(false);
+        } else {
+          console.log('❌ HomeScreen: No valid organization found - this should not happen for existing users');
+          console.log('🔄 HomeScreen: Showing error state instead of redirecting');
           setLoading(false);
           return;
-        } else {
-          console.log('🔄 No org indicators found, redirecting to org setup...');
-          // Clear any invalid data
-          localStorage.removeItem('currentOrganization');
-          localStorage.removeItem('userOrganizationData');
-          
-          // Force user to org setup
-          window.location.href = '/organization/create';
-          return;
         }
-      }
-    } catch (error) {
-      console.error('❌ Failed to load organization data:', error);
-      
-      // Check if user has any organization indicators before redirecting
-      const currentOrgId = localStorage.getItem('currentOrganization');
-      const userOrgData = localStorage.getItem('userOrganizationData');
-      const hasOrgIndicators = user?.organizations?.length > 0 || currentOrgId || userOrgData;
-      
-      if (hasOrgIndicators) {
-        console.log('🔄 User has org indicators but API failed, showing error state instead of redirecting');
-        // Don't redirect - show error state and let user retry
+      } else {
+        console.log('⚠️ HomeScreen: No organizations found for user');
+        console.log('📊 HomeScreen: User data organizations:', user?.organizations?.length || 0);
+        console.log('📊 HomeScreen: API response organizations:', organizations?.length || 0);
+        
+        // Don't redirect - just show error state
+        console.log('🔄 HomeScreen: Showing error state instead of redirecting');
         setLoading(false);
         return;
-      } else {
-        console.log('🔄 No org indicators found, redirecting to org setup...');
-        // Clear any invalid data
-        localStorage.removeItem('currentOrganization');
-        localStorage.removeItem('userOrganizationData');
-        
-        // Check if user has valid auth - if not, redirect to login
-        const authToken = localStorage.getItem('authToken');
-        if (!authToken) {
-          window.location.href = '/login';
-        } else {
-          // User is authenticated but org data failed to load
-          window.location.href = '/organization/create';
-        }
-        return;
       }
+    } catch (error) {
+      console.error('❌ HomeScreen: Failed to load organization data:', error);
+      
+      // Don't redirect - just show error state
+      console.log('🔄 HomeScreen: Showing error state instead of redirecting');
+      setLoading(false);
+      return;
     }
   };
 
