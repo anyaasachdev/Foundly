@@ -95,7 +95,9 @@ const authenticateToken = (req, res, next) => {
     return res.status(401).json({ error: 'Access token required' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+  const JWT_SECRET = process.env.JWT_SECRET || 'foundly-secret-key-2024';
+  
+  jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
       return res.status(403).json({ error: 'Invalid or expired token' });
     }
@@ -136,15 +138,18 @@ app.post('/api/auth/register', authLimiter, validateRegistration, async (req, re
     await user.save();
 
     // Generate both access and refresh tokens
+    const JWT_SECRET = process.env.JWT_SECRET || 'foundly-secret-key-2024';
+    const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || JWT_SECRET + '_refresh';
+    
     const accessToken = jwt.sign(
       { userId: user._id, email: user.email },
-      process.env.JWT_SECRET,
+      JWT_SECRET,
       { expiresIn: '15m' } // Short-lived access token
     );
     
     const refreshToken = jwt.sign(
       { userId: user._id, type: 'refresh' },
-      process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET + '_refresh',
+      JWT_REFRESH_SECRET,
       { expiresIn: '7d' } // Longer-lived refresh token
     );
 
@@ -215,15 +220,18 @@ app.post('/api/auth/login', authLimiter, validateLogin, async (req, res) => {
     }
 
     // Generate both access and refresh tokens
+    const JWT_SECRET = process.env.JWT_SECRET || 'foundly-secret-key-2024';
+    const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || JWT_SECRET + '_refresh';
+    
     const accessToken = jwt.sign(
       { userId: user._id, email: user.email },
-      process.env.JWT_SECRET,
+      JWT_SECRET,
       { expiresIn: '15m' } // Short-lived access token
     );
     
     const refreshToken = jwt.sign(
       { userId: user._id, type: 'refresh' },
-      process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET + '_refresh',
+      JWT_REFRESH_SECRET,
       { expiresIn: '7d' } // Longer-lived refresh token
     );
 
