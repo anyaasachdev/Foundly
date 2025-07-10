@@ -460,6 +460,26 @@ class ApiService {
       throw error;
     }
   }
+
+  // Test hours logging directly
+  async testLogHours() {
+    try {
+      const testData = {
+        hours: 2.5,
+        description: 'Test hours logging from browser',
+        date: new Date().toISOString().split('T')[0],
+        organizationId: 'default'
+      };
+      
+      console.log('Testing logHours with:', testData);
+      const response = await this.logHours(testData);
+      console.log('Test logHours Result:', response);
+      return response;
+    } catch (error) {
+      console.error('Test logHours Failed:', error);
+      throw error;
+    }
+  }
 }
 
 export default new ApiService();
