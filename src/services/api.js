@@ -213,7 +213,42 @@ class ApiService {
   
   async getMyOrganizations() {
     console.log('📊 Getting user organizations...');
-    return this.request('/organizations/my');
+    try {
+      const response = await this.request('/organizations/my');
+      console.log('📡 Raw organizations response:', response);
+      
+      // The backend returns the organizations array directly
+      // We need to wrap it in the expected structure
+      if (Array.isArray(response)) {
+        return { organizations: response };
+      } else if (response && response.organizations) {
+        return response;
+      } else {
+        console.warn('⚠️ Unexpected organizations response structure:', response);
+        return { organizations: [] };
+      }
+    } catch (error) {
+      console.error('❌ Failed to get organizations from main endpoint:', error);
+      
+      // Fallback to working API
+      try {
+        console.log('🔄 Trying working API fallback...');
+        const workingResponse = await this.request('/working?action=organizations');
+        console.log('📡 Working API organizations response:', workingResponse);
+        
+        if (workingResponse && workingResponse.organizations) {
+          return workingResponse;
+        } else if (Array.isArray(workingResponse)) {
+          return { organizations: workingResponse };
+        } else {
+          console.warn('⚠️ Working API also failed, returning empty array');
+          return { organizations: [] };
+        }
+      } catch (workingError) {
+        console.error('❌ Working API fallback also failed:', workingError);
+        return { organizations: [] };
+      }
+    }
   }
   
   async switchOrganization(organizationId) {

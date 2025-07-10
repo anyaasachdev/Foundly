@@ -75,7 +75,9 @@ const Navbar = ({ user, onLogout }) => {
         setCurrentOrg(null);
         return;
       }
+      
       setOrganizations(orgs);
+      
       // Get current org from localStorage (prefer most recently used)
       const orgPrefRaw = localStorage.getItem('userOrganizationData');
       let orgPref = null;
@@ -86,29 +88,26 @@ const Navbar = ({ user, onLogout }) => {
           orgPref = null;
         }
       }
+      
       let current = null;
-      if (orgPref && orgPref.organizationId) {
+      const currentOrgId = localStorage.getItem('currentOrganization');
+      console.log('🔍 Current org ID from localStorage:', currentOrgId);
+      
+      if (currentOrgId) {
         current = orgs.find(org => {
           const orgId = org._id || org.organization?._id || org.organizationId;
-          return orgId === orgPref.organizationId;
+          const match = orgId === currentOrgId;
+          return match;
         });
+        
         if (current) {
-          console.log('✅ Found current org from userOrganizationData:', current.organization?.name || current.name);
+          console.log('✅ Found current org from localStorage:', current.organization?.name || current.name);
+        } else {
+          console.log('⚠️ Current org ID not found in user organizations, clearing localStorage');
+          localStorage.removeItem('currentOrganization');
         }
       }
-      if (!current) {
-        // Fallback: use org from localStorage
-        const currentOrgId = localStorage.getItem('currentOrganization');
-        if (currentOrgId) {
-          current = orgs.find(org => {
-            const orgId = org._id || org.organization?._id || org.organizationId;
-            return orgId === currentOrgId;
-          });
-          if (current) {
-            console.log('✅ Found current org from localStorage:', current.organization?.name || current.name);
-          }
-        }
-      }
+      
       if (!current && orgs.length > 0) {
         // Fallback: use first valid organization
         current = orgs[0];
@@ -116,6 +115,7 @@ const Navbar = ({ user, onLogout }) => {
         localStorage.setItem('currentOrganization', orgId);
         console.log('🎯 Using first org as current:', current.organization?.name || current.name, 'ID:', orgId);
       }
+      
       setCurrentOrg(current);
       if (!current) {
         console.log('❌ No valid current organization could be set');
@@ -318,13 +318,19 @@ const Navbar = ({ user, onLogout }) => {
                     const orgId = org.organizationId?._id || org.organizationId || org._id;
                     const orgName = org.organizationId?.name || org.name || 'Unknown Organization';
                     const orgRole = org.role || 'Member';
-                    const isActive = currentOrg?._id === orgId;
+                    
+                    // Fix the active organization comparison
+                    const currentOrgId = currentOrg?._id || currentOrg?.organizationId?._id || currentOrg?.organizationId;
+                    const isActive = currentOrgId === orgId;
                     
                     return (
                       <button
                         key={orgId}
                         className={`org-option ${isActive ? 'active' : ''}`}
-                        onClick={() => handleOrgSwitch(orgId)}
+                        onClick={() => {
+                          console.log('🔄 Switching to organization:', orgName, 'ID:', orgId);
+                          handleOrgSwitch(orgId);
+                        }}
                       >
                         <div className="org-info">
                           <span className="org-option-name">{orgName}</span>
