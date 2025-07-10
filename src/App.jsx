@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import LoginScreen from './components/LoginScreen';
 import HomeScreen from './components/HomeScreen';
 import ProjectsScreen from './components/ProjectsScreen';
@@ -335,6 +336,7 @@ function App() {
             </main>
             <ToastNotification />
             <CollapsibleDisclaimer />
+            <Analytics />
           </div>
         </Router>
       </NotificationProvider>
