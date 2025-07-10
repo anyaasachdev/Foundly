@@ -149,16 +149,24 @@ function App() {
   };
 
   const handleOrganizationSetup = (result) => {
+    console.log('Organization setup completed:', result);
     setNeedsOrgSetup(false);
+    
     // Store the organization and navigate properly
     if (result.organization) {
       const orgId = result.organization._id;
+      console.log('Setting current organization to:', orgId, result.organization.name);
       localStorage.setItem('currentOrganization', orgId);
+      
+      // Clear any cached data so new org data loads fresh
+      localStorage.removeItem('cachedProjects');
+      localStorage.removeItem('cachedStats');
       
       // Update user state with organization info
       setUser(prev => ({
         ...prev,
         organization: result.organization,
+        currentOrganization: orgId,
         organizations: prev?.organizations ? [...prev.organizations, {
           organizationId: result.organization,
           role: result.type === 'created' ? 'admin' : 'member'
@@ -172,6 +180,7 @@ function App() {
       const updatedUser = {
         ...user,
         organization: result.organization,
+        currentOrganization: orgId,
         organizations: user?.organizations ? [...user.organizations, {
           organizationId: result.organization,
           role: result.type === 'created' ? 'admin' : 'member'
@@ -182,6 +191,7 @@ function App() {
       };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
+      console.log('Organization setup complete, redirecting to dashboard...');
       // Navigate to home page to show the new organization
       window.location.href = '/';
     }

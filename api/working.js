@@ -470,32 +470,47 @@ module.exports = async function handler(req, res) {
     
     // Organization actions
     if (action === 'organizations' && req.method === 'GET') {
-      // Get user's organizations
-      const Organization = getModel('Organization', new mongoose.Schema({
-        name: String,
-        description: String,
-        joinCode: String,
-        createdBy: String,
-        members: [{
-          user: String,
-          role: { type: String, default: 'member' },
-          joinedAt: { type: Date, default: Date.now }
-        }],
-        createdAt: { type: Date, default: Date.now }
-      }));
-      
-      // For now, return a default organization since we don't have user auth in this endpoint
-      const defaultOrg = {
-        _id: 'default-org-id',
-        name: 'Default Organization',
-        description: 'Your default organization',
-        role: 'admin'
-      };
-      
-      return res.status(200).json({ 
-        success: true, 
-        organizations: [defaultOrg]
-      });
+      try {
+        // Get user's organizations
+        const Organization = getModel('Organization', new mongoose.Schema({
+          name: String,
+          description: String,
+          joinCode: String,
+          createdBy: String,
+          members: [{
+            user: String,
+            role: { type: String, default: 'member' },
+            joinedAt: { type: Date, default: Date.now }
+          }],
+          createdAt: { type: Date, default: Date.now }
+        }));
+        
+        // Get all organizations (in a real app, you'd filter by user)
+        const organizations = await Organization.find({}).sort({ createdAt: -1 });
+        
+        console.log(`Found ${organizations.length} organizations`);
+        
+        // Format organizations for frontend
+        const formattedOrgs = organizations.map(org => ({
+          _id: org._id,
+          name: org.name,
+          description: org.description,
+          joinCode: org.joinCode,
+          role: 'admin', // For now, assume admin role
+          members: org.members || []
+        }));
+        
+        return res.status(200).json({ 
+          success: true, 
+          organizations: formattedOrgs
+        });
+      } catch (error) {
+        console.error('Error fetching organizations:', error);
+        return res.status(500).json({ 
+          error: 'Failed to fetch organizations', 
+          details: error.message 
+        });
+      }
     }
     
     if (action === 'organizations' && req.method === 'POST') {

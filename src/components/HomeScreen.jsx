@@ -60,37 +60,49 @@ const HomeScreen = ({ user }) => {
   }, [socket]);
 
   const loadOrganizationData = async () => {
-    setLoading(true);
     try {
-      // Try to get organizations from API
+      console.log('Loading organization data...');
       const response = await ApiService.getMyOrganizations();
-      console.log('Organization response:', response);
+      console.log('Organizations response:', response);
       
-      // Handle the new API response format
-      const organizations = response?.organizations || response || [];
-      
-      if (organizations && organizations.length > 0) {
-        let currentOrg = organizations.find(org => 
-          org._id === localStorage.getItem('currentOrganization')
-        );
+      const organizations = response?.organizations || [];
+      if (organizations.length > 0) {
+        const currentOrgId = localStorage.getItem('currentOrganization');
+        let currentOrg = organizations.find(org => org._id === currentOrgId);
         
         if (!currentOrg) {
           currentOrg = organizations[0];
           localStorage.setItem('currentOrganization', currentOrg._id);
+          console.log('Set current organization to:', currentOrg._id, currentOrg.name);
         }
         
         // Set organization data
         setOrganization(currentOrg);
         setIsAdmin(['admin', 'owner'].includes(currentOrg.role));
+        console.log('Current organization set:', currentOrg.name, 'ID:', currentOrg._id);
         
-        // Load real stats
+        // Load organization-specific data
         const [projectsResponse, statsResponse, hoursResponse] = await Promise.all([
-          ApiService.getProjects().catch(() => ({ projects: [] })),
-          ApiService.getStats().catch(() => ({ stats: { totalHours: 0, totalMembers: 1, activeProjects: 0, completedTasks: 0 } })),
-          ApiService.getHours().catch(() => ({ hourLogs: [], totalHours: 0 }))
+          ApiService.getProjects().catch((err) => {
+            console.error('Failed to load projects:', err);
+            return { projects: [] };
+          }),
+          ApiService.getStats().catch((err) => {
+            console.error('Failed to load stats:', err);
+            return { stats: { totalHours: 0, totalMembers: 1, activeProjects: 0, completedTasks: 0 } };
+          }),
+          ApiService.getHours().catch((err) => {
+            console.error('Failed to load hours:', err);
+            return { hourLogs: [], totalHours: 0 };
+          })
         ]);
         
-        console.log('Loaded data:', { projectsResponse, statsResponse, hoursResponse });
+        console.log('Loaded organization-specific data:', {
+          org: currentOrg.name,
+          projects: projectsResponse.projects?.length || 0,
+          totalHours: hoursResponse.totalHours || 0,
+          stats: statsResponse.stats
+        });
         
         // Get member count from organization or stats
         const memberCount = currentOrg.members?.length || statsResponse.stats?.totalMembers || 1;
@@ -106,59 +118,14 @@ const HomeScreen = ({ user }) => {
         
         setLoading(false);
       } else {
-        // Create a default organization for the user
-        console.log('No organizations found, creating default organization');
-        const defaultOrg = {
-          _id: 'default-org',
-          name: user.name + "'s Organization",
-          description: 'Your personal organization',
-          role: 'admin',
-          members: [{ userId: user._id || user.id, role: 'admin' }]
-        };
-        
-        setOrganization(defaultOrg);
-        setIsAdmin(true);
-        localStorage.setItem('currentOrganization', defaultOrg._id);
-        
-        // Set default stats
-        setStats({
-          totalMembers: 1,
-          activeProjects: 0,
-          hoursLogged: 0,
-          completedTasks: 0
-        });
-        
+        console.log('No organizations found');
         setLoading(false);
       }
     } catch (error) {
       console.error('Failed to load organization data:', error);
-      
-      // Create a default organization on error
-      console.log('Creating default organization due to API error');
-      const defaultOrg = {
-        _id: 'default-org',
-        name: user.name + "'s Organization",
-        description: 'Your personal organization',
-        role: 'admin',
-        members: [{ userId: user._id || user.id, role: 'admin' }]
-      };
-      
-      setOrganization(defaultOrg);
-      setIsAdmin(true);
-      localStorage.setItem('currentOrganization', defaultOrg._id);
-      
-      // Set default stats
-      setStats({
-        totalMembers: 1,
-        activeProjects: 0,
-        hoursLogged: 0,
-        completedTasks: 0
-      });
-      
       setLoading(false);
     }
   };
-
 
   const handleLogHours = async (e) => {
     e.preventDefault();
