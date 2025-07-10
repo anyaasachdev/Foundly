@@ -135,24 +135,10 @@ function App() {
     const hasUserData = !!localStorage.getItem('user');
     
     if (hasToken && hasUserData) {
+      // REMOVE: Emergency org creation logic
+      // Instead, just log and proceed to API/org checks
       console.log('🛡️ EMERGENCY DEFENSIVE: User has auth data, likely returning user');
-      console.log('   Creating emergency organization data to prevent re-signup...');
-      
-      // Create emergency organization data to prevent org setup
-      const emergencyOrgId = 'emergency-org-' + Date.now();
-      localStorage.setItem('currentOrganization', emergencyOrgId);
-      localStorage.setItem('userOrganizationData', JSON.stringify({
-        userEmail: userData.email,
-        organizationId: emergencyOrgId,
-        organizationName: 'Recovering Your Organization...',
-        role: 'member',
-        setAt: new Date().toISOString(),
-        source: 'emergency_defensive_check'
-      }));
-      
-      console.log('✅ EMERGENCY PASS: Created emergency org data');
-      setNeedsOrgSetup(false);
-      return;
+      // Do not create a fake org. Proceed to API/org checks below.
     }
     
     try {
@@ -183,15 +169,35 @@ function App() {
         setNeedsOrgSetup(true);
       } else {
         console.log('✅ Organizations found via API:', organizations.length);
-        // User has organizations, ensure one is set as current
-        const existingOrgId = localStorage.getItem('currentOrganization');
-        if (!existingOrgId && organizations.length > 0) {
-          // Set first organization as current
-          const firstOrg = organizations[0];
-          const orgId = firstOrg._id || firstOrg.organizationId?._id || firstOrg.organizationId;
-          console.log('🎯 Setting current organization from API to:', orgId);
-          localStorage.setItem('currentOrganization', orgId);
+        // User has organizations, ensure the most recently used one is set as current
+        const orgPrefRaw = localStorage.getItem('userOrganizationData');
+        let orgPref = null;
+        if (orgPrefRaw) {
+          try {
+            orgPref = JSON.parse(orgPrefRaw);
+          } catch (e) {
+            orgPref = null;
+          }
         }
+        let orgIdToSet = null;
+        if (orgPref && orgPref.userEmail === userData.email && orgPref.organizationId) {
+          // Check if the preferred org is in the fetched orgs
+          const found = organizations.find(org => {
+            const orgId = org._id || org.organizationId?._id || org.organizationId;
+            return orgId === orgPref.organizationId;
+          });
+          if (found) {
+            orgIdToSet = orgPref.organizationId;
+            console.log('🎯 Setting current organization from userOrganizationData:', orgIdToSet);
+          }
+        }
+        if (!orgIdToSet) {
+          // Fallback: use the first org from the API
+          const firstOrg = organizations[0];
+          orgIdToSet = firstOrg._id || firstOrg.organizationId?._id || firstOrg.organizationId;
+          console.log('🎯 Setting current organization from API to:', orgIdToSet);
+        }
+        localStorage.setItem('currentOrganization', orgIdToSet);
         setNeedsOrgSetup(false);
       }
     } catch (error) {

@@ -62,8 +62,12 @@ const Navbar = ({ user, onLogout }) => {
       const response = await ApiService.getMyOrganizations();
       console.log('📡 Navbar organizations response:', response);
       
-      const orgs = response?.organizations || [];
-      console.log('📊 Organizations found:', orgs.length);
+      // Filter out fake/temporary orgs
+      let orgs = (response?.organizations || []).filter(org => {
+        const orgName = org.organization?.name || org.name || org.organizationId?.name || '';
+        return orgName && !orgName.includes('Temporary') && !orgName.includes('Error') && !orgName.includes('Getting Started');
+      });
+      console.log('📊 Organizations found (filtered):', orgs.length);
       
       if (orgs.length === 0) {
         console.log('⚠️ No organizations found in navbar');
@@ -71,50 +75,48 @@ const Navbar = ({ user, onLogout }) => {
         setCurrentOrg(null);
         return;
       }
-      
       setOrganizations(orgs);
-      
-      // Get current org from localStorage
-      const currentOrgId = localStorage.getItem('currentOrganization');
-      console.log('🏢 Current org ID from storage:', currentOrgId);
-      
-      // Find current organization with proper structure handling
+      // Get current org from localStorage (prefer most recently used)
+      const orgPrefRaw = localStorage.getItem('userOrganizationData');
+      let orgPref = null;
+      if (orgPrefRaw) {
+        try {
+          orgPref = JSON.parse(orgPrefRaw);
+        } catch (e) {
+          orgPref = null;
+        }
+      }
       let current = null;
-      if (currentOrgId) {
+      if (orgPref && orgPref.organizationId) {
         current = orgs.find(org => {
-          // Handle different organization structures
           const orgId = org._id || org.organization?._id || org.organizationId;
-          return orgId === currentOrgId;
+          return orgId === orgPref.organizationId;
         });
-        
         if (current) {
-          console.log('✅ Found current org:', current.organization?.name || current.name);
-        } else {
-          console.log('⚠️ Current org ID not found in user organizations');
+          console.log('✅ Found current org from userOrganizationData:', current.organization?.name || current.name);
         }
       }
-      
-      // If no current org found, use first valid organization
+      if (!current) {
+        // Fallback: use org from localStorage
+        const currentOrgId = localStorage.getItem('currentOrganization');
+        if (currentOrgId) {
+          current = orgs.find(org => {
+            const orgId = org._id || org.organization?._id || org.organizationId;
+            return orgId === currentOrgId;
+          });
+          if (current) {
+            console.log('✅ Found current org from localStorage:', current.organization?.name || current.name);
+          }
+        }
+      }
       if (!current && orgs.length > 0) {
-        const firstOrg = orgs[0];
-        
-        // Extract the organization data properly
-        if (firstOrg.organization) {
-          // User organization format: { role: 'admin', organization: { _id, name, ... } }
-          current = firstOrg;
-          const orgId = firstOrg.organization._id;
-          localStorage.setItem('currentOrganization', orgId);
-          console.log('🎯 Using first org as current:', firstOrg.organization.name, 'ID:', orgId);
-        } else if (firstOrg._id) {
-          // Direct organization format
-          current = firstOrg;
-          localStorage.setItem('currentOrganization', firstOrg._id);
-          console.log('🎯 Using first org as current:', firstOrg.name, 'ID:', firstOrg._id);
-        }
+        // Fallback: use first valid organization
+        current = orgs[0];
+        const orgId = current._id || current.organization?._id || current.organizationId;
+        localStorage.setItem('currentOrganization', orgId);
+        console.log('🎯 Using first org as current:', current.organization?.name || current.name, 'ID:', orgId);
       }
-      
       setCurrentOrg(current);
-      
       if (!current) {
         console.log('❌ No valid current organization could be set');
       }
@@ -129,36 +131,29 @@ const Navbar = ({ user, onLogout }) => {
   const handleOrgSwitch = async (orgId) => {
     try {
       console.log('🔄 Switching to organization:', orgId);
-      
       // Find the organization to switch to with proper structure handling
       const newOrg = organizations.find(org => {
         const currentOrgId = org._id || org.organization?._id || org.organizationId;
         return currentOrgId === orgId;
       });
-      
       if (!newOrg) {
         console.error('❌ Organization not found in user organizations:', orgId);
         alert('Organization not found. Please refresh the page and try again.');
         return;
       }
-      
       // Validate that this is a real organization (not temporary/fake)
-      const orgName = newOrg.organization?.name || newOrg.name;
+      const orgName = newOrg.organization?.name || newOrg.name || newOrg.organizationId?.name || '';
       if (!orgName || orgName.includes('Temporary') || orgName.includes('Error') || orgName.includes('Getting Started')) {
         console.error('❌ Cannot switch to temporary/fake organization:', orgName);
         alert('Invalid organization. Please refresh the page.');
         return;
       }
-      
       console.log('✅ Switching to valid org:', orgName, 'ID:', orgId);
-      
       // Update localStorage
       localStorage.setItem('currentOrganization', orgId);
-      
       // Update state
       setCurrentOrg(newOrg);
       setShowOrgDropdown(false);
-      
       // Store organization preference for persistence
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       localStorage.setItem('userOrganizationData', JSON.stringify({
@@ -169,9 +164,7 @@ const Navbar = ({ user, onLogout }) => {
         setAt: new Date().toISOString(),
         source: 'navbar_switch'
       }));
-      
       console.log('🎯 Organization switch complete, reloading page...');
-      
       // Force page reload to refresh all data for the new organization
       window.location.reload();
     } catch (error) {
