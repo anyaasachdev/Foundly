@@ -359,8 +359,17 @@ app.post('/api/organizations', authenticateToken, async (req, res) => {
 
 app.get('/api/organizations/my', authenticateToken, async (req, res) => {
   try {
+    console.log('🔍 Getting organizations for user:', req.user.userId);
+    
     const user = await User.findById(req.user.userId).populate('organizations.organizationId');
-    res.json(user.organizations || []);
+    console.log('📊 User organizations:', user.organizations);
+    
+    // Return the expected structure
+    res.json({ 
+      organizations: user.organizations || [],
+      success: true,
+      count: (user.organizations || []).length
+    });
   } catch (error) {
     console.error('Get organizations error:', error);
     res.status(500).json({ error: 'Failed to fetch organizations' });
@@ -981,6 +990,8 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
     const user = await User.findById(req.user.userId);
     const orgId = user.currentOrganization;
     
+    console.log('🔍 Getting stats for organization:', orgId);
+    
     const [totalProjects, activeProjects, totalHours, organization] = await Promise.all([
       Project.countDocuments({ organization: orgId }),
       Project.countDocuments({ organization: orgId, status: 'active' }),
@@ -990,6 +1001,9 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
       ]),
       Organization.findById(orgId)
     ]);
+    
+    console.log('📊 Organization found:', organization?.name);
+    console.log('📊 Organization members:', organization?.members);
     
     // Fix: Get member count from organization's members array - count unique, active members only
     let totalMembers = 0;
@@ -1005,15 +1019,21 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
       });
       
       totalMembers = uniqueUserIds.size;
+      console.log('📊 Unique member IDs:', Array.from(uniqueUserIds));
+      console.log('📊 Total members calculated:', totalMembers);
     }
     
+    const stats = {
+      totalProjects,
+      activeProjects,
+      totalHours: totalHours[0]?.total || 0,
+      totalMembers
+    };
+    
+    console.log('📊 Final stats:', stats);
+    
     res.json({
-      data: {
-        totalProjects,
-        activeProjects,
-        totalHours: totalHours[0]?.total || 0,
-        totalMembers
-      }
+      data: stats
     });
   } catch (error) {
     console.error('Stats error:', error);
