@@ -76,25 +76,8 @@ const HomeScreen = ({ user }) => {
         }
       });
 
-      // Listen for member count updates
-      socket.on('member_count_updated', (data) => {
-        console.log('Member count updated:', data);
-        // Refresh stats to get updated member count
-        refreshStats();
-        
-        // Show notification for member changes
-        if (Notification.permission === 'granted') {
-          const action = data.action === 'joined' ? 'joined' : 'left';
-          new Notification('Organization Update', {
-            body: `A member ${action} your organization. Total members: ${data.totalMembers}`,
-            icon: '/favicon.ico'
-          });
-        }
-      });
-
       return () => {
         socket.off('hours_logged');
-        socket.off('member_count_updated');
       };
     }
   }, [socket]);

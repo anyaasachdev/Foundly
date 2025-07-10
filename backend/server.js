@@ -434,30 +434,7 @@ app.post('/api/organizations/join', authenticateToken, async (req, res) => {
         currentOrganization: organization._id // Set as current org
       });
       
-      // Calculate new member count
-      const uniqueActiveMembers = organization.members.filter((member, index, arr) => {
-        if (!member.user) return false;
-        const firstIndex = arr.findIndex(m => m.user.toString() === member.user.toString());
-        if (firstIndex !== index) return false;
-        if (member.hasOwnProperty('isActive') && member.isActive === false) return false;
-        return true;
-      });
-      
-      const newMemberCount = uniqueActiveMembers.length;
-      
-      // Broadcast member count update to all organization members
-      io.to(`org_${organization._id}`).emit('member_count_updated', {
-        organizationId: organization._id,
-        totalMembers: newMemberCount,
-        action: 'joined',
-        userId: req.user.userId
-      });
-      
-      res.json({ 
-        message: 'Successfully joined organization', 
-        organization,
-        totalMembers: newMemberCount
-      });
+      res.json({ message: 'Successfully joined organization', organization });
     }
   } catch (error) {
     console.error('Join organization error:', error);
@@ -493,12 +470,6 @@ app.post('/api/organizations/:id/leave', authenticateToken, async (req, res) => 
     const organizationId = req.params.id;
     const userId = req.user.userId;
     
-    // Get organization before removing user to calculate member count
-    const organization = await Organization.findById(organizationId);
-    if (!organization) {
-      return res.status(404).json({ error: 'Organization not found' });
-    }
-    
     // Remove user from organization members
     await Organization.findByIdAndUpdate(organizationId, {
       $pull: { members: { user: userId } }
@@ -517,30 +488,7 @@ app.post('/api/organizations/:id/leave', authenticateToken, async (req, res) => 
       });
     }
     
-    // Calculate new member count after user left
-    const updatedOrg = await Organization.findById(organizationId);
-    const uniqueActiveMembers = (updatedOrg?.members || []).filter((member, index, arr) => {
-      if (!member.user) return false;
-      const firstIndex = arr.findIndex(m => m.user.toString() === member.user.toString());
-      if (firstIndex !== index) return false;
-      if (member.hasOwnProperty('isActive') && member.isActive === false) return false;
-      return true;
-    });
-    
-    const newMemberCount = uniqueActiveMembers.length;
-    
-    // Broadcast member count update to all organization members
-    io.to(`org_${organizationId}`).emit('member_count_updated', {
-      organizationId: organizationId,
-      totalMembers: newMemberCount,
-      action: 'left',
-      userId: userId
-    });
-    
-    res.json({ 
-      message: 'Successfully left organization',
-      totalMembers: newMemberCount
-    });
+    res.json({ message: 'Successfully left organization' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to leave organization' });
   }
