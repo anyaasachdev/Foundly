@@ -60,42 +60,46 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Check for existing user session
-    const savedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('authToken');
-    
-    if (savedUser && token) {
-      try {
-        const userData = JSON.parse(savedUser);
-        setUser(userData);
-        ApiService.setToken(token);
-        
-        // Check if user needs organization setup
-        checkOrganizationStatus(userData);
-      } catch (error) {
-        console.error('Error parsing saved user:', error);
-        localStorage.removeItem('user');
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('refreshToken');
+    const initializeApp = async () => {
+      console.log('🚀 Initializing app...');
+      
+      // Check for existing user session
+      const savedUser = localStorage.getItem('user');
+      const token = localStorage.getItem('authToken');
+      
+      if (savedUser && token) {
+        try {
+          const userData = JSON.parse(savedUser);
+          console.log('👤 Found saved user:', userData.email);
+          setUser(userData);
+          ApiService.setToken(token);
+          
+          // Check if user needs organization setup and wait for it
+          await checkOrganizationStatus(userData);
+        } catch (error) {
+          console.error('Error parsing saved user:', error);
+          localStorage.removeItem('user');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('refreshToken');
+        }
       }
-    }
+      
+      console.log('✅ App initialization complete');
+      setLoading(false);
+    };
     
-    setLoading(false);
+    initializeApp();
   }, []);
 
   const checkOrganizationStatus = async (userData) => {
+    console.log('🔍 Checking organization status for user:', userData.email);
+    console.log('📊 User organizations in data:', userData.organizations?.length || 0);
+    console.log('🏢 Current org in localStorage:', localStorage.getItem('currentOrganization'));
+    
     try {
-      // Test API connectivity first
-      try {
-        await ApiService.quickTest();
-        console.log('✅ API is working correctly');
-      } catch (apiError) {
-        console.error('❌ API test failed:', apiError);
-      }
-
-      // Check if user has organizations in their data first
+      // First check if user has organizations in their stored data
       if (userData.organizations && userData.organizations.length > 0) {
-        console.log('Found organizations in user data:', userData.organizations.length);
+        console.log('✅ Found organizations in user data:', userData.organizations.length);
         
         // Set up the current organization if not already set
         const currentOrgId = localStorage.getItem('currentOrganization');
@@ -104,43 +108,75 @@ function App() {
           const firstOrg = userData.organizations[0];
           const orgId = firstOrg.organization?._id || firstOrg.organizationId?._id || firstOrg.organizationId;
           if (orgId) {
-            console.log('Setting current organization to:', orgId);
+            console.log('🎯 Setting current organization to:', orgId);
             localStorage.setItem('currentOrganization', orgId);
           }
         }
         
+        console.log('✅ User has organizations, skipping org setup');
         setNeedsOrgSetup(false);
         return;
       }
       
+      // Also check if there's a currentOrganization set (fallback)
+      const currentOrgId = localStorage.getItem('currentOrganization');
+      if (currentOrgId) {
+        console.log('✅ Found currentOrganization in localStorage, skipping org setup');
+        setNeedsOrgSetup(false);
+        return;
+      }
+      
+      // Test API connectivity before making requests
+      try {
+        await ApiService.quickTest();
+        console.log('✅ API is working correctly');
+      } catch (apiError) {
+        console.error('❌ API test failed:', apiError);
+        // If API is down but user has stored org data, don't force org setup
+        if (userData.organizations?.length > 0 || currentOrgId) {
+          console.log('🔄 API down but user has org data, skipping org setup');
+          setNeedsOrgSetup(false);
+          return;
+        }
+      }
+      
       // If no organizations in user data, try to fetch from API
+      console.log('🌐 Fetching organizations from API...');
       const response = await ApiService.getMyOrganizations();
-      console.log('Organization check response:', response);
+      console.log('📡 Organization API response:', response);
       
       // Check if user has any organizations
       const organizations = response?.organizations || response;
       if (!organizations || !organizations.length || organizations.length === 0) {
-        console.log('No organizations found, setting needsOrgSetup to true');
+        console.log('❌ No organizations found, user needs org setup');
         setNeedsOrgSetup(true);
       } else {
-        console.log('Organizations found:', organizations.length);
+        console.log('✅ Organizations found via API:', organizations.length);
         // User has organizations, ensure one is set as current
-        const currentOrgId = localStorage.getItem('currentOrganization');
-        if (!currentOrgId && organizations.length > 0) {
+        const existingOrgId = localStorage.getItem('currentOrganization');
+        if (!existingOrgId && organizations.length > 0) {
           // Set first organization as current
           const firstOrg = organizations[0];
           const orgId = firstOrg._id || firstOrg.organizationId?._id || firstOrg.organizationId;
-          console.log('Setting current organization to:', orgId);
+          console.log('🎯 Setting current organization from API to:', orgId);
           localStorage.setItem('currentOrganization', orgId);
         }
         setNeedsOrgSetup(false);
       }
     } catch (error) {
-      console.error('Error checking organization status:', error);
+      console.error('❌ Error checking organization status:', error);
       
-      // For new users or API errors, default to organization setup
-      console.log('API error or new user, setting needsOrgSetup to true');
-      setNeedsOrgSetup(true);
+      // Before defaulting to org setup, check if user has any org indicators
+      const currentOrgId = localStorage.getItem('currentOrganization');
+      const hasStoredOrgs = userData.organizations?.length > 0;
+      
+      if (hasStoredOrgs || currentOrgId) {
+        console.log('🔄 Error occurred but user has org data, skipping org setup');
+        setNeedsOrgSetup(false);
+      } else {
+        console.log('❌ Error occurred and no org data found, showing org setup');
+        setNeedsOrgSetup(true);
+      }
     }
   };
 
@@ -216,6 +252,11 @@ function App() {
         <div className="loading-spinner">
           <div className="spinner"></div>
           <p>Loading Foundly...</p>
+          {process.env.NODE_ENV === 'development' && (
+            <div style={{ marginTop: '20px', fontSize: '12px', color: '#666' }}>
+              <p>Debug: Checking user session and organizations...</p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -223,7 +264,12 @@ function App() {
 
   // Show organization setup if user is logged in but needs org setup
   if (user && needsOrgSetup) {
-    console.log('User needs organization setup, showing OrganizationSetup component');
+    console.log('🚨 SHOWING ORG SETUP - User needs organization setup');
+    console.log('👤 User email:', user.email);
+    console.log('📊 User organizations:', user.organizations?.length || 0);
+    console.log('🏢 Current org ID:', localStorage.getItem('currentOrganization'));
+    console.log('🎭 Needs org setup:', needsOrgSetup);
+    
     return (
       <div className="app">
         <OrganizationSetup onComplete={handleOrganizationSetup} />
@@ -231,8 +277,14 @@ function App() {
     );
   }
 
-      console.log('App state - user:', !!user, 'needsOrgSetup:', needsOrgSetup, 'loading:', loading);
-    console.log('App version:', version);
+  // Debug output before rendering main app
+  console.log('🏠 RENDERING MAIN APP');
+  console.log('👤 User:', !!user, user?.email || 'none');
+  console.log('🎭 Needs org setup:', needsOrgSetup);
+  console.log('⏳ Loading:', loading);
+  console.log('📊 User orgs:', user?.organizations?.length || 0);
+  console.log('🏢 Current org:', localStorage.getItem('currentOrganization'));
+  console.log('🔖 App version:', version);
 
   return (
     <ErrorBoundary>
