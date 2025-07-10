@@ -957,3 +957,10 @@ textarea.form-input {
   background: #e5e7eb;
   color: #374151;
 }
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}

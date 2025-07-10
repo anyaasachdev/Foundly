@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Users, Target, TrendingUp, Plus, Bell, AlertCircle, Info, CheckCircle, Copy, Users as UsersIcon } from 'lucide-react';
+import { Clock, Users, Target, TrendingUp, Plus, Bell, AlertCircle, Info, CheckCircle, Copy, Users as UsersIcon, RefreshCw } from 'lucide-react';
 import ApiService from '../services/api';
 import { useSocket } from '../hooks/useSocket';
 import './HomeScreen.css';
@@ -220,6 +220,7 @@ const HomeScreen = ({ user }) => {
         
         // Refresh data to get updated stats from database
         await loadOrganizationData();
+        await refreshStats(); // Ensure stats are always up to date
         
         // Also update stats locally as immediate feedback
         setStats(prev => ({
@@ -429,20 +430,24 @@ const HomeScreen = ({ user }) => {
           <button
             onClick={refreshStats}
             style={{
-              background: 'linear-gradient(135deg, #6366F1 0%, #3730A3 100%)',
-              color: 'white',
+              background: 'none',
+              color: '#6366F1',
               border: 'none',
-              borderRadius: '8px',
-              padding: '8px 18px',
-              fontSize: '1rem',
-              fontWeight: 500,
+              borderRadius: '50%',
+              padding: '6px',
+              fontSize: '1.2rem',
               cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(99, 102, 241, 0.08)',
-              transition: 'all 0.2s',
+              boxShadow: 'none',
+              transition: 'background 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
+            aria-label="Refresh Stats"
             disabled={loading}
+            title="Refresh Stats"
           >
-            {loading ? 'Refreshing...' : 'Refresh Stats'}
+            <RefreshCw size={20} style={{ opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s' }} className={loading ? 'spin' : ''} />
           </button>
         </div>
         <div className="stats-grid" style={{
@@ -650,14 +655,6 @@ const HomeScreen = ({ user }) => {
                   }}
                   required
                 />
-                <p style={{ 
-                  fontSize: '0.75rem', 
-                  color: '#6B7280', 
-                  marginTop: '4px',
-                  fontStyle: 'italic'
-                }}>
-                  💡 Tip: The date you select will be used to calculate performance trends on the Stats page
-                </p>
               </div>
               
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
