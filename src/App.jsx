@@ -93,34 +93,37 @@ function App() {
   }, []);
 
   const checkOrganizationStatus = async (userData) => {
-    console.log('🚨 EMERGENCY ORG CHECK for user:', userData.email);
+    console.log('🔍 Checking organization status for user:', userData.email);
     console.log('📊 User organizations in data:', userData.organizations?.length || 0);
     console.log('🏢 Current org in localStorage:', localStorage.getItem('currentOrganization'));
     
-    // EMERGENCY CHECK 1: User organizations in data
+    // QUICK CHECK 1: User already has organizations in their data
     if (userData.organizations && userData.organizations.length > 0) {
-      console.log('✅ EMERGENCY PASS: User has organizations in data');
-      setNeedsOrgSetup(false);
-      return;
+      console.log('✅ User has organizations in data, setting current org');
+      const firstOrg = userData.organizations[0];
+      const orgId = firstOrg.organization?._id || firstOrg.organizationId?._id || firstOrg.organizationId || firstOrg._id;
+      if (orgId) {
+        localStorage.setItem('currentOrganization', orgId);
+        setNeedsOrgSetup(false);
+        return;
+      }
     }
     
-    // EMERGENCY CHECK 2: Current organization ID exists
+    // QUICK CHECK 2: Current organization ID exists in localStorage
     const currentOrgId = localStorage.getItem('currentOrganization');
-    if (currentOrgId && currentOrgId !== 'placeholder-org') {
-      console.log('✅ EMERGENCY PASS: Current organization ID exists:', currentOrgId);
+    if (currentOrgId && currentOrgId !== 'placeholder-org' && currentOrgId !== 'null' && currentOrgId !== 'undefined') {
+      console.log('✅ Current organization ID exists:', currentOrgId);
       setNeedsOrgSetup(false);
       return;
     }
     
-    // EMERGENCY CHECK 3: User organization preference exists
+    // QUICK CHECK 3: User organization preference exists
     const userOrgData = localStorage.getItem('userOrganizationData');
     if (userOrgData) {
       try {
         const orgPref = JSON.parse(userOrgData);
         if (orgPref.userEmail === userData.email && orgPref.organizationId) {
-          console.log('✅ EMERGENCY PASS: User organization preference exists');
-          
-          // Restore organization data
+          console.log('✅ User organization preference exists, restoring:', orgPref.organizationId);
           localStorage.setItem('currentOrganization', orgPref.organizationId);
           setNeedsOrgSetup(false);
           return;
@@ -130,88 +133,44 @@ function App() {
       }
     }
     
-    // EMERGENCY CHECK 4: This user has been here before (very defensive)
-    const hasToken = !!localStorage.getItem('authToken');
-    const hasUserData = !!localStorage.getItem('user');
-    
-    if (hasToken && hasUserData) {
-      // REMOVE: Emergency org creation logic
-      // Instead, just log and proceed to API/org checks
-      console.log('🛡️ EMERGENCY DEFENSIVE: User has auth data, likely returning user');
-      // Do not create a fake org. Proceed to API/org checks below.
-    }
-    
+    // API CHECK: Fetch organizations from API if no local data
     try {
-      
-      // Test API connectivity before making requests
-      try {
-        await ApiService.quickTest();
-        console.log('✅ API is working correctly');
-      } catch (apiError) {
-        console.error('❌ API test failed:', apiError);
-        // If API is down but user has stored org data, don't force org setup
-        if (userData.organizations?.length > 0 || currentOrgId) {
-          console.log('🔄 API down but user has org data, skipping org setup');
-          setNeedsOrgSetup(false);
-          return;
-        }
-      }
-      
-      // If no organizations in user data, try to fetch from API
       console.log('🌐 Fetching organizations from API...');
       const response = await ApiService.getMyOrganizations();
       console.log('📡 Organization API response:', response);
       
-      // Check if user has any organizations
-      const organizations = response?.organizations || response;
-      if (!organizations || !organizations.length || organizations.length === 0) {
-        console.log('❌ No organizations found, user needs org setup');
-        setNeedsOrgSetup(true);
-      } else {
+      const organizations = response?.organizations || response || [];
+      
+      if (organizations && organizations.length > 0) {
         console.log('✅ Organizations found via API:', organizations.length);
-        // User has organizations, ensure the most recently used one is set as current
-        const orgPrefRaw = localStorage.getItem('userOrganizationData');
-        let orgPref = null;
-        if (orgPrefRaw) {
-          try {
-            orgPref = JSON.parse(orgPrefRaw);
-          } catch (e) {
-            orgPref = null;
-          }
+        
+        // Set the first organization as current
+        const firstOrg = organizations[0];
+        const orgId = firstOrg._id || firstOrg.organization?._id || firstOrg.organizationId?._id || firstOrg.organizationId;
+        
+        if (orgId) {
+          localStorage.setItem('currentOrganization', orgId);
+          console.log('🎯 Set current organization to:', orgId);
+          setNeedsOrgSetup(false);
+          return;
         }
-        let orgIdToSet = null;
-        if (orgPref && orgPref.userEmail === userData.email && orgPref.organizationId) {
-          // Check if the preferred org is in the fetched orgs
-          const found = organizations.find(org => {
-            const orgId = org._id || org.organizationId?._id || org.organizationId;
-            return orgId === orgPref.organizationId;
-          });
-          if (found) {
-            orgIdToSet = orgPref.organizationId;
-            console.log('🎯 Setting current organization from userOrganizationData:', orgIdToSet);
-          }
-        }
-        if (!orgIdToSet) {
-          // Fallback: use the first org from the API
-          const firstOrg = organizations[0];
-          orgIdToSet = firstOrg._id || firstOrg.organizationId?._id || firstOrg.organizationId;
-          console.log('🎯 Setting current organization from API to:', orgIdToSet);
-        }
-        localStorage.setItem('currentOrganization', orgIdToSet);
-        setNeedsOrgSetup(false);
+      } else {
+        console.log('❌ No organizations found via API, user needs org setup');
+        setNeedsOrgSetup(true);
       }
     } catch (error) {
-      console.error('❌ Error checking organization status:', error);
+      console.error('❌ Error fetching organizations from API:', error);
       
-      // Before defaulting to org setup, check if user has any org indicators
-      const currentOrgId = localStorage.getItem('currentOrganization');
-      const hasStoredOrgs = userData.organizations?.length > 0;
+      // If API fails but user has any org indicators, don't show org setup
+      const hasAnyOrgData = userData.organizations?.length > 0 || 
+                           localStorage.getItem('currentOrganization') || 
+                           localStorage.getItem('userOrganizationData');
       
-      if (hasStoredOrgs || currentOrgId) {
-        console.log('🔄 Error occurred but user has org data, skipping org setup');
+      if (hasAnyOrgData) {
+        console.log('🔄 API failed but user has org data, skipping org setup');
         setNeedsOrgSetup(false);
       } else {
-        console.log('❌ Error occurred and no org data found, showing org setup');
+        console.log('❌ API failed and no org data found, showing org setup');
         setNeedsOrgSetup(true);
       }
     }
