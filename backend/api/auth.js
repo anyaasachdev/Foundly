@@ -135,21 +135,60 @@ async function handleLogin(req, res) {
 
   // Fetch user's organizations with details
   let userOrganizations = [];
-  if (user.organizations && user.organizations.length > 0) {
+  if (user.organizations  user.organizations.length  0) {
     try {
-      const orgIds = user.organizations.map(org => org.organizationId);
+      console.log('🔍 Fetching organization details for user:', user.email);
+      console.log('📊 User has organizations:', user.organizations.length);
+      
+      // Convert organizationId to ObjectId for database query
+      const orgIds = user.organizations.map(org = {
+        const orgId = org.organizationId;
+        // Handle both string and ObjectId formats
+        return typeof orgId === 'string' ? new ObjectId(orgId) : orgId;
+      });
+      
+      console.log('🔎 Looking for organizations with IDs:', orgIds.map(id = id.toString()));
+      
       const orgDetails = await organizations.find({ _id: { $in: orgIds } }).toArray();
+      console.log('✅ Found organization details:', orgDetails.length);
       
       // Combine user org data with org details
-      userOrganizations = user.organizations.map(userOrg => {
-        const orgDetail = orgDetails.find(org => org._id.toString() === userOrg.organizationId.toString());
+      userOrganizations = user.organizations.map(userOrg = {
+        const orgId = userOrg.organizationId;
+        const orgIdString = typeof orgId === 'string' ? orgId : orgId.toString();
+        
+        const orgDetail = orgDetails.find(org = org._id.toString() === orgIdString);
+        
+        if (!orgDetail) {
+          console.warn('⚠️ Organization details not found for ID:', orgIdString);
+          return {
+            ...userOrg,
+            organization: {
+              _id: orgId,
+              name: 'Organization Not Found',
+              description: 'This organization may have been deleted'
+            }
+          };
+        }
+        
         return {
           ...userOrg,
           organization: orgDetail
         };
       });
+      
+      console.log('🎯 Final user organizations:', userOrganizations.length);
     } catch (error) {
-      console.error('Error fetching organization details:', error);
+      console.error('❌ Error fetching organization details:', error);
+      // Fallback: create basic organization objects
+      userOrganizations = user.organizations.map(userOrg = ({
+        ...userOrg,
+        organization: {
+          _id: userOrg.organizationId,
+          name: 'Organization (Details unavailable)',
+          description: 'Unable to fetch organization details'
+        }
+      }));
     }
   }
 
