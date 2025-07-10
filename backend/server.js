@@ -334,14 +334,11 @@ app.post('/api/organizations', authenticateToken, async (req, res) => {
     
     // Ensure we have a valid user ID
     const userId = req.user.userId;
-    console.log('🔍 Creating organization with user ID:', userId);
-    console.log('🔍 User object from token:', req.user);
-    
     if (!userId || typeof userId !== 'string' || userId.length !== 24) {
-      console.error('❌ Invalid user ID from token:', userId);
       return res.status(400).json({ error: 'Invalid user authentication' });
     }
     
+    // Always start with clean stats and only the creator as member
     const organization = new Organization({
       name,
       description,
@@ -357,9 +354,8 @@ app.post('/api/organizations', authenticateToken, async (req, res) => {
         joinedAt: new Date(),
         isActive: true
       }],
-      // Initialize with zero stats - no data leakage
       stats: {
-        totalMembers: 1, // Only the creator
+        totalMembers: 1,
         totalHours: 0,
         activeProjects: 0,
         completedTasks: 0
@@ -369,7 +365,7 @@ app.post('/api/organizations', authenticateToken, async (req, res) => {
     
     await organization.save();
     
-    await User.findByIdAndUpdate(req.user.userId, {
+    await User.findByIdAndUpdate(userId, {
       $push: {
         organizations: {
           organizationId: organization._id,
@@ -379,10 +375,10 @@ app.post('/api/organizations', authenticateToken, async (req, res) => {
       currentOrganization: organization._id
     });
     
-    res.status(201).json({ organization }); // Wrap in object
+    return res.status(201).json({ organization });
   } catch (error) {
-    console.error('Create organization error:', error);
-    res.status(500).json({ error: 'Failed to create organization' });
+    if (res.headersSent) return;
+    return res.status(500).json({ error: 'Failed to create organization' });
   }
 });
 
@@ -1415,19 +1411,15 @@ app.get('/api/working', authenticateToken, async (req, res) => {
     
     // Validate user ID
     if (!userId || typeof userId !== 'string' || userId.length !== 24) {
-      console.error('❌ Invalid user ID from token:', userId);
       return res.status(400).json({ error: 'Invalid user authentication' });
     }
     
     const user = await User.findById(userId);
     if (!user) {
-      console.error('❌ User not found:', userId);
       return res.status(404).json({ error: 'User not found' });
     }
     
     const currentOrgId = organizationId || user.currentOrganization;
-    
-    console.log('🔧 Working API called:', action, 'for org:', currentOrgId, 'user:', userId);
     
     switch (action) {
       case 'organizations':
@@ -1468,29 +1460,19 @@ app.get('/api/working', authenticateToken, async (req, res) => {
         if (!org) {
           return res.json({ success: true, stats: { totalMembers: 0, totalHours: 0, activeProjects: 0, completedTasks: 0 } });
         }
-        
-        const [totalProjects, activeProjects, totalHours] = await Promise.all([
-          Project.countDocuments({ organization: currentOrgId }),
-          Project.countDocuments({ organization: currentOrgId, status: 'active' }),
-          HourLog.aggregate([
-            { $match: { organization: currentOrgId } },
-            { $group: { _id: null, total: { $sum: '$hours' } } }
-          ])
-        ]);
-        
-        // Count unique members
+        // Count unique, active members
         const uniqueUserIds = new Set();
-        org.members.forEach(member => {
-          if (member.user && member.user.toString()) {
+        (org.members || []).forEach(member => {
+          if (member.user && member.isActive !== false) {
             uniqueUserIds.add(member.user.toString());
           }
         });
         
         const stats = {
           totalMembers: uniqueUserIds.size,
-          totalHours: totalHours[0]?.total || 0,
-          activeProjects,
-          completedTasks: totalProjects - activeProjects
+          totalHours: org.stats?.totalHours || 0,
+          activeProjects: org.stats?.activeProjects || 0,
+          completedTasks: org.stats?.completedTasks || 0
         };
         
         return res.json({ success: true, stats });
@@ -1499,7 +1481,7 @@ app.get('/api/working', authenticateToken, async (req, res) => {
         return res.status(400).json({ error: 'Invalid action' });
     }
   } catch (error) {
-    console.error('Working API error:', error);
+    if (res.headersSent) return;
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -1512,28 +1494,23 @@ app.post('/api/working', authenticateToken, async (req, res) => {
     
     // Validate user ID
     if (!userId || typeof userId !== 'string' || userId.length !== 24) {
-      console.error('❌ Invalid user ID from token:', userId);
       return res.status(400).json({ error: 'Invalid user authentication' });
     }
     
     const user = await User.findById(userId);
     if (!user) {
-      console.error('❌ User not found:', userId);
       return res.status(404).json({ error: 'User not found' });
     }
     
     const currentOrgId = req.body.organizationId || user.currentOrganization;
     
-    console.log('🔧 Working API POST called:', action, 'for org:', currentOrgId, 'user:', userId);
-    
     switch (action) {
       case 'log-hours':
         const { hours, description, date } = req.body;
-        
         if (!hours || !description || !date) {
           return res.status(400).json({ error: 'Hours, description, and date are required' });
         }
-        
+        // Save hour log
         const hourLog = new HourLog({
           user: userId,
           organization: currentOrgId,
@@ -1542,21 +1519,21 @@ app.post('/api/working', authenticateToken, async (req, res) => {
           date: new Date(date),
           category: 'volunteer'
         });
-        
         await hourLog.save();
-        
-        // Update user stats
+        // Add hours to org stats
+        await Organization.findByIdAndUpdate(currentOrgId, {
+          $inc: { 'stats.totalHours': hourLog.hours }
+        });
+        // Add hours to user stats
         await User.findByIdAndUpdate(userId, {
           $inc: { 'stats.hoursVolunteered': hourLog.hours }
         });
-        
         return res.json({ success: true, hourLog });
-        
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }
   } catch (error) {
-    console.error('Working API POST error:', error);
+    if (res.headersSent) return;
     res.status(500).json({ error: 'Internal server error' });
   }
 });
