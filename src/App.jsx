@@ -93,28 +93,48 @@ function App() {
   }, []);
 
   const checkOrganizationStatus = async (userData) => {
-    console.log('🔍 Checking organization status for user:', userData.email);
-    console.log('📊 User organizations in data:', userData.organizations?.length || 0);
-    console.log('🏢 Current org in localStorage:', localStorage.getItem('currentOrganization'));
+    console.log('🔍 ORG DETECTION DEBUG: Starting organization status check');
+    console.log('🔍 ORG DETECTION DEBUG: User email:', userData.email);
+    console.log('🔍 ORG DETECTION DEBUG: User data structure:', {
+      hasOrganizations: !!userData.organizations,
+      organizationCount: userData.organizations?.length || 0,
+      organizations: userData.organizations || []
+    });
+    console.log('🔍 ORG DETECTION DEBUG: Current org in localStorage:', localStorage.getItem('currentOrganization'));
+    console.log('🔍 ORG DETECTION DEBUG: User org data in localStorage:', localStorage.getItem('userOrganizationData'));
     
     // QUICK CHECK 1: User already has organizations in their data
     if (userData.organizations && userData.organizations.length > 0) {
-      console.log('✅ User has organizations in data, setting current org');
+      console.log('✅ ORG DETECTION DEBUG: QUICK CHECK 1 PASSED - User has organizations in data');
       const firstOrg = userData.organizations[0];
+      console.log('🔍 ORG DETECTION DEBUG: First organization:', firstOrg);
+      
       const orgId = firstOrg.organization?._id || firstOrg.organizationId?._id || firstOrg.organizationId || firstOrg._id;
+      console.log('🔍 ORG DETECTION DEBUG: Extracted org ID:', orgId);
+      
       if (orgId) {
         localStorage.setItem('currentOrganization', orgId);
+        console.log('✅ ORG DETECTION DEBUG: Set current organization to:', orgId);
         setNeedsOrgSetup(false);
+        console.log('✅ ORG DETECTION DEBUG: Setting needsOrgSetup to FALSE');
         return;
+      } else {
+        console.log('❌ ORG DETECTION DEBUG: Could not extract org ID from first organization');
       }
+    } else {
+      console.log('❌ ORG DETECTION DEBUG: QUICK CHECK 1 FAILED - No organizations in user data');
     }
     
     // QUICK CHECK 2: Current organization ID exists in localStorage
     const currentOrgId = localStorage.getItem('currentOrganization');
     if (currentOrgId && currentOrgId !== 'placeholder-org' && currentOrgId !== 'null' && currentOrgId !== 'undefined') {
-      console.log('✅ Current organization ID exists:', currentOrgId);
+      console.log('✅ ORG DETECTION DEBUG: QUICK CHECK 2 PASSED - Current organization ID exists:', currentOrgId);
       setNeedsOrgSetup(false);
+      console.log('✅ ORG DETECTION DEBUG: Setting needsOrgSetup to FALSE');
       return;
+    } else {
+      console.log('❌ ORG DETECTION DEBUG: QUICK CHECK 2 FAILED - No valid current org ID');
+      console.log('🔍 ORG DETECTION DEBUG: Current org ID value:', currentOrgId);
     }
     
     // QUICK CHECK 3: User organization preference exists
@@ -122,27 +142,38 @@ function App() {
     if (userOrgData) {
       try {
         const orgPref = JSON.parse(userOrgData);
+        console.log('🔍 ORG DETECTION DEBUG: Parsed org preference:', orgPref);
+        
         if (orgPref.userEmail === userData.email && orgPref.organizationId) {
-          console.log('✅ User organization preference exists, restoring:', orgPref.organizationId);
+          console.log('✅ ORG DETECTION DEBUG: QUICK CHECK 3 PASSED - User organization preference exists');
           localStorage.setItem('currentOrganization', orgPref.organizationId);
+          console.log('✅ ORG DETECTION DEBUG: Restored current organization:', orgPref.organizationId);
           setNeedsOrgSetup(false);
+          console.log('✅ ORG DETECTION DEBUG: Setting needsOrgSetup to FALSE');
           return;
+        } else {
+          console.log('❌ ORG DETECTION DEBUG: QUICK CHECK 3 FAILED - Email mismatch or no org ID');
+          console.log('🔍 ORG DETECTION DEBUG: Email match:', orgPref.userEmail === userData.email);
+          console.log('🔍 ORG DETECTION DEBUG: Has org ID:', !!orgPref.organizationId);
         }
       } catch (e) {
-        console.error('Error checking org preference:', e);
+        console.error('❌ ORG DETECTION DEBUG: Error parsing org preference:', e);
       }
+    } else {
+      console.log('❌ ORG DETECTION DEBUG: QUICK CHECK 3 FAILED - No user org data in localStorage');
     }
     
     // API CHECK: Fetch organizations from API if no local data
     try {
-      console.log('🌐 Fetching organizations from API...');
+      console.log('🌐 ORG DETECTION DEBUG: Fetching organizations from API...');
       const response = await ApiService.getMyOrganizations();
-      console.log('📡 Organization API response:', response);
+      console.log('📡 ORG DETECTION DEBUG: Organization API response:', response);
       
       const organizations = response?.organizations || response || [];
+      console.log('🔍 ORG DETECTION DEBUG: Extracted organizations:', organizations);
       
       if (organizations && organizations.length > 0) {
-        console.log('✅ Organizations found via API:', organizations.length);
+        console.log('✅ ORG DETECTION DEBUG: Organizations found via API:', organizations.length);
         
         // Set the first organization as current
         const firstOrg = organizations[0];
@@ -150,16 +181,20 @@ function App() {
         
         if (orgId) {
           localStorage.setItem('currentOrganization', orgId);
-          console.log('🎯 Set current organization to:', orgId);
+          console.log('🎯 ORG DETECTION DEBUG: Set current organization to:', orgId);
           setNeedsOrgSetup(false);
+          console.log('✅ ORG DETECTION DEBUG: Setting needsOrgSetup to FALSE');
           return;
+        } else {
+          console.log('❌ ORG DETECTION DEBUG: Could not extract org ID from API response');
         }
       } else {
-        console.log('❌ No organizations found via API, user needs org setup');
+        console.log('❌ ORG DETECTION DEBUG: No organizations found via API, user needs org setup');
         setNeedsOrgSetup(true);
+        console.log('❌ ORG DETECTION DEBUG: Setting needsOrgSetup to TRUE');
       }
     } catch (error) {
-      console.error('❌ Error fetching organizations from API:', error);
+      console.error('❌ ORG DETECTION DEBUG: Error fetching organizations from API:', error);
       
       // If API fails but user has any org indicators, don't show org setup
       const hasAnyOrgData = userData.organizations?.length > 0 || 
@@ -167,11 +202,13 @@ function App() {
                            localStorage.getItem('userOrganizationData');
       
       if (hasAnyOrgData) {
-        console.log('🔄 API failed but user has org data, skipping org setup');
+        console.log('🔄 ORG DETECTION DEBUG: API failed but user has org data, skipping org setup');
         setNeedsOrgSetup(false);
+        console.log('✅ ORG DETECTION DEBUG: Setting needsOrgSetup to FALSE');
       } else {
-        console.log('❌ API failed and no org data found, showing org setup');
+        console.log('❌ ORG DETECTION DEBUG: API failed and no org data found, showing org setup');
         setNeedsOrgSetup(true);
+        console.log('❌ ORG DETECTION DEBUG: Setting needsOrgSetup to TRUE');
       }
     }
   };
@@ -272,11 +309,16 @@ function App() {
 
   // Show organization setup if user is logged in but needs org setup
   if (user && needsOrgSetup) {
-    console.log('🚨 SHOWING ORG SETUP - User needs organization setup');
-    console.log('👤 User email:', user.email);
-    console.log('📊 User organizations:', user.organizations?.length || 0);
-    console.log('🏢 Current org ID:', localStorage.getItem('currentOrganization'));
-    console.log('🎭 Needs org setup:', needsOrgSetup);
+    console.log('🚨 RENDERING DEBUG: SHOWING ORG SETUP - User needs organization setup');
+    console.log('🚨 RENDERING DEBUG: User email:', user.email);
+    console.log('🚨 RENDERING DEBUG: User organizations:', user.organizations?.length || 0);
+    console.log('🚨 RENDERING DEBUG: Current org ID:', localStorage.getItem('currentOrganization'));
+    console.log('🚨 RENDERING DEBUG: Needs org setup:', needsOrgSetup);
+    console.log('🚨 RENDERING DEBUG: User data structure:', {
+      hasOrganizations: !!user.organizations,
+      organizationCount: user.organizations?.length || 0,
+      organizations: user.organizations || []
+    });
     
     return (
       <div className="app">
@@ -286,13 +328,13 @@ function App() {
   }
 
   // Debug output before rendering main app
-  console.log('🏠 RENDERING MAIN APP');
-  console.log('👤 User:', !!user, user?.email || 'none');
-  console.log('🎭 Needs org setup:', needsOrgSetup);
-  console.log('⏳ Loading:', loading);
-  console.log('📊 User orgs:', user?.organizations?.length || 0);
-  console.log('🏢 Current org:', localStorage.getItem('currentOrganization'));
-  console.log('🔖 App version:', version);
+  console.log('🏠 RENDERING DEBUG: RENDERING MAIN APP');
+  console.log('🏠 RENDERING DEBUG: User:', !!user, user?.email || 'none');
+  console.log('🏠 RENDERING DEBUG: Needs org setup:', needsOrgSetup);
+  console.log('🏠 RENDERING DEBUG: Loading:', loading);
+  console.log('🏠 RENDERING DEBUG: User orgs:', user?.organizations?.length || 0);
+  console.log('🏠 RENDERING DEBUG: Current org:', localStorage.getItem('currentOrganization'));
+  console.log('🏠 RENDERING DEBUG: App version:', version);
 
   return (
     <ErrorBoundary>

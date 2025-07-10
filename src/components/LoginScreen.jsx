@@ -29,21 +29,51 @@ function LoginScreen({ onLogin }) {
       let result;
       
       if (isLogin) {
+        console.log('🔍 LOGIN DEBUG: Starting login process for:', formData.email);
         result = await authService.login(formData.email, formData.password);
+        console.log('🔍 LOGIN DEBUG: Login result:', result);
+        
+        if (result.success) {
+          console.log('🔍 LOGIN DEBUG: Login successful');
+          console.log('🔍 LOGIN DEBUG: User data structure:', {
+            email: result.user?.email,
+            hasOrganizations: !!result.user?.organizations,
+            organizationCount: result.user?.organizations?.length || 0,
+            organizations: result.user?.organizations || []
+          });
+          
+          // Store complete user data in localStorage including organizations
+          localStorage.setItem('user', JSON.stringify(result.user));
+          console.log('🔍 LOGIN DEBUG: User data stored in localStorage');
+          console.log('🔍 LOGIN DEBUG: User logged in with organizations:', result.user.organizations?.length || 0);
+          
+          // Check if user has organizations and set current org
+          if (result.user.organizations && result.user.organizations.length > 0) {
+            const currentOrgId = localStorage.getItem('currentOrganization');
+            if (!currentOrgId) {
+              const firstOrg = result.user.organizations[0];
+              const orgId = firstOrg.organization?._id || firstOrg.organizationId;
+              localStorage.setItem('currentOrganization', orgId);
+              console.log('🔍 LOGIN DEBUG: Set current organization:', orgId);
+            }
+          }
+          
+          onLogin(result.user);
+        } else {
+          console.log('🔍 LOGIN DEBUG: Login failed:', result.error);
+          setError(result.error);
+        }
       } else {
         result = await authService.register(formData.email, formData.password, formData.name);
-      }
-
-      if (result.success) {
-        // Store complete user data in localStorage including organizations
-        localStorage.setItem('user', JSON.stringify(result.user));
-        console.log('User logged in with organizations:', result.user.organizations?.length || 0);
-        onLogin(result.user);
-      } else {
-        setError(result.error);
+        if (result.success) {
+          localStorage.setItem('user', JSON.stringify(result.user));
+          onLogin(result.user);
+        } else {
+          setError(result.error);
+        }
       }
     } catch (error) {
-      console.error('Auth error:', error);
+      console.error('🔍 LOGIN DEBUG: Auth error:', error);
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
