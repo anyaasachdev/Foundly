@@ -33,7 +33,7 @@ class ApiService {
           throw new Error('No refresh token available');
         }
 
-        const response = await fetch(`${this.baseURL}/auth?action=refresh`, {
+        const response = await fetch(`${this.baseURL}/auth/refresh`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -145,7 +145,7 @@ class ApiService {
   
   // Authentication
   async login(email, password) {
-    const response = await this.request('/auth?action=login', {
+    const response = await this.request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password })
     });
@@ -163,7 +163,7 @@ class ApiService {
   }
   
   async register(name, email, password) {
-    const response = await this.request('/auth?action=register', {
+    const response = await this.request('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ name, email, password })
     });
@@ -181,7 +181,17 @@ class ApiService {
   }
   
   async getCurrentUser() {
-    return this.request('/auth/me');
+    // Since we don't have a /auth/me endpoint, return the user from localStorage
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        return JSON.parse(userStr);
+      } catch (error) {
+        console.error('Failed to parse user from localStorage:', error);
+        return null;
+      }
+    }
+    return null;
   }
   
   async logout() {
@@ -197,7 +207,7 @@ class ApiService {
   // Organizations
   async createOrganization(organizationData) {
     console.log('🏢 Creating organization:', organizationData);
-    return this.request('/auth?action=create-org', {
+    return this.request('/organizations', {
       method: 'POST',
       body: JSON.stringify(organizationData)
     });
@@ -205,7 +215,7 @@ class ApiService {
   
   async joinOrganization(joinCode) {
     console.log('🔑 Joining organization with code:', joinCode);
-    return this.request('/auth?action=join-org', {
+    return this.request('/organizations/join', {
       method: 'POST',
       body: JSON.stringify({ joinCode })
     });

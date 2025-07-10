@@ -126,6 +126,12 @@ app.post('/api/auth/register', authLimiter, validateRegistration, async (req, re
 
     const { email, password, name } = req.body;
 
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User with this email already exists' });
+    }
+
     const user = new User({ email, password, name });
     await user.save();
 
@@ -158,6 +164,9 @@ app.post('/api/auth/register', authLimiter, validateRegistration, async (req, re
     });
   } catch (error) {
     console.error('Registration error:', error);
+    if (error.code === 11000) {
+      return res.status(400).json({ error: 'User with this email already exists' });
+    }
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -323,6 +332,16 @@ app.post('/api/organizations', authenticateToken, async (req, res) => {
       }
     }
     
+    // Ensure we have a valid user ID
+    const userId = req.user.userId;
+    console.log('🔍 Creating organization with user ID:', userId);
+    console.log('🔍 User object from token:', req.user);
+    
+    if (!userId || typeof userId !== 'string' || userId.length !== 24) {
+      console.error('❌ Invalid user ID from token:', userId);
+      return res.status(400).json({ error: 'Invalid user authentication' });
+    }
+    
     const organization = new Organization({
       name,
       description,
@@ -330,12 +349,22 @@ app.post('/api/organizations', authenticateToken, async (req, res) => {
       website,
       category,
       joinCode: customJoinCode ? customJoinCode.toUpperCase() : undefined, // Use custom or auto-generate
-      createdBy: req.user.userId,
-      admins: [req.user.userId],
+      createdBy: userId,
+      admins: [userId],
       members: [{
-        user: req.user.userId,
-        role: 'admin'
-      }]
+        user: userId,
+        role: 'admin',
+        joinedAt: new Date(),
+        isActive: true
+      }],
+      // Initialize with zero stats - no data leakage
+      stats: {
+        totalMembers: 1, // Only the creator
+        totalHours: 0,
+        activeProjects: 0,
+        completedTasks: 0
+      },
+      createdAt: new Date()
     });
     
     await organization.save();
@@ -1376,6 +1405,160 @@ app.get('/api/health', (req, res) => {
       ].filter(Boolean)
     }
   });
+});
+
+// Working API endpoint to handle frontend requests
+app.get('/api/working', authenticateToken, async (req, res) => {
+  try {
+    const { action, organizationId } = req.query;
+    const userId = req.user.userId;
+    
+    // Validate user ID
+    if (!userId || typeof userId !== 'string' || userId.length !== 24) {
+      console.error('❌ Invalid user ID from token:', userId);
+      return res.status(400).json({ error: 'Invalid user authentication' });
+    }
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      console.error('❌ User not found:', userId);
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const currentOrgId = organizationId || user.currentOrganization;
+    
+    console.log('🔧 Working API called:', action, 'for org:', currentOrgId, 'user:', userId);
+    
+    switch (action) {
+      case 'organizations':
+        // Get user's organizations
+        const userOrgs = await Organization.find({
+          'members.user': userId
+        });
+        
+        const transformedOrgs = userOrgs.map(org => {
+          const userMember = org.members.find(member => 
+            member.user.toString() === userId.toString()
+          );
+          
+          return {
+            _id: org._id,
+            organizationId: org._id,
+            organization: {
+              _id: org._id,
+              name: org.name,
+              description: org.description || '',
+              joinCode: org.joinCode,
+              location: org.location || '',
+              website: org.website || '',
+              category: org.category || '',
+              createdAt: org.createdAt,
+              members: org.members || []
+            },
+            role: userMember?.role || 'member',
+            joinedAt: userMember?.joinedAt || org.createdAt
+          };
+        });
+        
+        return res.json({ success: true, organizations: transformedOrgs });
+        
+      case 'get-stats':
+        // Get stats for current organization
+        const org = await Organization.findById(currentOrgId);
+        if (!org) {
+          return res.json({ success: true, stats: { totalMembers: 0, totalHours: 0, activeProjects: 0, completedTasks: 0 } });
+        }
+        
+        const [totalProjects, activeProjects, totalHours] = await Promise.all([
+          Project.countDocuments({ organization: currentOrgId }),
+          Project.countDocuments({ organization: currentOrgId, status: 'active' }),
+          HourLog.aggregate([
+            { $match: { organization: currentOrgId } },
+            { $group: { _id: null, total: { $sum: '$hours' } } }
+          ])
+        ]);
+        
+        // Count unique members
+        const uniqueUserIds = new Set();
+        org.members.forEach(member => {
+          if (member.user && member.user.toString()) {
+            uniqueUserIds.add(member.user.toString());
+          }
+        });
+        
+        const stats = {
+          totalMembers: uniqueUserIds.size,
+          totalHours: totalHours[0]?.total || 0,
+          activeProjects,
+          completedTasks: totalProjects - activeProjects
+        };
+        
+        return res.json({ success: true, stats });
+        
+      default:
+        return res.status(400).json({ error: 'Invalid action' });
+    }
+  } catch (error) {
+    console.error('Working API error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Working API POST endpoint for hours logging
+app.post('/api/working', authenticateToken, async (req, res) => {
+  try {
+    const { action } = req.query;
+    const userId = req.user.userId;
+    
+    // Validate user ID
+    if (!userId || typeof userId !== 'string' || userId.length !== 24) {
+      console.error('❌ Invalid user ID from token:', userId);
+      return res.status(400).json({ error: 'Invalid user authentication' });
+    }
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      console.error('❌ User not found:', userId);
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const currentOrgId = req.body.organizationId || user.currentOrganization;
+    
+    console.log('🔧 Working API POST called:', action, 'for org:', currentOrgId, 'user:', userId);
+    
+    switch (action) {
+      case 'log-hours':
+        const { hours, description, date } = req.body;
+        
+        if (!hours || !description || !date) {
+          return res.status(400).json({ error: 'Hours, description, and date are required' });
+        }
+        
+        const hourLog = new HourLog({
+          user: userId,
+          organization: currentOrgId,
+          hours: parseFloat(hours),
+          description,
+          date: new Date(date),
+          category: 'volunteer'
+        });
+        
+        await hourLog.save();
+        
+        // Update user stats
+        await User.findByIdAndUpdate(userId, {
+          $inc: { 'stats.hoursVolunteered': hourLog.hours }
+        });
+        
+        return res.json({ success: true, hourLog });
+        
+      default:
+        return res.status(400).json({ error: 'Invalid action' });
+    }
+  } catch (error) {
+    console.error('Working API POST error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.use((req, res) => {
