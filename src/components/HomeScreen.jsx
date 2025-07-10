@@ -149,18 +149,27 @@ const HomeScreen = ({ user }) => {
             stats: statsResponse.stats
           });
           
-          // Get accurate member count from organization
-          const memberCount = currentOrg.memberCount || currentOrg.members?.length || 1;
+          // Use accurate stats from API response instead of calculating locally
           const projects = projectsResponse.projects || projectsResponse.data || [];
-          const actualHours = hoursResponse.totalHours || 0;
+          const stats = statsResponse.stats || statsResponse.data || {};
+          
+          console.log('📊 Parsed stats from API:', stats);
           
           setProjects(projects);
           setStats({
-            totalHours: actualHours,
-            totalMembers: memberCount,
-            activeProjects: projects.filter(p => p.status === 'active').length,
-            hoursLogged: actualHours,
-            completedTasks: statsResponse.stats?.completedTasks || projects.filter(p => p.status === 'completed').length || 0
+            totalHours: stats.totalHours || 0,
+            totalMembers: stats.totalMembers || 0,
+            activeProjects: stats.activeProjects || 0,
+            hoursLogged: stats.totalHours || 0,
+            completedTasks: stats.completedTasks || 0
+          });
+          
+          console.log('✅ Stats set from API:', {
+            totalHours: stats.totalHours || 0,
+            totalMembers: stats.totalMembers || 0,
+            activeProjects: stats.activeProjects || 0,
+            hoursLogged: stats.totalHours || 0,
+            completedTasks: stats.completedTasks || 0
           });
           
           setLoading(false);
@@ -251,15 +260,28 @@ const HomeScreen = ({ user }) => {
   const refreshStats = async () => {
     setLoading(true);
     try {
+      console.log('🔄 Refreshing stats...');
       const statsResponse = await ApiService.getStats();
-      const stats = statsResponse.stats || {};
+      console.log('📊 Stats response:', statsResponse);
+      
+      const stats = statsResponse.stats || statsResponse.data || {};
+      console.log('📈 Parsed stats:', stats);
+      
       setStats({
         totalMembers: stats.totalMembers || 0,
         activeProjects: stats.activeProjects || 0,
         hoursLogged: stats.totalHours || 0,
         completedTasks: stats.completedTasks || 0
       });
+      
+      console.log('✅ Stats updated:', {
+        totalMembers: stats.totalMembers || 0,
+        activeProjects: stats.activeProjects || 0,
+        hoursLogged: stats.totalHours || 0,
+        completedTasks: stats.completedTasks || 0
+      });
     } catch (error) {
+      console.error('❌ Failed to refresh stats:', error);
       // Optionally show an error toast
     }
     setLoading(false);
@@ -460,13 +482,7 @@ const HomeScreen = ({ user }) => {
             <RefreshCw size={20} style={{ opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s' }} className={loading ? 'spin' : ''} />
           </button>
         </div>
-        <div className="stats-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '20px',
-          marginBottom: '40px',
-          padding: '0',
-        }}>
+        <div className="stats-grid">
           <div className="stat-card" style={{
             background: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
             color: 'white',
@@ -521,7 +537,7 @@ const HomeScreen = ({ user }) => {
           }}>
             <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>📈</div>
             <div style={{ fontSize: '2.1rem', fontWeight: 700 }}>{stats.completedTasks}</div>
-            <div style={{ fontSize: '1.1rem', marginTop: '6px', color: '#FEF3C7' }}>Completed Tasks</div>
+            <div style={{ fontSize: '1.1rem', marginTop: '6px', color: '#FEF3C7' }}>Completed Projects</div>
           </div>
         </div>
       </div>
