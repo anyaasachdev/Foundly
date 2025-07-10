@@ -360,15 +360,27 @@ app.post('/api/organizations', authenticateToken, async (req, res) => {
 app.get('/api/organizations/my', authenticateToken, async (req, res) => {
   try {
     console.log('🔍 Getting organizations for user:', req.user.userId);
-    
     const user = await User.findById(req.user.userId).populate('organizations.organizationId');
-    console.log('📊 User organizations:', user.organizations);
-    
-    // Return the expected structure
+    if (!user) {
+      console.warn('⚠️ User not found for organizations/my:', req.user.userId);
+      return res.json({ organizations: [], success: true, count: 0 });
+    }
+    if (!user.organizations || user.organizations.length === 0) {
+      console.warn('⚠️ No organizations found for user:', user.email);
+      return res.json({ organizations: [], success: true, count: 0 });
+    }
+    // Defensive: ensure population worked
+    const orgs = user.organizations.map(org => {
+      if (!org.organizationId || typeof org.organizationId !== 'object') {
+        console.warn('⚠️ Organization population failed for org:', org);
+      }
+      return org;
+    });
+    console.log('📊 User organizations:', orgs);
     res.json({ 
-      organizations: user.organizations || [],
+      organizations: orgs,
       success: true,
-      count: (user.organizations || []).length
+      count: orgs.length
     });
   } catch (error) {
     console.error('Get organizations error:', error);

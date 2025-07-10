@@ -13,6 +13,7 @@ const Navbar = ({ user, onLogout }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [organizations, setOrganizations] = useState([]);
   const [currentOrg, setCurrentOrg] = useState(null);
+  const [orgLoadError, setOrgLoadError] = useState(null);
   const { unreadCount } = useNotifications();
   const location = useLocation();
 
@@ -57,6 +58,7 @@ const Navbar = ({ user, onLogout }) => {
   }, [location.pathname]);
 
   const loadOrganizations = async () => {
+    setOrgLoadError(null);
     try {
       console.log('🔍 Navbar: Loading organizations...');
       console.log('🔍 User data:', user);
@@ -76,10 +78,9 @@ const Navbar = ({ user, onLogout }) => {
       console.log('📊 Filtered orgs:', orgs);
       
       if (orgs.length === 0) {
-        console.log('⚠️ No organizations found in navbar');
-        console.log('⚠️ Raw response was:', response);
         setOrganizations([]);
         setCurrentOrg(null);
+        setOrgLoadError('No organizations found. If this is unexpected, please contact support.');
         return;
       }
       
@@ -133,6 +134,7 @@ const Navbar = ({ user, onLogout }) => {
       console.error('❌ Error stack:', error.stack);
       setOrganizations([]);
       setCurrentOrg(null);
+      setOrgLoadError('Failed to load organizations. Please check your connection or try again.');
     }
   };
 
@@ -322,7 +324,12 @@ const Navbar = ({ user, onLogout }) => {
                 <div className="org-dropdown-header">
                   <span>Switch Organization</span>
                 </div>
-                {organizations && organizations.length > 0 ? (
+                {orgLoadError ? (
+                  <div className="org-option" style={{ color: '#d9534f', fontStyle: 'italic' }}>
+                    {orgLoadError}
+                    <button style={{ marginTop: 8 }} onClick={loadOrganizations}>Retry</button>
+                  </div>
+                ) : organizations && organizations.length > 0 ? (
                   organizations.map((org) => {
                     const orgId = org.organizationId?._id || org.organizationId || org._id;
                     const orgName = org.organizationId?.name || org.name || 'Unknown Organization';

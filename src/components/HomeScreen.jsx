@@ -23,6 +23,7 @@ const HomeScreen = ({ user }) => {
     hoursLogged: 0,
     completedTasks: 0
   });
+  const [orgLoadError, setOrgLoadError] = useState(null);
 
   const socket = useSocket(
     localStorage.getItem('authToken'),
@@ -98,6 +99,7 @@ const HomeScreen = ({ user }) => {
   }, [socket]);
 
   const loadOrganizationData = async () => {
+    setOrgLoadError(null);
     try {
       console.log('🏠 HomeScreen: Loading organization data...');
       console.log('👤 User data:', user?.email, 'Organizations in user:', user?.organizations?.length || 0);
@@ -336,6 +338,16 @@ const HomeScreen = ({ user }) => {
         <div className="loading-container">
           <div className="loading-spinner"></div>
           <p>Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+  if (orgLoadError) {
+    return (
+      <div className="home-screen">
+        <div className="loading-container">
+          <p style={{ color: '#d9534f', fontStyle: 'italic' }}>{orgLoadError}</p>
+          <button style={{ marginTop: 8 }} onClick={loadOrganizationData}>Retry</button>
         </div>
       </div>
     );

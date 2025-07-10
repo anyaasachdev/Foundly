@@ -21,11 +21,84 @@ async function testOrganizationFixes() {
     }
   }
   
-  // Test 2: Test organizations endpoint structure
-  console.log('\n2️⃣ Testing organizations endpoint structure...');
-  console.log('   📋 Expected response structure:');
-  console.log('   { organizations: [...], success: true, count: number }');
-  console.log('   📋 This should fix the "Loading organizations..." issue');
+  // Test 2: Login and get organizations
+  console.log('\n2️⃣ Testing login and organizations endpoint...');
+  try {
+    // First, try to login with a test user
+    const loginResponse = await axios.post(`${BASE_URL}/api/auth/login`, {
+      email: 'test@example.com',
+      password: 'password123'
+    });
+    
+    if (loginResponse.data.token) {
+      console.log('   ✅ Login successful, testing organizations endpoint...');
+      
+      const orgResponse = await axios.get(`${BASE_URL}/api/organizations/my`, {
+        headers: { 'Authorization': `Bearer ${loginResponse.data.token}` }
+      });
+      
+      console.log('   📡 Organizations response:', orgResponse.data);
+      console.log('   📊 Response structure:', {
+        hasOrganizations: !!orgResponse.data.organizations,
+        organizationCount: orgResponse.data.organizations?.length || 0,
+        hasSuccess: !!orgResponse.data.success,
+        hasCount: !!orgResponse.data.count
+      });
+      
+      if (orgResponse.data.organizations && orgResponse.data.organizations.length > 0) {
+        console.log('   ✅ Organizations found:', orgResponse.data.organizations.length);
+        console.log('   📋 Organizations:', orgResponse.data.organizations.map(org => ({
+          name: org.organization?.name || org.name,
+          role: org.role,
+          id: org._id || org.organizationId
+        })));
+      } else {
+        console.log('   ⚠️ No organizations found for test user');
+      }
+    } else {
+      console.log('   ❌ Login failed, trying with different credentials...');
+      
+      // Try with a different test user
+      const loginResponse2 = await axios.post(`${BASE_URL}/api/auth/login`, {
+        email: 'admin@foundly.com',
+        password: 'admin123'
+      });
+      
+      if (loginResponse2.data.token) {
+        console.log('   ✅ Second login successful, testing organizations endpoint...');
+        
+        const orgResponse = await axios.get(`${BASE_URL}/api/organizations/my`, {
+          headers: { 'Authorization': `Bearer ${loginResponse2.data.token}` }
+        });
+        
+        console.log('   📡 Organizations response:', orgResponse.data);
+        console.log('   📊 Response structure:', {
+          hasOrganizations: !!orgResponse.data.organizations,
+          organizationCount: orgResponse.data.organizations?.length || 0,
+          hasSuccess: !!orgResponse.data.success,
+          hasCount: !!orgResponse.data.count
+        });
+        
+        if (orgResponse.data.organizations && orgResponse.data.organizations.length > 0) {
+          console.log('   ✅ Organizations found:', orgResponse.data.organizations.length);
+          console.log('   📋 Organizations:', orgResponse.data.organizations.map(org => ({
+            name: org.organization?.name || org.name,
+            role: org.role,
+            id: org._id || org.organizationId
+          })));
+        } else {
+          console.log('   ⚠️ No organizations found for second test user');
+        }
+      } else {
+        console.log('   ❌ Both login attempts failed');
+      }
+    }
+  } catch (error) {
+    console.log('   ❌ Error testing organizations endpoint:', error.message);
+    if (error.response) {
+      console.log('   📡 Error response:', error.response.data);
+    }
+  }
   
   // Test 3: Test member count logic
   console.log('\n3️⃣ Testing member count logic...');
