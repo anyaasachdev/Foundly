@@ -499,7 +499,7 @@ module.exports = async function handler(req, res) {
     }
     
     if (action === 'organizations' && req.method === 'POST') {
-      const { name, description, inviteCode } = req.body;
+      const { name, description, inviteCode, customJoinCode } = req.body;
       
       if (inviteCode) {
         // Joining an organization
@@ -539,6 +539,15 @@ module.exports = async function handler(req, res) {
           return res.status(400).json({ error: 'Organization name is required' });
         }
         
+        if (!customJoinCode) {
+          return res.status(400).json({ error: 'Custom join code is required' });
+        }
+        
+        // Validate custom join code format
+        if (customJoinCode.length < 6 || customJoinCode.length > 10) {
+          return res.status(400).json({ error: 'Join code must be between 6-10 characters' });
+        }
+        
         const Organization = getModel('Organization', new mongoose.Schema({
           name: String,
           description: String,
@@ -552,7 +561,14 @@ module.exports = async function handler(req, res) {
           createdAt: { type: Date, default: Date.now }
         }));
         
-        const joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        // Check if join code already exists
+        const existingOrg = await Organization.findOne({ joinCode: customJoinCode.toUpperCase() });
+        if (existingOrg) {
+          return res.status(400).json({ error: 'This join code is already taken. Please choose a different one.' });
+        }
+        
+        // Use the custom join code provided by the user
+        const joinCode = customJoinCode.toUpperCase();
         
         const organization = new Organization({
           name,
@@ -567,7 +583,7 @@ module.exports = async function handler(req, res) {
         });
 
         await organization.save();
-        console.log('Organization created:', organization);
+        console.log('Organization created with custom join code:', organization);
 
         return res.status(201).json({ 
           success: true,
