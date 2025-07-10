@@ -334,66 +334,60 @@ const HomeScreen = ({ user }) => {
         maxWidth: '1200px',
         margin: '0 auto',
         padding: '40px 20px 20px 20px',
-        borderBottom: '1px solid #e5e7eb'
+        borderBottom: '1px solid #e5e7eb',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between'
       }}>
         <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          marginBottom: '20px'
+          flex: 1,
+          minWidth: '320px',
+          marginRight: '32px'
         }}>
-          <h2 style={{
-            fontSize: '1.2rem',
-            fontWeight: '600',
-            color: '#6366F1',
-            marginBottom: '8px',
-            letterSpacing: '0.02em'
-          }}>Your Org at Work 🚀</h2>
           <h1 style={{
-            fontSize: '2.5rem',
+            fontSize: '2.8rem',
             fontWeight: '700',
             margin: 0,
             color: '#111827',
-            letterSpacing: '-0.02em'
+            letterSpacing: '-0.02em',
+            fontFamily: 'Poppins, sans-serif'
           }}>{organization?.name || 'Organization Dashboard'}</h1>
-        </div>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '40px',
-          flexWrap: 'wrap',
-          marginTop: '10px'
-        }}>
-          {/* Angled Card with Rocketship */}
-          <div style={{
-            background: 'linear-gradient(135deg, #3730A3 0%, #6366F1 100%)',
-            color: 'white',
-            borderRadius: '22px',
-            padding: '32px 36px',
-            minWidth: '320px',
-            minHeight: '160px',
-            boxShadow: '0 8px 32px rgba(55, 48, 163, 0.18)',
-            transform: 'rotate(-6deg)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginRight: '24px',
-            marginBottom: '16px',
-            position: 'relative'
+          <p style={{
+            fontSize: '1.15rem',
+            color: '#6B7280',
+            marginTop: '18px',
+            maxWidth: '500px',
+            lineHeight: '1.5',
+            fontFamily: 'Poppins, sans-serif'
           }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🚀</div>
-            <div style={{ fontWeight: 600, fontSize: '1.3rem', marginBottom: '6px', letterSpacing: '-0.01em' }}>
-              {organization?.name || 'Your Organization'} at a Glance
-            </div>
-            <div style={{ fontSize: '1.05rem', color: '#E0E7FF', marginBottom: '6px', textAlign: 'center' }}>
-              {stats.totalMembers} members • {stats.activeProjects} active projects
-            </div>
-            <div style={{ fontSize: '0.98rem', color: '#C7D2FE', textAlign: 'center' }}>
-              {stats.hoursLogged} hours logged • {stats.completedTasks} tasks done
-            </div>
+            Streamline your organization&apos;s workflow with our comprehensive management platform. Track progress, manage teams, and achieve your goals.
+          </p>
+        </div>
+        {/* Angled Card with Rocketship */}
+        <div style={{
+          background: 'linear-gradient(135deg, #3730A3 0%, #6366F1 100%)',
+          color: 'white',
+          borderRadius: '22px',
+          padding: '32px 36px',
+          minWidth: '320px',
+          minHeight: '160px',
+          boxShadow: '0 8px 32px rgba(55, 48, 163, 0.18)',
+          transform: 'rotate(-6deg)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginBottom: '16px',
+          position: 'relative'
+        }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🚀</div>
+          <div style={{ fontWeight: 700, fontSize: '1.35rem', marginBottom: '8px', letterSpacing: '-0.01em', textAlign: 'center' }}>
+            Welcome to Foundly
           </div>
-          {/* End Angled Card */}
+          <div style={{ fontSize: '1.08rem', color: '#E0E7FF', textAlign: 'center', fontWeight: 400 }}>
+            Your organization&apos;s central hub for collaboration and impact
+          </div>
         </div>
       </div>
       {/* Stats Grid */}
