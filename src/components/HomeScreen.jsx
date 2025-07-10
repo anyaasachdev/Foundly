@@ -30,8 +30,10 @@ const HomeScreen = ({ user }) => {
   );
 
   useEffect(() => {
-    loadOrganizationData();
-  }, []);
+    if (user) {
+      loadOrganizationData();
+    }
+  }, [user]);
 
   // Removed auto-refresh to prevent excessive API calls
 
@@ -61,19 +63,53 @@ const HomeScreen = ({ user }) => {
 
   const loadOrganizationData = async () => {
     try {
-      console.log('Loading organization data...');
-      const response = await ApiService.getMyOrganizations();
-      console.log('Organizations response:', response);
+      console.log('🏠 Loading organization data for HomeScreen...');
+      console.log('👤 User data:', user?.email, 'Organizations in user:', user?.organizations?.length || 0);
       
-      const organizations = response?.organizations || [];
+      // First check if user has organizations in their data
+      let organizations = [];
+      if (user?.organizations && user.organizations.length > 0) {
+        console.log('✅ Using organizations from user data');
+        organizations = user.organizations;
+      } else {
+        console.log('🌐 Fetching organizations from API...');
+        const response = await ApiService.getMyOrganizations();
+        console.log('📡 API Organizations response:', response);
+        organizations = response?.organizations || [];
+      }
+      
       if (organizations.length > 0) {
         const currentOrgId = localStorage.getItem('currentOrganization');
-        let currentOrg = organizations.find(org => org._id === currentOrgId);
         
+        // Handle different organization data structures
+        let currentOrg = null;
+        
+        // Try to find by currentOrgId first
+        if (currentOrgId) {
+          currentOrg = organizations.find(org => {
+            const orgId = org._id || org.organization?._id || org.organizationId?._id || org.organizationId;
+            return orgId === currentOrgId;
+          });
+        }
+        
+        // If not found, use the first organization
         if (!currentOrg) {
-          currentOrg = organizations[0];
-          localStorage.setItem('currentOrganization', currentOrg._id);
-          console.log('Set current organization to:', currentOrg._id, currentOrg.name);
+          const firstOrgData = organizations[0];
+          // Extract the actual organization data
+          if (firstOrgData.organization) {
+            // User data format: { role: 'admin', organization: { _id, name, ... } }
+            currentOrg = {
+              ...firstOrgData.organization,
+              role: firstOrgData.role
+            };
+          } else {
+            // Direct organization format: { _id, name, ... }
+            currentOrg = firstOrgData;
+          }
+          
+          const orgId = currentOrg._id;
+          localStorage.setItem('currentOrganization', orgId);
+          console.log('🎯 Set current organization to:', orgId, currentOrg.name);
         }
         
         // Set organization data
@@ -120,14 +156,19 @@ const HomeScreen = ({ user }) => {
         
         setLoading(false);
       } else {
-        console.log('No organizations found');
-        // Create a temporary organization view while user is in setup
+        console.log('⚠️ No organizations found for user');
+        console.log('🔄 This should not happen for existing users - showing temporary org');
+        console.log('📡 User data organizations:', user?.organizations?.length || 0);
+        console.log('📡 API response organizations:', organizations?.length || 0);
+        
+        // Create a temporary organization view - this should only happen for new users
         const tempOrg = {
           _id: 'temp-org',
           name: 'Getting Started',
-          description: 'Setting up your organization...',
+          description: 'No organizations found. Please join or create an organization.',
           role: 'admin',
-          members: []
+          members: [],
+          isTemporary: true
         };
         
         setOrganization(tempOrg);
