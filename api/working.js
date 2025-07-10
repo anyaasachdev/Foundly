@@ -135,45 +135,66 @@ module.exports = async function handler(req, res) {
     }
     
     if ((action === 'log-hours' || action === 'hours') && req.method === 'POST') {
-      const { hours, description, date, organizationId } = req.body;
-      
-      if (!hours || !date) {
-        return res.status(400).json({ error: 'Hours and date are required' });
-      }
-      
-      const HourLog = getModel('HourLog', new mongoose.Schema({
-        hours: { type: Number, required: true, min: 0.1, max: 24 },
-        description: { type: String, default: '' },
-        date: { type: Date, required: true },
-        organizationId: { type: String, default: 'default' },
-        createdAt: { type: Date, default: Date.now }
-      }));
-      
-      const parsedHours = parseFloat(hours);
-      if (isNaN(parsedHours) || parsedHours <= 0) {
-        return res.status(400).json({ error: 'Hours must be a positive number' });
-      }
-      
-      const hourLog = new HourLog({
-        hours: parsedHours,
-        description: description || '',
-        date: new Date(date),
-        organizationId: organizationId || 'default'
-      });
-
-      const savedHourLog = await hourLog.save();
-      console.log('Hours logged successfully:', savedHourLog._id);
-
-      return res.status(201).json({ 
-        success: true,
-        message: 'Hours logged successfully',
-        hourLog: {
-          _id: savedHourLog._id,
-          hours: savedHourLog.hours,
-          date: savedHourLog.date,
-          description: savedHourLog.description
+      try {
+        console.log('log-hours endpoint called with data:', req.body);
+        const { hours, description, date, organizationId } = req.body;
+        
+        console.log('Extracted data:', { hours, description, date, organizationId });
+        
+        if (!hours || !date) {
+          console.log('Missing required fields:', { hours: !!hours, date: !!date });
+          return res.status(400).json({ error: 'Hours and date are required' });
         }
-      });
+        
+        const HourLog = getModel('HourLog', new mongoose.Schema({
+          hours: { type: Number, required: true, min: 0.1, max: 24 },
+          description: { type: String, default: '' },
+          date: { type: Date, required: true },
+          organizationId: { type: String, default: 'default' },
+          createdAt: { type: Date, default: Date.now }
+        }));
+        
+        const parsedHours = parseFloat(hours);
+        console.log('Parsed hours:', parsedHours);
+        
+        if (isNaN(parsedHours) || parsedHours <= 0) {
+          console.log('Invalid hours value:', parsedHours);
+          return res.status(400).json({ error: 'Hours must be a positive number' });
+        }
+        
+        const hourLogData = {
+          hours: parsedHours,
+          description: description || '',
+          date: new Date(date),
+          organizationId: organizationId || 'default'
+        };
+        
+        console.log('Creating hour log with data:', hourLogData);
+        const hourLog = new HourLog(hourLogData);
+
+        console.log('Saving hour log to database...');
+        const savedHourLog = await hourLog.save();
+        console.log('Hours logged successfully:', savedHourLog._id);
+
+        return res.status(201).json({ 
+          success: true,
+          message: 'Hours logged successfully',
+          hourLog: {
+            _id: savedHourLog._id,
+            hours: savedHourLog.hours,
+            date: savedHourLog.date,
+            description: savedHourLog.description
+          }
+        });
+      } catch (hourLogError) {
+        console.error('Error in log-hours endpoint:', hourLogError);
+        console.error('Error stack:', hourLogError.stack);
+        return res.status(500).json({ 
+          error: 'Failed to log hours', 
+          details: hourLogError.message,
+          stack: hourLogError.stack
+        });
+      }
     }
     
     if ((action === 'get-hours' || action === 'hours') && req.method === 'GET') {
