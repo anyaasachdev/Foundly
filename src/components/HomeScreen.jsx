@@ -252,6 +252,7 @@ const HomeScreen = ({ user }) => {
     setLoading(true);
     try {
       const statsResponse = await ApiService.getStats();
+      console.log('DEBUG: HomeScreen getStats response:', statsResponse);
       const stats = statsResponse.stats || {};
       setStats({
         totalMembers: stats.totalMembers || 0,
