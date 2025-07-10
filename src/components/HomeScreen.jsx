@@ -90,32 +90,69 @@ const HomeScreen = ({ user }) => {
             const orgId = org._id || org.organization?._id || org.organizationId?._id || org.organizationId;
             return orgId === currentOrgId;
           });
+          
+          if (currentOrg) {
+            console.log('✅ Found current organization by ID:', currentOrgId);
+          } else {
+            console.log('⚠️ Current org ID not found in user organizations:', currentOrgId);
+            // Clear invalid org ID
+            localStorage.removeItem('currentOrganization');
+          }
         }
         
-        // If not found, use the first organization
-        if (!currentOrg) {
+        // If not found, use the first valid organization
+        if (!currentOrg && organizations.length > 0) {
           const firstOrgData = organizations[0];
-          // Extract the actual organization data
+          
+          // Extract the actual organization data with validation
           if (firstOrgData.organization) {
             // User data format: { role: 'admin', organization: { _id, name, ... } }
-            currentOrg = {
-              ...firstOrgData.organization,
-              role: firstOrgData.role
-            };
-          } else {
+            const orgData = firstOrgData.organization;
+            
+            // Validate this is a real organization
+            if (orgData._id && orgData.name && !orgData.name.includes('Temporary') && !orgData.name.includes('Error')) {
+              currentOrg = {
+                ...orgData,
+                role: firstOrgData.role
+              };
+              
+              const orgId = orgData._id;
+              localStorage.setItem('currentOrganization', orgId);
+              console.log('🎯 Set current organization to first valid org:', orgId, orgData.name);
+            } else {
+              console.log('❌ First organization is invalid/temporary:', orgData.name);
+            }
+          } else if (firstOrgData._id && firstOrgData.name) {
             // Direct organization format: { _id, name, ... }
-            currentOrg = firstOrgData;
+            // Validate this is a real organization
+            if (!firstOrgData.name.includes('Temporary') && !firstOrgData.name.includes('Error') && !firstOrgData.name.includes('Getting Started')) {
+              currentOrg = firstOrgData;
+              localStorage.setItem('currentOrganization', firstOrgData._id);
+              console.log('🎯 Set current organization to first valid org:', firstOrgData._id, firstOrgData.name);
+            } else {
+              console.log('❌ First organization is invalid/temporary:', firstOrgData.name);
+            }
           }
-          
-          const orgId = currentOrg._id;
-          localStorage.setItem('currentOrganization', orgId);
-          console.log('🎯 Set current organization to:', orgId, currentOrg.name);
         }
         
-        // Set organization data
+        // Only proceed if we have a valid current organization
+        if (!currentOrg) {
+          console.log('❌ No valid organization found - this should not happen for existing users');
+          console.log('🔄 Redirecting to organization setup or login...');
+          
+          // Clear any invalid data
+          localStorage.removeItem('currentOrganization');
+          localStorage.removeItem('userOrganizationData');
+          
+          // Force user to org setup or login
+          window.location.href = '/organization/create';
+          return;
+        }
+        
+        // Set valid organization data
         setOrganization(currentOrg);
-        setIsAdmin(['admin', 'owner'].includes(currentOrg.role));
-        console.log('Current organization set:', currentOrg.name, 'ID:', currentOrg._id);
+        setIsAdmin(['admin', 'owner'].includes(currentOrg?.role));
+        console.log('✅ Current organization set:', currentOrg.name, 'ID:', currentOrg._id);
         
         // Load organization-specific data
         const [projectsResponse, statsResponse, hoursResponse] = await Promise.all([
@@ -157,57 +194,39 @@ const HomeScreen = ({ user }) => {
         setLoading(false);
       } else {
         console.log('⚠️ No organizations found for user');
-        console.log('🔄 This should not happen for existing users - showing temporary org');
-        console.log('📡 User data organizations:', user?.organizations?.length || 0);
-        console.log('📡 API response organizations:', organizations?.length || 0);
+        console.log('📊 User data organizations:', user?.organizations?.length || 0);
+        console.log('📊 API response organizations:', organizations?.length || 0);
         
-        // Create a temporary organization view - this should only happen for new users
-        const tempOrg = {
-          _id: 'temp-org',
-          name: 'Getting Started',
-          description: 'No organizations found. Please join or create an organization.',
-          role: 'admin',
-          members: [],
-          isTemporary: true
-        };
+        // Do NOT create fake organizations - redirect to org setup
+        console.log('🔄 No valid organizations found, redirecting to org setup...');
         
-        setOrganization(tempOrg);
-        setIsAdmin(true);
+        // Clear any invalid data
+        localStorage.removeItem('currentOrganization');
+        localStorage.removeItem('userOrganizationData');
         
-        // Set empty stats
-        setStats({
-          totalMembers: 0,
-          activeProjects: 0,
-          hoursLogged: 0,
-          completedTasks: 0
-        });
-        
-        setLoading(false);
+        // Force user to org setup
+        window.location.href = '/organization/create';
+        return;
       }
     } catch (error) {
-      console.error('Failed to load organization data:', error);
+      console.error('❌ Failed to load organization data:', error);
       
-      // Create an error state organization
-      const errorOrg = {
-        _id: 'error-org',
-        name: 'Error Loading',
-        description: 'Please refresh the page',
-        role: 'admin',
-        members: []
-      };
+      // Do NOT create fake error organizations - redirect appropriately
+      console.log('🔄 Error loading organizations, redirecting to org setup...');
       
-      setOrganization(errorOrg);
-      setIsAdmin(true);
+      // Clear any invalid data
+      localStorage.removeItem('currentOrganization');
+      localStorage.removeItem('userOrganizationData');
       
-      // Set empty stats
-      setStats({
-        totalMembers: 0,
-        activeProjects: 0,
-        hoursLogged: 0,
-        completedTasks: 0
-      });
-      
-      setLoading(false);
+      // Check if user has valid auth - if not, redirect to login
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        window.location.href = '/login';
+      } else {
+        // User is authenticated but org data failed to load
+        window.location.href = '/organization/create';
+      }
+      return;
     }
   };
 

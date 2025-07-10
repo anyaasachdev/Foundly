@@ -58,64 +58,124 @@ const Navbar = ({ user, onLogout }) => {
 
   const loadOrganizations = async () => {
     try {
+      console.log('🔍 Navbar: Loading organizations...');
       const response = await ApiService.getMyOrganizations();
-      console.log('Navbar organizations response:', response);
+      console.log('📡 Navbar organizations response:', response);
       
       const orgs = response?.organizations || [];
+      console.log('📊 Organizations found:', orgs.length);
+      
+      if (orgs.length === 0) {
+        console.log('⚠️ No organizations found in navbar');
+        setOrganizations([]);
+        setCurrentOrg(null);
+        return;
+      }
+      
       setOrganizations(orgs);
       
       // Get current org from localStorage
       const currentOrgId = localStorage.getItem('currentOrganization');
-      console.log('Current org ID from storage:', currentOrgId);
+      console.log('🏢 Current org ID from storage:', currentOrgId);
       
-      // Find current organization
+      // Find current organization with proper structure handling
       let current = null;
-      if (orgs && orgs.length > 0) {
-        if (currentOrgId) {
-          current = orgs.find(org => org._id === currentOrgId);
-          console.log('Found current org:', current?.name);
-        }
+      if (currentOrgId) {
+        current = orgs.find(org => {
+          // Handle different organization structures
+          const orgId = org._id || org.organization?._id || org.organizationId;
+          return orgId === currentOrgId;
+        });
         
-        // If no current org found or no currentOrgId, use first organization
-        if (!current) {
-          current = orgs[0];
-          console.log('Using first org as current:', current?.name);
-          localStorage.setItem('currentOrganization', current._id);
+        if (current) {
+          console.log('✅ Found current org:', current.organization?.name || current.name);
+        } else {
+          console.log('⚠️ Current org ID not found in user organizations');
         }
+      }
+      
+      // If no current org found, use first valid organization
+      if (!current && orgs.length > 0) {
+        const firstOrg = orgs[0];
         
-        setCurrentOrg(current);
-      } else {
-        console.log('No organizations found');
+        // Extract the organization data properly
+        if (firstOrg.organization) {
+          // User organization format: { role: 'admin', organization: { _id, name, ... } }
+          current = firstOrg;
+          const orgId = firstOrg.organization._id;
+          localStorage.setItem('currentOrganization', orgId);
+          console.log('🎯 Using first org as current:', firstOrg.organization.name, 'ID:', orgId);
+        } else if (firstOrg._id) {
+          // Direct organization format
+          current = firstOrg;
+          localStorage.setItem('currentOrganization', firstOrg._id);
+          console.log('🎯 Using first org as current:', firstOrg.name, 'ID:', firstOrg._id);
+        }
+      }
+      
+      setCurrentOrg(current);
+      
+      if (!current) {
+        console.log('❌ No valid current organization could be set');
       }
     } catch (error) {
-      console.error('Failed to load organizations:', error);
+      console.error('❌ Failed to load organizations:', error);
+      setOrganizations([]);
+      setCurrentOrg(null);
     }
   };
 
   // Improved organization switching logic
   const handleOrgSwitch = async (orgId) => {
     try {
-      console.log('Switching to organization:', orgId);
+      console.log('🔄 Switching to organization:', orgId);
+      
+      // Find the organization to switch to with proper structure handling
+      const newOrg = organizations.find(org => {
+        const currentOrgId = org._id || org.organization?._id || org.organizationId;
+        return currentOrgId === orgId;
+      });
+      
+      if (!newOrg) {
+        console.error('❌ Organization not found in user organizations:', orgId);
+        alert('Organization not found. Please refresh the page and try again.');
+        return;
+      }
+      
+      // Validate that this is a real organization (not temporary/fake)
+      const orgName = newOrg.organization?.name || newOrg.name;
+      if (!orgName || orgName.includes('Temporary') || orgName.includes('Error') || orgName.includes('Getting Started')) {
+        console.error('❌ Cannot switch to temporary/fake organization:', orgName);
+        alert('Invalid organization. Please refresh the page.');
+        return;
+      }
+      
+      console.log('✅ Switching to valid org:', orgName, 'ID:', orgId);
       
       // Update localStorage
       localStorage.setItem('currentOrganization', orgId);
       
-      // Find and set the new current organization
-      const newOrg = organizations.find(org => org._id === orgId);
-      
-      if (newOrg) {
-        setCurrentOrg(newOrg);
-        console.log('Switched to org:', newOrg.name);
-      } else {
-        console.warn('Organization not found in local state');
-      }
-      
+      // Update state
+      setCurrentOrg(newOrg);
       setShowOrgDropdown(false);
+      
+      // Store organization preference for persistence
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      localStorage.setItem('userOrganizationData', JSON.stringify({
+        userEmail: user.email,
+        organizationId: orgId,
+        organizationName: orgName,
+        role: newOrg.role || 'member',
+        setAt: new Date().toISOString(),
+        source: 'navbar_switch'
+      }));
+      
+      console.log('🎯 Organization switch complete, reloading page...');
       
       // Force page reload to refresh all data for the new organization
       window.location.reload();
     } catch (error) {
-      console.error('Failed to switch organization:', error);
+      console.error('❌ Failed to switch organization:', error);
       alert('Failed to switch organization. Please try again.');
     }
   };

@@ -196,36 +196,24 @@ class ApiService {
   
   // Organizations
   async createOrganization(organizationData) {
-    // Add user information to organization data
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const dataWithUser = {
-      ...organizationData,
-      userEmail: user.email || 'unknown@email.com',
-      userName: user.name || 'Unknown User'
-    };
-    
-    return this.request('/working?action=organizations', {
+    console.log('🏢 Creating organization:', organizationData);
+    return this.request('/auth?action=create-org', {
       method: 'POST',
-      body: JSON.stringify(dataWithUser)
+      body: JSON.stringify(organizationData)
     });
   }
   
   async joinOrganization(joinCode) {
-    // Add user information when joining
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    
-    return this.request('/working?action=organizations', {
+    console.log('🔑 Joining organization with code:', joinCode);
+    return this.request('/auth?action=join-org', {
       method: 'POST',
-      body: JSON.stringify({ 
-        inviteCode: joinCode,
-        userEmail: user.email || 'unknown@email.com',
-        userName: user.name || 'Unknown User'
-      })
+      body: JSON.stringify({ joinCode })
     });
   }
   
   async getMyOrganizations() {
-    return this.request('/working?action=organizations');
+    console.log('📊 Getting user organizations...');
+    return this.request('/auth?action=get-orgs');
   }
   
   async switchOrganization(organizationId) {
