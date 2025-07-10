@@ -162,14 +162,25 @@ const HomeScreen = ({ user }) => {
 
   const handleLogHours = async (e) => {
     e.preventDefault();
+    
+    // Basic validation
+    if (!hourLogData.hours || !hourLogData.description || !hourLogData.member) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+    
+    if (parseFloat(hourLogData.hours) <= 0) {
+      alert('Hours must be greater than 0.');
+      return;
+    }
+    
     try {
       console.log('Logging hours with data:', hourLogData);
       
       const hourEntry = {
         hours: parseFloat(hourLogData.hours),
-        description: hourLogData.description,
+        description: hourLogData.description.trim(),
         date: hourLogData.date,
-        category: 'volunteer',
         organizationId: localStorage.getItem('currentOrganization') || 'default'
       };
       
@@ -177,31 +188,31 @@ const HomeScreen = ({ user }) => {
       const result = await ApiService.logHours(hourEntry);
       console.log('Hours logging result:', result);
       
-      // Emit via socket for real-time updates
-      if (socket) {
-        socket.emit('log_hours', hourEntry);
+      if (result.success) {
+        alert(`Successfully logged ${hourLogData.hours} hours!`);
+        setShowHourLog(false);
+        setHourLogData({
+          member: '',
+          hours: '',
+          description: '',
+          date: new Date().toISOString().split('T')[0]
+        });
+        
+        // Refresh data to get updated stats from database
+        await loadOrganizationData();
+        
+        // Also update stats locally as immediate feedback
+        setStats(prev => ({
+          ...prev,
+          hoursLogged: prev.hoursLogged + parseFloat(hourLogData.hours)
+        }));
+      } else {
+        throw new Error(result.message || 'Unknown error');
       }
-      
-      alert(`Successfully logged ${hourLogData.hours} hours for ${hourLogData.member}`);
-      setShowHourLog(false);
-      setHourLogData({
-        member: '',
-        hours: '',
-        description: '',
-        date: new Date().toISOString().split('T')[0]
-      });
-      
-      // Refresh data to get updated stats from database
-      await loadOrganizationData();
-      
-      // Also update stats locally as immediate feedback
-      setStats(prev => ({
-        ...prev,
-        hoursLogged: prev.hoursLogged + parseFloat(hourLogData.hours)
-      }));
     } catch (error) {
       console.error('Failed to log hours:', error);
-      alert('Failed to log hours. Please try again.');
+      const errorMessage = error.message || 'Unknown error occurred';
+      alert(`Failed to log hours: ${errorMessage}. Please try again.`);
     }
   };
 

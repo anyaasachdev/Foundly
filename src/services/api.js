@@ -363,31 +363,39 @@ class ApiService {
     // Use working endpoint with correct action
     console.log('logHours called with data:', hoursData);
     try {
+      // Validate data before sending
+      if (!hoursData.hours || isNaN(parseFloat(hoursData.hours))) {
+        throw new Error('Hours must be a valid number');
+      }
+      
+      if (!hoursData.description || hoursData.description.trim() === '') {
+        throw new Error('Description is required');
+      }
+      
       // Ensure the data is properly formatted
       const formattedData = {
         hours: parseFloat(hoursData.hours),
-        description: hoursData.description || '',
+        description: hoursData.description.trim(),
         date: hoursData.date || new Date().toISOString().split('T')[0],
         organizationId: hoursData.organizationId || 'default'
       };
       
       console.log('Formatted data to send:', formattedData);
-      console.log('API URL:', `${this.baseURL}/working?action=log-hours`);
-      console.log('Auth token:', this.token ? 'Present' : 'Missing');
       
       const result = await this.request('/working?action=log-hours', {
         method: 'POST',
         body: JSON.stringify(formattedData)
       });
+      
       console.log('logHours result:', result);
+      
+      if (!result.success) {
+        throw new Error(result.error || result.message || 'Failed to log hours');
+      }
+      
       return result;
     } catch (error) {
       console.error('logHours error:', error);
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        response: error.response
-      });
       throw error;
     }
   }

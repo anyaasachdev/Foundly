@@ -62,33 +62,32 @@ const StatsScreen = ({ user }) => {
   const loadAnalytics = async () => {
     setLoading(true);
     try {
-      console.log('Loading analytics for timeRange:', timeRange);
+      console.log('Loading stats...');
       
-      // Get both stats and analytics data
-      const [statsResponse, analyticsResponse] = await Promise.all([
-        ApiService.getStats(),
-        ApiService.getAnalytics(timeRange)
-      ]);
+      // Just get stats data since we removed trends
+      const statsResponse = await ApiService.getStats();
       
       console.log('Stats response:', statsResponse);
-      console.log('Analytics response:', analyticsResponse);
       
       const stats = statsResponse.stats || {};
-      const analytics = analyticsResponse.analytics || {};
       
       setAnalyticsData({
         totalHours: stats.totalHours || 0,
         activeProjects: stats.activeProjects || 0,
         completedTasks: stats.completedTasks || 0,
         totalMembers: stats.totalMembers || 0,
-        totalProjects: stats.totalProjects || 0,
-        trends: analytics.trends || [],
-        summary: analytics.summary || {}
+        totalProjects: stats.totalProjects || 0
       });
       setLoading(false);
     } catch (error) {
       console.error('Failed to load analytics:', error);
-      setAnalyticsData(getDefaultData({}));
+      setAnalyticsData({
+        totalHours: 0,
+        activeProjects: 0,
+        completedTasks: 0,
+        totalMembers: 0,
+        totalProjects: 0
+      });
       setLoading(false);
     }
   };
@@ -681,19 +680,7 @@ const StatsScreen = ({ user }) => {
             />
           </div>
           
-          {/* Charts Section */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr',
-            gap: '20px',
-            marginBottom: '32px'
-          }}>
-            <MetricChart
-              data={data.trends && data.trends.length > 0 ? data.trends : getDefaultData(data).trends.projectProgress}
-              metric={selectedMetric}
-              title="Performance Trends"
-            />
-          </div>
+          {/* Performance trends section removed as requested */}
         </>
       )}
       
