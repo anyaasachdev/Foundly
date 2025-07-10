@@ -214,10 +214,10 @@ class ApiService {
   }
   
   async switchOrganization(organizationId) {
-    return this.request('/user/switch-organization', {
-      method: 'POST',
-      body: JSON.stringify({ organizationId })
-    });
+    // Organization switching is handled locally by localStorage
+    // No API call needed - just update localStorage and reload
+    console.log('Switching to organization:', organizationId);
+    return Promise.resolve({ success: true });
   }
   
   async leaveOrganization(organizationId) {

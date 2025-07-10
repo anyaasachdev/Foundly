@@ -58,37 +58,34 @@ const Navbar = ({ user, onLogout }) => {
 
   const loadOrganizations = async () => {
     try {
-      const orgs = await ApiService.getMyOrganizations();
+      const response = await ApiService.getMyOrganizations();
+      console.log('Navbar organizations response:', response);
+      
+      const orgs = response?.organizations || [];
       setOrganizations(orgs);
       
-      // Get current org from localStorage or user data
-      const currentOrgId = localStorage.getItem('currentOrganization') || user?.currentOrganization;
+      // Get current org from localStorage
+      const currentOrgId = localStorage.getItem('currentOrganization');
+      console.log('Current org ID from storage:', currentOrgId);
       
-      // Find current organization with better error handling
+      // Find current organization
       let current = null;
       if (orgs && orgs.length > 0) {
         if (currentOrgId) {
-          current = orgs.find(org => {
-            const orgId = org.organizationId?._id || org.organizationId || org._id;
-            return orgId === currentOrgId;
-          });
+          current = orgs.find(org => org._id === currentOrgId);
+          console.log('Found current org:', current?.name);
         }
         
         // If no current org found or no currentOrgId, use first organization
         if (!current) {
           current = orgs[0];
+          console.log('Using first org as current:', current?.name);
+          localStorage.setItem('currentOrganization', current._id);
         }
         
-        const orgData = current.organizationId || current;
-        setCurrentOrg(orgData);
-        
-        // Update localStorage if needed
-        if (!currentOrgId && orgData._id) {
-          localStorage.setItem('currentOrganization', orgData._id);
-        }
+        setCurrentOrg(current);
       } else {
-        // If no organizations, create a default one or redirect to organization setup
-        console.log('No organizations found, user should be redirected to organization setup');
+        console.log('No organizations found');
       }
     } catch (error) {
       console.error('Failed to load organizations:', error);
@@ -100,34 +97,22 @@ const Navbar = ({ user, onLogout }) => {
     try {
       console.log('Switching to organization:', orgId);
       
-      // Call API to switch organization
-      await ApiService.switchOrganization(orgId);
-      
       // Update localStorage
       localStorage.setItem('currentOrganization', orgId);
       
-      // Find and set the new current organization with better error handling
-      const newOrg = organizations.find(org => {
-        const id = org.organizationId?._id || org.organizationId || org._id;
-        return id === orgId;
-      });
+      // Find and set the new current organization
+      const newOrg = organizations.find(org => org._id === orgId);
       
       if (newOrg) {
-        const orgData = newOrg.organizationId || newOrg;
-        setCurrentOrg(orgData);
-        
-        // Update API service token if needed
-        const token = localStorage.getItem('authToken');
-        if (token) {
-          ApiService.setToken(token);
-        }
+        setCurrentOrg(newOrg);
+        console.log('Switched to org:', newOrg.name);
       } else {
-        console.warn('Organization not found in local state, reloading...');
+        console.warn('Organization not found in local state');
       }
       
       setShowOrgDropdown(false);
       
-      // Force page reload to refresh all data
+      // Force page reload to refresh all data for the new organization
       window.location.reload();
     } catch (error) {
       console.error('Failed to switch organization:', error);

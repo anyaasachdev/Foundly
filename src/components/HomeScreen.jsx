@@ -119,10 +119,51 @@ const HomeScreen = ({ user }) => {
         setLoading(false);
       } else {
         console.log('No organizations found');
+        // Create a temporary organization view while user is in setup
+        const tempOrg = {
+          _id: 'temp-org',
+          name: 'Getting Started',
+          description: 'Setting up your organization...',
+          role: 'admin',
+          members: []
+        };
+        
+        setOrganization(tempOrg);
+        setIsAdmin(true);
+        
+        // Set empty stats
+        setStats({
+          totalMembers: 0,
+          activeProjects: 0,
+          hoursLogged: 0,
+          completedTasks: 0
+        });
+        
         setLoading(false);
       }
     } catch (error) {
       console.error('Failed to load organization data:', error);
+      
+      // Create an error state organization
+      const errorOrg = {
+        _id: 'error-org',
+        name: 'Error Loading',
+        description: 'Please refresh the page',
+        role: 'admin',
+        members: []
+      };
+      
+      setOrganization(errorOrg);
+      setIsAdmin(true);
+      
+      // Set empty stats
+      setStats({
+        totalMembers: 0,
+        activeProjects: 0,
+        hoursLogged: 0,
+        completedTasks: 0
+      });
+      
       setLoading(false);
     }
   };
