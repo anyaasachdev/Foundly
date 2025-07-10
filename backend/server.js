@@ -636,9 +636,7 @@ app.get('/api/users', authenticateToken, async (req, res) => {
   }
 });
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
+// Health check endpoint moved to end of file
 
 // SOCKET.IO
 io.use((socket, next) => {
@@ -1340,7 +1338,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 

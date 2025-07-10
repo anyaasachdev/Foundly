@@ -62,11 +62,8 @@ const HomeScreen = ({ user }) => {
   useEffect(() => {
     if (socket) {
       socket.on('hours_logged', (hourData) => {
-        // Update stats when anyone logs hours
-        setStats(prev => ({
-          ...prev,
-          hoursLogged: prev.hoursLogged + parseFloat(hourData.hours)
-        }));
+        // Refresh stats from database when anyone logs hours
+        refreshStats();
         
         // Show notification for team hours
         if (hourData.userId !== user.id && Notification.permission === 'granted') {
@@ -259,13 +256,10 @@ const HomeScreen = ({ user }) => {
         
         // Refresh data to get updated stats from database
         await loadOrganizationData();
-        await refreshStats(); // Ensure stats are always up to date
+        await refreshStats(); // Ensure stats are always up to date from database
         
-        // Also update stats locally as immediate feedback
-        setStats(prev => ({
-          ...prev,
-          hoursLogged: prev.hoursLogged + parseFloat(hourLogData.hours)
-        }));
+        // Don't update stats locally - let the database be the source of truth
+        // This ensures consistency between HomeScreen and StatsScreen
       } else {
         throw new Error(result.message || 'Unknown error');
       }
@@ -291,6 +285,7 @@ const HomeScreen = ({ user }) => {
         localStorage.setItem('currentOrganization', 'default');
       }
       
+      // Use the working endpoint for consistent stats
       const statsResponse = await ApiService.getStats();
       console.log('📊 Stats response:', statsResponse);
       

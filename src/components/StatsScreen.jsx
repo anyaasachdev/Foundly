@@ -64,12 +64,12 @@ const StatsScreen = ({ user }) => {
     try {
       console.log('Loading stats...');
       
-      // Just get stats data since we removed trends
+      // Use the working endpoint for consistent stats with HomeScreen
       const statsResponse = await ApiService.getStats();
       
       console.log('Stats response:', statsResponse);
       
-      const stats = statsResponse.stats || {};
+      const stats = statsResponse.stats || statsResponse.data || {};
       
       setAnalyticsData({
         totalHours: stats.totalHours || 0,
