@@ -84,19 +84,23 @@ const HomeScreen = ({ user }) => {
         setIsAdmin(['admin', 'owner'].includes(currentOrg.role));
         
         // Load real stats
-        const [projectsResponse, statsResponse] = await Promise.all([
+        const [projectsResponse, statsResponse, hoursResponse] = await Promise.all([
           ApiService.getProjects().catch(() => ({ projects: [] })),
-          ApiService.getStats().catch(() => ({ stats: { totalHours: 0, totalMembers: 1, activeProjects: 0, completedTasks: 0 } }))
+          ApiService.getStats().catch(() => ({ stats: { totalHours: 0, totalMembers: 1, activeProjects: 0, completedTasks: 0 } })),
+          ApiService.getHours().catch(() => ({ hourLogs: [], totalHours: 0 }))
         ]);
+        
+        console.log('Loaded data:', { projectsResponse, statsResponse, hoursResponse });
         
         // Get member count from organization or stats
         const memberCount = currentOrg.members?.length || statsResponse.stats?.totalMembers || 1;
         const projects = projectsResponse.projects || projectsResponse.data || [];
+        const actualHours = hoursResponse.totalHours || statsResponse.stats?.totalHours || 0;
         
         setStats({
           totalMembers: memberCount,
           activeProjects: statsResponse.stats?.activeProjects || projects.filter(p => p.status === 'active').length || 0,
-          hoursLogged: statsResponse.stats?.totalHours || 0,
+          hoursLogged: actualHours,
           completedTasks: statsResponse.stats?.completedTasks || projects.filter(p => p.status === 'completed').length || 0
         });
         
@@ -187,7 +191,10 @@ const HomeScreen = ({ user }) => {
         date: new Date().toISOString().split('T')[0]
       });
       
-      // Update stats locally
+      // Refresh data to get updated stats from database
+      await loadOrganizationData();
+      
+      // Also update stats locally as immediate feedback
       setStats(prev => ({
         ...prev,
         hoursLogged: prev.hoursLogged + parseFloat(hourLogData.hours)

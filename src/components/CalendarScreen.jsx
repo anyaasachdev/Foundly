@@ -66,10 +66,27 @@ const CalendarScreen = ({ user }) => {
       console.log('Events response:', response);
       
       // Handle different response formats
-      const events = response.events || response.data || [];
-      setEvents(events);
+      const eventsData = response.events || response.data || [];
+      console.log('Events data:', eventsData);
+      
+      // Format events to ensure proper structure
+      const formattedEvents = eventsData.map(event => ({
+        ...event,
+        id: event._id || event.id,
+        title: event.title || 'Untitled Event',
+        description: event.description || '',
+        startDate: new Date(event.startDate),
+        endDate: event.endDate ? new Date(event.endDate) : new Date(event.startDate),
+        type: event.type || 'meeting',
+        location: event.location || '',
+        color: event.color || '#667eea'
+      }));
+      
+      console.log('Formatted events:', formattedEvents);
+      setEvents(formattedEvents);
     } catch (error) {
       console.error('Failed to load events:', error);
+      console.error('Error details:', error.message);
       setEvents([]);
     }
   };
@@ -216,18 +233,29 @@ const CalendarScreen = ({ user }) => {
     const dateStr = date.toISOString().split('T')[0];
     
     return filteredEvents.filter(event => {
-      // Handle different date formats
-      let eventDate;
-      const dateField = event.startDate || event.startTime;
-      if (typeof dateField === 'string') {
-        eventDate = dateField.split('T')[0];
-      } else if (dateField instanceof Date) {
-        eventDate = dateField.toISOString().split('T')[0];
-      } else {
+      try {
+        // Handle different date formats
+        let eventDate;
+        const dateField = event.startDate || event.startTime;
+        
+        if (typeof dateField === 'string') {
+          eventDate = dateField.split('T')[0];
+        } else if (dateField instanceof Date) {
+          eventDate = dateField.toISOString().split('T')[0];
+        } else {
+          console.warn('Invalid date format for event:', event);
+          return false;
+        }
+        
+        const matches = eventDate === dateStr;
+        if (matches) {
+          console.log('Event matches date:', event.title, 'on', dateStr);
+        }
+        return matches;
+      } catch (error) {
+        console.error('Error filtering event:', event, error);
         return false;
       }
-      
-      return eventDate === dateStr;
     });
   };
 

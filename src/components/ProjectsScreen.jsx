@@ -66,26 +66,31 @@ const ProjectsScreen = ({ user }) => {
   };
   
   const loadProjects = async () => {
-    const currentOrgId = localStorage.getItem('currentOrganization');
-    if (!currentOrgId) {
-      setProjects([]);
-      setLoading(false);
-      return;
-    }
-    
     try {
       setLoading(true);
+      console.log('Loading projects...');
       const response = await ApiService.getProjects();
-      const projects = (response.projects || []).map(project => ({
+      console.log('Projects response:', response);
+      
+      // Handle different response formats
+      const projectsData = response.projects || response.data || [];
+      console.log('Projects data:', projectsData);
+      
+      const projects = projectsData.map(project => ({
         ...project,
         title: project.title || project.name,
         priority: project.priority || 'medium',
         status: project.status || 'active',
-        color: project.color || '#8B5CF6'
+        color: project.color || '#8B5CF6',
+        dueDate: project.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        assignedTo: project.assignedTo || []
       }));
+      
+      console.log('Formatted projects:', projects);
       setProjects(projects);
     } catch (error) {
       console.error('Failed to load projects:', error);
+      console.error('Error details:', error.message);
       setProjects([]);
     } finally {
       setLoading(false);
