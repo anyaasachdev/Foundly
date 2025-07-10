@@ -1,7 +1,7 @@
 class ApiService {
   constructor() {
     // Use environment variable for API URL with fallback
-    this.baseURL = process.env.REACT_APP_API_URL || 'https://foundly-olive.vercel.app/api';
+    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
     this.refreshPromise = null;
     this.version = Date.now() + Math.random(); // Force cache refresh with random
     console.log('ApiService initialized with baseURL:', this.baseURL);

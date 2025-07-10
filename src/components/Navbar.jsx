@@ -59,18 +59,25 @@ const Navbar = ({ user, onLogout }) => {
   const loadOrganizations = async () => {
     try {
       console.log('🔍 Navbar: Loading organizations...');
+      console.log('🔍 User data:', user);
+      
       const response = await ApiService.getMyOrganizations();
       console.log('📡 Navbar organizations response:', response);
+      console.log('📡 Response type:', typeof response);
+      console.log('📡 Response keys:', Object.keys(response || {}));
       
       // Filter out fake/temporary orgs
       let orgs = (response?.organizations || []).filter(org => {
         const orgName = org.organization?.name || org.name || org.organizationId?.name || '';
+        console.log('🔍 Checking org:', { org, orgName });
         return orgName && !orgName.includes('Temporary') && !orgName.includes('Error') && !orgName.includes('Getting Started');
       });
       console.log('📊 Organizations found (filtered):', orgs.length);
+      console.log('📊 Filtered orgs:', orgs);
       
       if (orgs.length === 0) {
         console.log('⚠️ No organizations found in navbar');
+        console.log('⚠️ Raw response was:', response);
         setOrganizations([]);
         setCurrentOrg(null);
         return;
@@ -122,6 +129,8 @@ const Navbar = ({ user, onLogout }) => {
       }
     } catch (error) {
       console.error('❌ Failed to load organizations:', error);
+      console.error('❌ Error details:', error.message);
+      console.error('❌ Error stack:', error.stack);
       setOrganizations([]);
       setCurrentOrg(null);
     }
