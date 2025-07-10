@@ -252,7 +252,6 @@ const HomeScreen = ({ user }) => {
     setLoading(true);
     try {
       const statsResponse = await ApiService.getStats();
-      console.log('DEBUG: HomeScreen getStats response:', statsResponse);
       const stats = statsResponse.stats || {};
       setStats({
         totalMembers: stats.totalMembers || 0,
@@ -463,15 +462,16 @@ const HomeScreen = ({ user }) => {
         </div>
         <div className="stats-grid" style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '32px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '20px',
           marginBottom: '40px',
+          padding: '0',
         }}>
           <div className="stat-card" style={{
             background: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
             color: 'white',
-            borderRadius: '18px',
-            padding: '32px 24px',
+            borderRadius: '16px',
+            padding: '24px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -484,8 +484,8 @@ const HomeScreen = ({ user }) => {
           <div className="stat-card" style={{
             background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
             color: 'white',
-            borderRadius: '18px',
-            padding: '32px 24px',
+            borderRadius: '16px',
+            padding: '24px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -498,8 +498,8 @@ const HomeScreen = ({ user }) => {
           <div className="stat-card" style={{
             background: 'linear-gradient(135deg, #EC4899 0%, #F472B6 100%)',
             color: 'white',
-            borderRadius: '18px',
-            padding: '32px 24px',
+            borderRadius: '16px',
+            padding: '24px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -512,8 +512,8 @@ const HomeScreen = ({ user }) => {
           <div className="stat-card" style={{
             background: 'linear-gradient(135deg, #F59E42 0%, #FBBF24 100%)',
             color: 'white',
-            borderRadius: '18px',
-            padding: '32px 24px',
+            borderRadius: '16px',
+            padding: '24px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',

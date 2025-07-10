@@ -982,8 +982,23 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
       Organization.findById(orgId)
     ]);
     
-    // Fix: Get member count from organization's members array
-    const totalMembers = organization?.members?.length || 0;
+    // Fix: Get member count from organization's members array - count unique, active members only
+    const uniqueActiveMembers = (organization?.members || [])
+      .filter((member, index, arr) => {
+        // Ensure member has a valid user ID
+        if (!member.user) return false;
+        
+        // Check if this is the first occurrence of this user ID (remove duplicates)
+        const firstIndex = arr.findIndex(m => m.user.toString() === member.user.toString());
+        if (firstIndex !== index) return false;
+        
+        // Optionally check if member is active (if isActive field exists)
+        if (member.hasOwnProperty('isActive') && member.isActive === false) return false;
+        
+        return true;
+      });
+    
+    const totalMembers = uniqueActiveMembers.length || 0;
     
     res.json({
       data: {
@@ -1041,9 +1056,23 @@ app.get('/api/analytics', authenticateToken, async (req, res) => {
       Organization.findById(orgId).populate('members.user', 'name email')
     ]);
     
-    // Fix: Get member count from organization's members array
-    const totalMembers = organization?.members?.length || 0;
-    const totalProjects = activeProjects + completedProjects;
+    // Fix: Get member count from organization's members array - count unique, active members only
+    const uniqueActiveMembers = (organization?.members || [])
+      .filter((member, index, arr) => {
+        // Ensure member has a valid user ID
+        if (!member.user) return false;
+        
+        // Check if this is the first occurrence of this user ID (remove duplicates)
+        const firstIndex = arr.findIndex(m => m.user.toString() === member.user.toString());
+        if (firstIndex !== index) return false;
+        
+        // Optionally check if member is active (if isActive field exists)
+        if (member.hasOwnProperty('isActive') && member.isActive === false) return false;
+        
+        return true;
+      });
+    
+    const totalMembers = uniqueActiveMembers.length || 0;
     
     // Calculate member performance data
     const memberPerformance = [];

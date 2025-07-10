@@ -269,7 +269,24 @@ module.exports = async function handler(req, res) {
       const totalHours = hourLogs.reduce((sum, log) => sum + log.hours, 0);
       const activeProjects = projects.filter(p => p.status === 'active').length;
       const completedTasks = projects.filter(p => p.status === 'completed').length;
-      const totalMembers = organization?.members?.length || 1;
+      
+      // Fix: Count unique, active members only
+      const uniqueActiveMembers = (organization?.members || [])
+        .filter((member, index, arr) => {
+          // Ensure member has a valid user ID
+          if (!member.user) return false;
+          
+          // Check if this is the first occurrence of this user ID (remove duplicates)
+          const firstIndex = arr.findIndex(m => m.user.toString() === member.user.toString());
+          if (firstIndex !== index) return false;
+          
+          // Optionally check if member is active (if isActive field exists)
+          if (member.hasOwnProperty('isActive') && member.isActive === false) return false;
+          
+          return true;
+        });
+      
+      const totalMembers = uniqueActiveMembers.length || 1;
       
       return res.status(200).json({ 
         success: true,
