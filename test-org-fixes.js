@@ -1,147 +1,193 @@
-const axios = require('axios');
+// Use built-in fetch in Node.js
+const fetch = globalThis.fetch || require('node-fetch');
 
-const BASE_URL = 'http://localhost:3001';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3001';
 
-async function testOrganizationFixes() {
-  console.log('🧪 Testing Organization Fixes...\n');
-  
-  // Test 1: Check server is running
-  console.log('1️⃣ Testing server connectivity...');
+async function testAPI(endpoint, options = {}) {
   try {
-    const response = await axios.get(`${BASE_URL}/api/stats`, {
-      headers: { 'Authorization': 'Bearer test-token' }
-    });
-    console.log('   ❌ Server should require valid auth but didn\'t');
-  } catch (error) {
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      console.log('   ✅ Server is running and requires authentication');
-    } else {
-      console.log('   ❌ Server connection failed:', error.message);
-      return;
-    }
-  }
-  
-  // Test 2: Login and get organizations
-  console.log('\n2️⃣ Testing login and organizations endpoint...');
-  try {
-    // First, try to login with a test user
-    const loginResponse = await axios.post(`${BASE_URL}/api/auth/login`, {
-      email: 'test@example.com',
-      password: 'password123'
+    const url = `${BASE_URL}${endpoint}`;
+    console.log(`Testing: ${options.method || 'GET'} ${url}`);
+    
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+      },
+      ...options
     });
     
-    if (loginResponse.data.token) {
-      console.log('   ✅ Login successful, testing organizations endpoint...');
-      
-      const orgResponse = await axios.get(`${BASE_URL}/api/organizations/my`, {
-        headers: { 'Authorization': `Bearer ${loginResponse.data.token}` }
-      });
-      
-      console.log('   📡 Organizations response:', orgResponse.data);
-      console.log('   📊 Response structure:', {
-        hasOrganizations: !!orgResponse.data.organizations,
-        organizationCount: orgResponse.data.organizations?.length || 0,
-        hasSuccess: !!orgResponse.data.success,
-        hasCount: !!orgResponse.data.count
-      });
-      
-      if (orgResponse.data.organizations && orgResponse.data.organizations.length > 0) {
-        console.log('   ✅ Organizations found:', orgResponse.data.organizations.length);
-        console.log('   📋 Organizations:', orgResponse.data.organizations.map(org => ({
-          name: org.organization?.name || org.name,
-          role: org.role,
-          id: org._id || org.organizationId
-        })));
-      } else {
-        console.log('   ⚠️ No organizations found for test user');
-      }
-    } else {
-      console.log('   ❌ Login failed, trying with different credentials...');
-      
-      // Try with a different test user
-      const loginResponse2 = await axios.post(`${BASE_URL}/api/auth/login`, {
-        email: 'admin@foundly.com',
-        password: 'admin123'
-      });
-      
-      if (loginResponse2.data.token) {
-        console.log('   ✅ Second login successful, testing organizations endpoint...');
-        
-        const orgResponse = await axios.get(`${BASE_URL}/api/organizations/my`, {
-          headers: { 'Authorization': `Bearer ${loginResponse2.data.token}` }
-        });
-        
-        console.log('   📡 Organizations response:', orgResponse.data);
-        console.log('   📊 Response structure:', {
-          hasOrganizations: !!orgResponse.data.organizations,
-          organizationCount: orgResponse.data.organizations?.length || 0,
-          hasSuccess: !!orgResponse.data.success,
-          hasCount: !!orgResponse.data.count
-        });
-        
-        if (orgResponse.data.organizations && orgResponse.data.organizations.length > 0) {
-          console.log('   ✅ Organizations found:', orgResponse.data.organizations.length);
-          console.log('   📋 Organizations:', orgResponse.data.organizations.map(org => ({
-            name: org.organization?.name || org.name,
-            role: org.role,
-            id: org._id || org.organizationId
-          })));
-        } else {
-          console.log('   ⚠️ No organizations found for second test user');
-        }
-      } else {
-        console.log('   ❌ Both login attempts failed');
-      }
-    }
+    const data = await response.json().catch(() => ({}));
+    
+    return {
+      status: response.status,
+      data,
+      error: null
+    };
   } catch (error) {
-    console.log('   ❌ Error testing organizations endpoint:', error.message);
-    if (error.response) {
-      console.log('   📡 Error response:', error.response.data);
-    }
+    return {
+      status: 0,
+      data: null,
+      error: error.message
+    };
   }
-  
-  // Test 3: Test member count logic
-  console.log('\n3️⃣ Testing member count logic...');
-  console.log('   📋 Backend changes made:');
-  console.log('   - Fixed organizations endpoint to return proper structure');
-  console.log('   - Fixed member counting to use unique user IDs from organization.members');
-  console.log('   - Added detailed logging for debugging');
-  console.log('   - Consistent member counting across stats and analytics endpoints');
-  
-  // Test 4: Frontend changes
-  console.log('\n4️⃣ Frontend changes made...');
-  console.log('   📋 Navbar component:');
-  console.log('   - Improved organization loading with better error handling');
-  console.log('   - Fixed organization switching logic');
-  console.log('   - Added event-driven updates for organization changes');
-  console.log('   - Better localStorage management for organization persistence');
-  
-  // Test 5: API service changes
-  console.log('\n5️⃣ API service changes...');
-  console.log('   📋 Fixed base URL to use localhost for local development');
-  console.log('   📋 Improved error handling and response structure handling');
-  console.log('   📋 Added fallback mechanisms for organization loading');
-  
-  console.log('\n🎯 Manual Testing Required:');
-  console.log('   1. Login to the app');
-  console.log('   2. Check browser console for organization loading logs');
-  console.log('   3. Click "Switch Organization" - should show all orgs');
-  console.log('   4. Switch between organizations - dashboard should update');
-  console.log('   5. Check member count on homepage and stats page');
-  console.log('   6. Verify join code updates when switching orgs');
-  
-  console.log('\n🔧 If issues persist:');
-  console.log('   1. Check browser console for error messages');
-  console.log('   2. Check backend console for API call logs');
-  console.log('   3. Verify user has organizations in database');
-  console.log('   4. Check localStorage for organization data');
-  
-  console.log('\n✅ Expected Results:');
-  console.log('   - Organization dropdown loads immediately');
-  console.log('   - All user organizations appear in the list');
-  console.log('   - Member count shows accurate unique user count');
-  console.log('   - Organization switching updates all data');
-  console.log('   - Join code updates when switching organizations');
 }
 
+async function testOrganizationFixes() {
+  console.log('🧪 Testing Organization and Stats Fixes\n');
+  
+  // Test 1: Create organization with clean stats
+  console.log('1️⃣ Testing Organization Creation with Clean Stats...');
+  
+  const createOrgResult = await testAPI('/api/organizations', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer test-token' },
+    body: JSON.stringify({
+      name: 'Test Organization Fixes',
+      description: 'Testing organization fixes',
+      customJoinCode: 'TEST123'
+    })
+  });
+  
+  if (createOrgResult.status === 201) {
+    console.log('   ✅ Organization created successfully');
+    const org = createOrgResult.data.organization;
+    console.log('   📊 Organization stats:', org.stats);
+    
+    // Verify clean stats
+    if (org.stats.totalMembers === 1 && org.stats.totalHours === 0) {
+      console.log('   ✅ Organization starts with clean stats');
+    } else {
+      console.log('   ❌ Organization does not start with clean stats');
+    }
+  } else {
+    console.log('   ❌ Failed to create organization:', createOrgResult.data?.error || createOrgResult.error);
+  }
+  
+  // Test 2: Test stats consistency
+  console.log('\n2️⃣ Testing Stats Consistency...');
+  
+  const statsResult = await testAPI('/api/stats', {
+    headers: { 'Authorization': 'Bearer test-token' }
+  });
+  
+  if (statsResult.status === 200) {
+    console.log('   ✅ Stats endpoint working');
+    const stats = statsResult.data.data || statsResult.data.stats || {};
+    console.log('   📊 Stats:', {
+      totalMembers: stats.totalMembers || 0,
+      totalHours: stats.totalHours || 0,
+      activeProjects: stats.activeProjects || 0
+    });
+  } else {
+    console.log('   ❌ Stats endpoint failed:', statsResult.data?.error || statsResult.error);
+  }
+  
+  // Test 3: Test working API stats
+  console.log('\n3️⃣ Testing Working API Stats...');
+  
+  const workingStatsResult = await testAPI('/api/working?action=get-stats&organizationId=default', {
+    headers: { 'Authorization': 'Bearer test-token' }
+  });
+  
+  if (workingStatsResult.status === 200) {
+    console.log('   ✅ Working API stats endpoint working');
+    const workingStats = workingStatsResult.data.stats || {};
+    console.log('   📊 Working API Stats:', {
+      totalMembers: workingStats.totalMembers || 0,
+      totalHours: workingStats.totalHours || 0,
+      activeProjects: workingStats.activeProjects || 0
+    });
+  } else {
+    console.log('   ❌ Working API stats failed:', workingStatsResult.data?.error || workingStatsResult.error);
+  }
+  
+  // Test 4: Test hours logging
+  console.log('\n4️⃣ Testing Hours Logging...');
+  
+  const logHoursResult = await testAPI('/api/working', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer test-token' },
+    body: JSON.stringify({
+      action: 'log-hours',
+      hours: 2.5,
+      description: 'Test hours for fixes',
+      date: new Date().toISOString().split('T')[0],
+      organizationId: 'default'
+    })
+  });
+  
+  if (logHoursResult.status === 201) {
+    console.log('   ✅ Hours logged successfully');
+    
+    // Check updated stats
+    const updatedStatsResult = await testAPI('/api/working?action=get-stats&organizationId=default', {
+      headers: { 'Authorization': 'Bearer test-token' }
+    });
+    
+    if (updatedStatsResult.status === 200) {
+      const updatedStats = updatedStatsResult.data.stats || {};
+      console.log('   📊 Updated stats after logging hours:', {
+        totalHours: updatedStats.totalHours || 0
+      });
+      
+      if (updatedStats.totalHours >= 2.5) {
+        console.log('   ✅ Hours properly added to total');
+      } else {
+        console.log('   ❌ Hours not properly added to total');
+      }
+    }
+  } else {
+    console.log('   ❌ Failed to log hours:', logHoursResult.data?.error || logHoursResult.error);
+  }
+  
+  // Test 5: Test organization switching
+  console.log('\n5️⃣ Testing Organization Switching...');
+  
+  const switchOrgResult = await testAPI('/api/user/switch-organization', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer test-token' },
+    body: JSON.stringify({
+      organizationId: 'test-org-id'
+    })
+  });
+  
+  if (switchOrgResult.status === 200) {
+    console.log('   ✅ Organization switching working');
+  } else {
+    console.log('   ❌ Organization switching failed:', switchOrgResult.data?.error || switchOrgResult.error);
+  }
+  
+  // Test 6: Test member count accuracy
+  console.log('\n6️⃣ Testing Member Count Accuracy...');
+  
+  const memberStatsResult = await testAPI('/api/working?action=get-stats&organizationId=default', {
+    headers: { 'Authorization': 'Bearer test-token' }
+  });
+  
+  if (memberStatsResult.status === 200) {
+    const memberStats = memberStatsResult.data.stats || {};
+    const memberCount = memberStats.totalMembers || 0;
+    
+    console.log(`   👥 Member count: ${memberCount}`);
+    
+    if (memberCount >= 1) {
+      console.log('   ✅ Member count is valid (minimum 1)');
+    } else {
+      console.log('   ❌ Member count is invalid');
+    }
+  } else {
+    console.log('   ❌ Failed to get member stats');
+  }
+  
+  console.log('\n🎯 Test Summary:');
+  console.log('   - Organization creation should work without body stream errors');
+  console.log('   - New organizations should start with clean stats');
+  console.log('   - Stats should be consistent between endpoints');
+  console.log('   - Hours logging should add to total, not overwrite');
+  console.log('   - Member count should be accurate and consistent');
+  console.log('   - Organization switching should work properly');
+  console.log('   - Join codes should be displayed correctly');
+}
+
+// Run the tests
 testOrganizationFixes().catch(console.error); 

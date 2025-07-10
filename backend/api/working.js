@@ -341,7 +341,13 @@ async function handleOrganizations(req, res) {
         inviteCode: inviteCode || generateInviteCode(),
         createdBy: decoded.userId,
         createdAt: new Date(),
-        members: [{ userId: decoded.userId, role: 'admin' }]
+        members: [{ userId: decoded.userId, role: 'admin' }],
+        stats: {
+          totalMembers: 1,
+          totalHours: 0,
+          activeProjects: 0,
+          completedTasks: 0
+        }
       };
       
       const result = await organizations.insertOne(newOrg);
@@ -395,6 +401,12 @@ async function handleGetStats(req, res) {
         joinedAt: { type: Date, default: Date.now },
         isActive: { type: Boolean, default: true }
       }],
+      stats: {
+        totalMembers: { type: Number, default: 1 },
+        totalHours: { type: Number, default: 0 },
+        activeProjects: { type: Number, default: 0 },
+        completedTasks: { type: Number, default: 0 }
+      },
       createdAt: { type: Date, default: Date.now }
     }));
     
@@ -415,24 +427,19 @@ async function handleGetStats(req, res) {
     const completedTasks = projects.filter(p => p.status === 'completed').length;
     
     // Fix: Count unique, active members only
-    let totalMembers = 0;
+    let totalMembers = 1; // Default to 1 (current user)
     if (organization && organization.members) {
       // Create a Set to track unique user IDs
       const uniqueUserIds = new Set();
       
       organization.members.forEach(member => {
-        // Ensure member has a valid user ID
-        if (member.user && member.user.toString()) {
+        // Ensure member has a valid user ID and is active
+        if (member.user && member.user.toString() && member.isActive !== false) {
           uniqueUserIds.add(member.user.toString());
         }
       });
       
-      totalMembers = uniqueUserIds.size;
-    }
-    
-    // Ensure minimum of 1 member (the current user)
-    if (totalMembers === 0) {
-      totalMembers = 1;
+      totalMembers = Math.max(uniqueUserIds.size, 1);
     }
     
     const totalOrganizations = userOrganizations.length || 0;
@@ -487,6 +494,26 @@ async function handleLogHours(req, res) {
       createdAt: { type: Date, default: Date.now }
     }));
     
+    const Organization = getModel('Organization', new mongoose.Schema({
+      name: String,
+      description: String,
+      joinCode: String,
+      createdBy: String,
+      members: [{
+        user: String,
+        role: { type: String, default: 'member' },
+        joinedAt: { type: Date, default: Date.now },
+        isActive: { type: Boolean, default: true }
+      }],
+      stats: {
+        totalMembers: { type: Number, default: 1 },
+        totalHours: { type: Number, default: 0 },
+        activeProjects: { type: Number, default: 0 },
+        completedTasks: { type: Number, default: 0 }
+      },
+      createdAt: { type: Date, default: Date.now }
+    }));
+    
     const parsedHours = parseFloat(hours);
     console.log('Parsed hours:', parsedHours);
     
@@ -509,6 +536,16 @@ async function handleLogHours(req, res) {
     console.log('Saving hour log to database...');
     const savedHourLog = await hourLog.save();
     console.log('Hours logged successfully:', savedHourLog._id);
+    
+    // Update organization stats
+    try {
+      await Organization.findByIdAndUpdate(organizationId || 'default', {
+        $inc: { 'stats.totalHours': parsedHours }
+      });
+      console.log('Updated organization stats with new hours');
+    } catch (orgUpdateError) {
+      console.warn('Failed to update organization stats:', orgUpdateError);
+    }
 
     return res.status(201).json({ 
       success: true,

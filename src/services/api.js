@@ -469,33 +469,74 @@ class ApiService {
   
   // Stats
   async getStats() {
-    // Use working endpoint with correct action
-    const organizationId = localStorage.getItem('currentOrganization') || 'default';
-    const response = await this.request(`/working?action=get-stats&organizationId=${organizationId}`);
-    
-    // Ensure consistent data structure
-    if (response && response.success) {
-      return {
-        success: true,
-        stats: response.stats || {},
-        data: response.stats || {}
-      };
-    }
-    
-    // Fallback to main server endpoint
     try {
+      // Use working endpoint with correct action as primary
+      const organizationId = localStorage.getItem('currentOrganization') || 'default';
+      const response = await this.request(`/working?action=get-stats&organizationId=${organizationId}`);
+      
+      console.log('📊 getStats response:', response);
+      
+      // Ensure consistent data structure
+      if (response && response.success) {
+        const stats = response.stats || {};
+        return {
+          success: true,
+          stats: {
+            totalHours: stats.totalHours || 0,
+            totalMembers: stats.totalMembers || 1,
+            activeProjects: stats.activeProjects || 0,
+            completedTasks: stats.completedTasks || 0,
+            totalProjects: stats.totalProjects || 0
+          },
+          data: {
+            totalHours: stats.totalHours || 0,
+            totalMembers: stats.totalMembers || 1,
+            activeProjects: stats.activeProjects || 0,
+            completedTasks: stats.completedTasks || 0,
+            totalProjects: stats.totalProjects || 0
+          }
+        };
+      }
+      
+      // Fallback to main server endpoint
       const mainResponse = await this.request('/stats');
+      const mainStats = mainResponse.data || {};
+      
       return {
         success: true,
-        stats: mainResponse.data || {},
-        data: mainResponse.data || {}
+        stats: {
+          totalHours: mainStats.totalHours || 0,
+          totalMembers: mainStats.totalMembers || 1,
+          activeProjects: mainStats.activeProjects || 0,
+          completedTasks: mainStats.completedTasks || 0,
+          totalProjects: mainStats.totalProjects || 0
+        },
+        data: {
+          totalHours: mainStats.totalHours || 0,
+          totalMembers: mainStats.totalMembers || 1,
+          activeProjects: mainStats.activeProjects || 0,
+          completedTasks: mainStats.completedTasks || 0,
+          totalProjects: mainStats.totalProjects || 0
+        }
       };
     } catch (error) {
-      console.error('Failed to get stats from main endpoint:', error);
+      console.error('Failed to get stats:', error);
       return {
         success: false,
-        stats: { totalHours: 0, totalMembers: 1, activeProjects: 0, completedTasks: 0 },
-        data: { totalHours: 0, totalMembers: 1, activeProjects: 0, completedTasks: 0 }
+        stats: { 
+          totalHours: 0, 
+          totalMembers: 1, 
+          activeProjects: 0, 
+          completedTasks: 0,
+          totalProjects: 0
+        },
+        data: { 
+          totalHours: 0, 
+          totalMembers: 1, 
+          activeProjects: 0, 
+          completedTasks: 0,
+          totalProjects: 0
+        }
       };
     }
   }

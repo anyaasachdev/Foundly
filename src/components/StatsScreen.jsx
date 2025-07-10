@@ -64,7 +64,7 @@ const StatsScreen = ({ user }) => {
     try {
       console.log('Loading stats...');
       
-      // Use the working endpoint for consistent stats with HomeScreen
+      // Use the same getStats method as HomeScreen for consistency
       const statsResponse = await ApiService.getStats();
       
       console.log('Stats response:', statsResponse);
@@ -75,7 +75,7 @@ const StatsScreen = ({ user }) => {
         totalHours: stats.totalHours || 0,
         activeProjects: stats.activeProjects || 0,
         completedTasks: stats.completedTasks || 0,
-        totalMembers: stats.totalMembers || 0,
+        totalMembers: stats.totalMembers || 1,
         totalProjects: stats.totalProjects || 0
       });
       setLoading(false);
@@ -85,7 +85,7 @@ const StatsScreen = ({ user }) => {
         totalHours: 0,
         activeProjects: 0,
         completedTasks: 0,
-        totalMembers: 0,
+        totalMembers: 1,
         totalProjects: 0
       });
       setLoading(false);

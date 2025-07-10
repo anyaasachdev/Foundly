@@ -149,20 +149,28 @@ const HomeScreen = ({ user }) => {
         }
         
         if (currentOrg) {
+          // Normalize organization structure
+          const normalizedOrg = {
+            _id: currentOrg._id || currentOrg.organization?._id || currentOrg.organizationId?._id || currentOrg.organizationId,
+            name: currentOrg.name || currentOrg.organization?.name || currentOrg.organizationId?.name || 'Unknown Organization',
+            description: currentOrg.description || currentOrg.organization?.description || '',
+            joinCode: currentOrg.joinCode || currentOrg.organization?.joinCode || currentOrg.organizationId?.joinCode || '',
+            role: currentOrg.role || 'member'
+          };
+          
           // Set valid organization data
-          setOrganization(currentOrg);
-          setIsAdmin(['admin', 'owner'].includes(currentOrg?.role));
-          console.log('✅ HomeScreen: Current organization set:', currentOrg.name, 'ID:', currentOrg._id);
+          setOrganization(normalizedOrg);
+          setIsAdmin(['admin', 'owner'].includes(normalizedOrg?.role));
+          console.log('✅ HomeScreen: Current organization set:', normalizedOrg.name, 'ID:', normalizedOrg._id);
           
           // Ensure organization ID is set in localStorage
-          const orgId = currentOrg._id || currentOrg.organization?._id || currentOrg.organizationId?._id || currentOrg.organizationId;
-          if (orgId) {
-            localStorage.setItem('currentOrganization', orgId);
-            console.log('✅ HomeScreen: Organization ID set in localStorage:', orgId);
+          if (normalizedOrg._id) {
+            localStorage.setItem('currentOrganization', normalizedOrg._id);
+            console.log('✅ HomeScreen: Organization ID set in localStorage:', normalizedOrg._id);
           }
           
           // Load organization-specific data
-          console.log('🔄 HomeScreen: Loading data for organization:', orgId);
+          console.log('🔄 HomeScreen: Loading data for organization:', normalizedOrg._id);
           const [projectsResponse, statsResponse, hoursResponse] = await Promise.all([
             ApiService.getProjects().catch((err) => {
               console.error('Failed to load projects:', err);
@@ -179,7 +187,7 @@ const HomeScreen = ({ user }) => {
           ]);
           
           console.log('HomeScreen: Loaded organization-specific data:', {
-            org: currentOrg.name,
+            org: normalizedOrg.name,
             projects: projectsResponse.projects?.length || 0,
             totalHours: hoursResponse.totalHours || 0,
             stats: statsResponse.stats
@@ -194,7 +202,7 @@ const HomeScreen = ({ user }) => {
           setProjects(projects);
           setStats({
             totalHours: stats.totalHours || 0,
-            totalMembers: stats.totalMembers || 0,
+            totalMembers: stats.totalMembers || 1,
             activeProjects: stats.activeProjects || 0,
             hoursLogged: stats.totalHours || 0,
             completedTasks: stats.completedTasks || 0
@@ -202,7 +210,7 @@ const HomeScreen = ({ user }) => {
           
           console.log('✅ Stats set from API:', {
             totalHours: stats.totalHours || 0,
-            totalMembers: stats.totalMembers || 0,
+            totalMembers: stats.totalMembers || 1,
             activeProjects: stats.activeProjects || 0,
             hoursLogged: stats.totalHours || 0,
             completedTasks: stats.completedTasks || 0
@@ -831,17 +839,17 @@ const HomeScreen = ({ user }) => {
                 fontWeight: 'bold',
                 letterSpacing: '1px'
               }}>
-                {organization.joinCode || 'NO CODE'}
+                {organization?.joinCode || 'NO CODE'}
               </div>
               
               <button
                 onClick={async () => {
                   try {
-                    await navigator.clipboard.writeText(organization.joinCode || '');
+                    await navigator.clipboard.writeText(organization?.joinCode || '');
                     alert('Join code copied to clipboard!');
                   } catch (error) {
                     const textArea = document.createElement('textarea');
-                    textArea.value = organization.joinCode || '';
+                    textArea.value = organization?.joinCode || '';
                     document.body.appendChild(textArea);
                     textArea.select();
                     document.execCommand('copy');

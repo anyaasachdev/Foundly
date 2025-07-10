@@ -332,6 +332,11 @@ app.post('/api/organizations', authenticateToken, async (req, res) => {
   try {
     const { name, description, location, website, category, customJoinCode } = req.body;
     
+    // Validate required fields
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Organization name is required' });
+    }
+    
     // Check if custom join code already exists
     if (customJoinCode) {
       const existingOrg = await Organization.findOne({ joinCode: customJoinCode.toUpperCase() });
@@ -346,14 +351,17 @@ app.post('/api/organizations', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Invalid user authentication' });
     }
     
+    // Generate join code if not provided
+    const joinCode = customJoinCode ? customJoinCode.toUpperCase() : Math.random().toString(36).substring(2, 8).toUpperCase();
+    
     // Always start with clean stats and only the creator as member
     const organization = new Organization({
-      name,
-      description,
+      name: name.trim(),
+      description: description || '',
       location,
       website,
-      category,
-      joinCode: customJoinCode ? customJoinCode.toUpperCase() : undefined, // Use custom or auto-generate
+      category: category || 'community',
+      joinCode,
       createdBy: userId,
       admins: [userId],
       members: [{
@@ -373,6 +381,7 @@ app.post('/api/organizations', authenticateToken, async (req, res) => {
     
     await organization.save();
     
+    // Update user with organization
     await User.findByIdAndUpdate(userId, {
       $push: {
         organizations: {
@@ -383,10 +392,31 @@ app.post('/api/organizations', authenticateToken, async (req, res) => {
       currentOrganization: organization._id
     });
     
-    return res.status(201).json({ organization });
+    console.log('✅ Organization created successfully:', {
+      name: organization.name,
+      joinCode: organization.joinCode,
+      creator: userId
+    });
+    
+    return res.status(201).json({ 
+      success: true,
+      organization: {
+        _id: organization._id,
+        name: organization.name,
+        description: organization.description,
+        joinCode: organization.joinCode,
+        category: organization.category,
+        stats: organization.stats
+      }
+    });
   } catch (error) {
-    if (res.headersSent) return;
-    return res.status(500).json({ error: 'Failed to create organization' });
+    console.error('Organization creation error:', error);
+    // Check if response has already been sent
+    if (res.headersSent) {
+      console.error('Response already sent, cannot send error response');
+      return;
+    }
+    return res.status(500).json({ error: 'Failed to create organization: ' + error.message });
   }
 });
 
@@ -1007,6 +1037,11 @@ app.post('/api/hours', authenticateToken, async (req, res) => {
       $inc: { 'stats.hoursVolunteered': hourLog.hours }
     });
     
+    // Update organization stats
+    await Organization.findByIdAndUpdate(user.currentOrganization, {
+      $inc: { 'stats.totalHours': hourLog.hours }
+    });
+    
     // Populate user info for response
     await hourLog.populate('user', 'name email');
     
@@ -1057,8 +1092,8 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
       const uniqueUserIds = new Set();
       
       organization.members.forEach(member => {
-        // Ensure member has a valid user ID
-        if (member.user && member.user.toString()) {
+        // Ensure member has a valid user ID and is active
+        if (member.user && member.user.toString() && member.isActive !== false) {
           uniqueUserIds.add(member.user.toString());
         }
       });
@@ -1068,11 +1103,13 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
       console.log('📊 Total members calculated:', totalMembers);
     }
     
+    // Use organization stats if available, otherwise calculate
     const stats = {
       totalProjects,
       activeProjects,
-      totalHours: totalHours[0]?.total || 0,
-      totalMembers
+      totalHours: organization?.stats?.totalHours || totalHours[0]?.total || 0,
+      totalMembers: Math.max(totalMembers, organization?.stats?.totalMembers || 1),
+      completedTasks: organization?.stats?.completedTasks || 0
     };
     
     console.log('📊 Final stats:', stats);

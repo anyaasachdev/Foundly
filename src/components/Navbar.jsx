@@ -65,15 +65,36 @@ const Navbar = ({ user, onLogout }) => {
       
       const response = await ApiService.getMyOrganizations();
       console.log('📡 Navbar organizations response:', response);
-      console.log('📡 Response type:', typeof response);
-      console.log('📡 Response keys:', Object.keys(response || {}));
       
-      // Filter out fake/temporary orgs
-      let orgs = (response?.organizations || []).filter(org => {
-        const orgName = org.organization?.name || org.name || org.organizationId?.name || '';
-        console.log('🔍 Checking org:', { org, orgName });
-        return orgName && !orgName.includes('Temporary') && !orgName.includes('Error') && !orgName.includes('Getting Started');
+      // Handle different response structures consistently
+      let orgs = [];
+      if (response?.organizations && Array.isArray(response.organizations)) {
+        orgs = response.organizations;
+      } else if (Array.isArray(response)) {
+        orgs = response;
+      } else {
+        console.warn('⚠️ Unexpected organizations response structure:', response);
+        orgs = [];
+      }
+      
+      // Filter out fake/temporary orgs and normalize structure
+      orgs = orgs.filter(org => {
+        if (!org) return false;
+        
+        // Normalize organization structure
+        const orgName = org.name || org.organization?.name || org.organizationId?.name || '';
+        const orgId = org._id || org.organization?._id || org.organizationId?._id || org.organizationId;
+        
+        // Update org object with normalized structure
+        org.name = orgName;
+        org._id = orgId;
+        
+        return orgName && orgId && 
+               !orgName.includes('Temporary') && 
+               !orgName.includes('Error') && 
+               !orgName.includes('Getting Started');
       });
+      
       console.log('📊 Organizations found (filtered):', orgs.length);
       console.log('📊 Filtered orgs:', orgs);
       
@@ -86,30 +107,16 @@ const Navbar = ({ user, onLogout }) => {
       
       setOrganizations(orgs);
       
-      // Get current org from localStorage (prefer most recently used)
-      const orgPrefRaw = localStorage.getItem('userOrganizationData');
-      let orgPref = null;
-      if (orgPrefRaw) {
-        try {
-          orgPref = JSON.parse(orgPrefRaw);
-        } catch (e) {
-          orgPref = null;
-        }
-      }
-      
+      // Get current org from localStorage
       let current = null;
       const currentOrgId = localStorage.getItem('currentOrganization');
       console.log('🔍 Current org ID from localStorage:', currentOrgId);
       
       if (currentOrgId) {
-        current = orgs.find(org => {
-          const orgId = org._id || org.organization?._id || org.organizationId;
-          const match = orgId === currentOrgId;
-          return match;
-        });
+        current = orgs.find(org => org._id === currentOrgId);
         
         if (current) {
-          console.log('✅ Found current org from localStorage:', current.organization?.name || current.name);
+          console.log('✅ Found current org from localStorage:', current.name);
         } else {
           console.log('⚠️ Current org ID not found in user organizations, clearing localStorage');
           localStorage.removeItem('currentOrganization');
@@ -119,9 +126,8 @@ const Navbar = ({ user, onLogout }) => {
       if (!current && orgs.length > 0) {
         // Fallback: use first valid organization
         current = orgs[0];
-        const orgId = current._id || current.organization?._id || current.organizationId;
-        localStorage.setItem('currentOrganization', orgId);
-        console.log('🎯 Using first org as current:', current.organization?.name || current.name, 'ID:', orgId);
+        localStorage.setItem('currentOrganization', current._id);
+        console.log('🎯 Using first org as current:', current.name, 'ID:', current._id);
       }
       
       setCurrentOrg(current);
@@ -130,8 +136,6 @@ const Navbar = ({ user, onLogout }) => {
       }
     } catch (error) {
       console.error('❌ Failed to load organizations:', error);
-      console.error('❌ Error details:', error.message);
-      console.error('❌ Error stack:', error.stack);
       setOrganizations([]);
       setCurrentOrg(null);
       setOrgLoadError('Failed to load organizations. Please check your connection or try again.');
@@ -142,34 +146,33 @@ const Navbar = ({ user, onLogout }) => {
   const handleOrgSwitch = async (orgId) => {
     try {
       console.log('🔄 Switching to organization:', orgId);
-      // Find the organization to switch to with proper structure handling
-      const newOrg = organizations.find(org => {
-        const currentOrgId = org._id || org.organization?._id || org.organizationId;
-        return currentOrgId === orgId;
-      });
+      
+      // Find the organization to switch to
+      const newOrg = organizations.find(org => org._id === orgId);
       if (!newOrg) {
         console.error('❌ Organization not found in user organizations:', orgId);
         alert('Organization not found. Please refresh the page and try again.');
         return;
       }
-      // Validate that this is a real organization (not temporary/fake)
-      const orgName = newOrg.organization?.name || newOrg.name || newOrg.organizationId?.name || '';
-      if (!orgName || orgName.includes('Temporary') || orgName.includes('Error') || orgName.includes('Getting Started')) {
-        console.error('❌ Cannot switch to temporary/fake organization:', orgName);
+      
+      // Validate that this is a real organization
+      if (!newOrg.name || newOrg.name.includes('Temporary') || newOrg.name.includes('Error') || newOrg.name.includes('Getting Started')) {
+        console.error('❌ Cannot switch to temporary/fake organization:', newOrg.name);
         alert('Invalid organization. Please refresh the page.');
         return;
       }
-      console.log('✅ Switching to valid org:', orgName, 'ID:', orgId);
+      
+      console.log('✅ Switching to valid org:', newOrg.name, 'ID:', orgId);
       
       // Update localStorage
       localStorage.setItem('currentOrganization', orgId);
       
       // Store organization preference for persistence
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
       localStorage.setItem('userOrganizationData', JSON.stringify({
-        userEmail: user.email,
+        userEmail: userData.email,
         organizationId: orgId,
-        organizationName: orgName,
+        organizationName: newOrg.name,
         role: newOrg.role || 'member',
         setAt: new Date().toISOString(),
         source: 'navbar_switch'
@@ -314,7 +317,7 @@ const Navbar = ({ user, onLogout }) => {
             >
               <Building2 size={16} />
               <span className="org-name">
-                {currentOrg?.name || (organizations && organizations.length > 0 ? organizations[0]?.organizationId?.name || organizations[0]?.name || 'Organization' : 'Organization')}
+                {currentOrg?.name || (organizations && organizations.length > 0 ? organizations[0]?.name || 'Organization' : 'Organization')}
               </span>
               <ChevronDown size={16} className={`chevron ${showOrgDropdown ? 'open' : ''}`} />
             </button>
@@ -331,12 +334,12 @@ const Navbar = ({ user, onLogout }) => {
                   </div>
                 ) : organizations && organizations.length > 0 ? (
                   organizations.map((org) => {
-                    const orgId = org.organizationId?._id || org.organizationId || org._id;
-                    const orgName = org.organizationId?.name || org.name || 'Unknown Organization';
+                    const orgId = org._id;
+                    const orgName = org.name || 'Unknown Organization';
                     const orgRole = org.role || 'Member';
                     
                     // Fix the active organization comparison
-                    const currentOrgId = currentOrg?._id || currentOrg?.organizationId?._id || currentOrg?.organizationId;
+                    const currentOrgId = currentOrg?._id;
                     const isActive = currentOrgId === orgId;
                     
                     return (
