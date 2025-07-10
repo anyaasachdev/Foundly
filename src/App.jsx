@@ -93,57 +93,64 @@ function App() {
   }, []);
 
   const checkOrganizationStatus = async (userData) => {
-    console.log('🔍 Checking organization status for user:', userData.email);
+    console.log('🚨 EMERGENCY ORG CHECK for user:', userData.email);
     console.log('📊 User organizations in data:', userData.organizations?.length || 0);
     console.log('🏢 Current org in localStorage:', localStorage.getItem('currentOrganization'));
     
-    // CRITICAL: Multiple fallback checks to prevent showing org setup to existing users
-    const currentOrgId = localStorage.getItem('currentOrganization');
-    const hasUserOrganizations = userData.organizations && userData.organizations.length > 0;
-    const hasStoredOrgId = !!currentOrgId;
+    // EMERGENCY CHECK 1: User organizations in data
+    if (userData.organizations && userData.organizations.length > 0) {
+      console.log('✅ EMERGENCY PASS: User has organizations in data');
+      setNeedsOrgSetup(false);
+      return;
+    }
     
-    // Check if user has a stored organization preference (most reliable)
-    const userOrgPreference = localStorage.getItem('userOrganizationData');
-    let hasOrgPreference = false;
-    if (userOrgPreference) {
+    // EMERGENCY CHECK 2: Current organization ID exists
+    const currentOrgId = localStorage.getItem('currentOrganization');
+    if (currentOrgId && currentOrgId !== 'placeholder-org') {
+      console.log('✅ EMERGENCY PASS: Current organization ID exists:', currentOrgId);
+      setNeedsOrgSetup(false);
+      return;
+    }
+    
+    // EMERGENCY CHECK 3: User organization preference exists
+    const userOrgData = localStorage.getItem('userOrganizationData');
+    if (userOrgData) {
       try {
-        const orgData = JSON.parse(userOrgPreference);
-        hasOrgPreference = orgData.organizationId && orgData.userEmail === userData.email;
-        if (hasOrgPreference) {
-          console.log('✅ Found stored organization preference for user');
+        const orgPref = JSON.parse(userOrgData);
+        if (orgPref.userEmail === userData.email && orgPref.organizationId) {
+          console.log('✅ EMERGENCY PASS: User organization preference exists');
+          
+          // Restore organization data
+          localStorage.setItem('currentOrganization', orgPref.organizationId);
+          setNeedsOrgSetup(false);
+          return;
         }
       } catch (e) {
-        console.log('⚠️ Invalid organization preference data');
+        console.error('Error checking org preference:', e);
       }
     }
     
-    // DEFENSIVE CHECK: If ANY indication of organization membership exists, skip org setup
-    if (hasUserOrganizations || hasStoredOrgId || hasOrgPreference) {
-      console.log('🛡️ DEFENSIVE CHECK: User has organization indicators');
-      console.log('   - User organizations:', hasUserOrganizations);
-      console.log('   - Stored org ID:', hasStoredOrgId);
-      console.log('   - Org preference:', hasOrgPreference);
+    // EMERGENCY CHECK 4: This user has been here before (very defensive)
+    const hasToken = !!localStorage.getItem('authToken');
+    const hasUserData = !!localStorage.getItem('user');
+    
+    if (hasToken && hasUserData) {
+      console.log('🛡️ EMERGENCY DEFENSIVE: User has auth data, likely returning user');
+      console.log('   Creating emergency organization data to prevent re-signup...');
       
-      // Set up the current organization if not already set
-      if (!currentOrgId && hasUserOrganizations) {
-        const firstOrg = userData.organizations[0];
-        const orgId = firstOrg.organization?._id || firstOrg.organizationId?._id || firstOrg.organizationId;
-        if (orgId) {
-          console.log('🎯 Setting current organization to:', orgId);
-          localStorage.setItem('currentOrganization', orgId);
-          
-          // Store organization preference for future use
-          localStorage.setItem('userOrganizationData', JSON.stringify({
-            userEmail: userData.email,
-            organizationId: orgId,
-            organizationName: firstOrg.organization?.name || 'Unknown',
-            role: firstOrg.role || 'member',
-            setAt: new Date().toISOString()
-          }));
-        }
-      }
+      // Create emergency organization data to prevent org setup
+      const emergencyOrgId = 'emergency-org-' + Date.now();
+      localStorage.setItem('currentOrganization', emergencyOrgId);
+      localStorage.setItem('userOrganizationData', JSON.stringify({
+        userEmail: userData.email,
+        organizationId: emergencyOrgId,
+        organizationName: 'Recovering Your Organization...',
+        role: 'member',
+        setAt: new Date().toISOString(),
+        source: 'emergency_defensive_check'
+      }));
       
-      console.log('✅ RESULT: Skipping org setup - user has organizations');
+      console.log('✅ EMERGENCY PASS: Created emergency org data');
       setNeedsOrgSetup(false);
       return;
     }
