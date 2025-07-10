@@ -33,6 +33,8 @@ const HomeScreen = ({ user }) => {
     if (user && user.email) {
       console.log('👤 HomeScreen: User data available, loading organization data...');
       loadOrganizationData();
+      // Also load stats immediately to avoid showing 0
+      refreshStats();
     } else {
       console.log('⏳ HomeScreen: Waiting for complete user data...');
     }

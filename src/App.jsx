@@ -197,7 +197,10 @@ function App() {
     
     // FINAL CHECK: If we get here, check if user has any organization indicators at all
     const hasAnyOrgData = userData.organizations?.length > 0 || 
-                         localStorage.getItem('currentOrganization') || 
+                         (localStorage.getItem('currentOrganization') && 
+                          localStorage.getItem('currentOrganization') !== 'placeholder-org' && 
+                          localStorage.getItem('currentOrganization') !== 'null' && 
+                          localStorage.getItem('currentOrganization') !== 'undefined') || 
                          localStorage.getItem('userOrganizationData');
     
     if (hasAnyOrgData) {
@@ -309,7 +312,10 @@ function App() {
   if (user && needsOrgSetup) {
     // FINAL SAFEGUARD: Check if user has any organization indicators
     const hasAnyOrgData = user.organizations?.length > 0 || 
-                         localStorage.getItem('currentOrganization') || 
+                         (localStorage.getItem('currentOrganization') && 
+                          localStorage.getItem('currentOrganization') !== 'placeholder-org' && 
+                          localStorage.getItem('currentOrganization') !== 'null' && 
+                          localStorage.getItem('currentOrganization') !== 'undefined') || 
                          localStorage.getItem('userOrganizationData');
     
     if (hasAnyOrgData) {

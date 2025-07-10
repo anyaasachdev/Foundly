@@ -21,10 +21,30 @@ function verifyToken(req) {
     throw new Error('No token provided');
   }
   const decoded = jwt.verify(token, JWT_SECRET);
-  // Convert userId to ObjectId if it's a string
-  if (decoded.userId && typeof decoded.userId === 'string') {
-    decoded.userId = new ObjectId(decoded.userId);
+  
+  // Handle different JWT token structures
+  let userId = decoded.userId || decoded.user?.id || decoded.id;
+  
+  // If userId is still a JWT token (contains dots), extract the actual user ID
+  if (userId && typeof userId === 'string' && userId.includes('.')) {
+    try {
+      const tokenParts = userId.split('.');
+      if (tokenParts.length === 3) {
+        const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+        userId = payload.userId || payload.user?.id || payload.id;
+      }
+    } catch (e) {
+      console.error('Failed to parse JWT token:', e);
+    }
   }
+  
+  // Convert userId to ObjectId if it's a string and looks like an ObjectId
+  if (userId && typeof userId === 'string' && /^[0-9a-fA-F]{24}$/.test(userId)) {
+    decoded.userId = new ObjectId(userId);
+  } else {
+    decoded.userId = userId;
+  }
+  
   return decoded;
 }
 
@@ -59,6 +79,12 @@ export default async function handler(req, res) {
         return await handleOrganizations(req, res);
       case 'test':
         return res.status(200).json({ success: true, message: 'Working endpoint is functional' });
+      case 'get-stats':
+        return await handleGetStats(req, res);
+      case 'log-hours':
+        return await handleLogHours(req, res);
+      case 'get-hours':
+        return await handleGetHours(req, res);
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }
@@ -332,4 +358,200 @@ async function handleOrganizations(req, res) {
 
 function generateInviteCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+// Stats handler with organization context
+async function handleGetStats(req, res) {
+  const decoded = verifyToken(req);
+  const organizationId = req.query.organizationId || 'default';
+  
+  try {
+    // Get all models
+    const HourLog = getModel('HourLog', new mongoose.Schema({
+      hours: Number,
+      description: String,
+      date: Date,
+      organizationId: String,
+      userId: String,
+      createdAt: { type: Date, default: Date.now }
+    }));
+    
+    const Project = getModel('Project', new mongoose.Schema({
+      name: String,
+      description: String,
+      organizationId: String,
+      status: String,
+      createdAt: { type: Date, default: Date.now }
+    }));
+    
+    const Organization = getModel('Organization', new mongoose.Schema({
+      name: String,
+      description: String,
+      joinCode: String,
+      createdBy: String,
+      members: [{
+        user: String,
+        role: { type: String, default: 'member' },
+        joinedAt: { type: Date, default: Date.now },
+        isActive: { type: Boolean, default: true }
+      }],
+      createdAt: { type: Date, default: Date.now }
+    }));
+    
+    // Get data from all sources
+    const [hourLogs, projects, organization] = await Promise.all([
+      HourLog.find({ organizationId }),
+      Project.find({ organizationId }),
+      Organization.findById(organizationId).catch(() => null)
+    ]);
+    
+    // Calculate stats
+    const totalHours = hourLogs.reduce((sum, log) => sum + log.hours, 0);
+    const activeProjects = projects.filter(p => p.status === 'active').length;
+    const completedTasks = projects.filter(p => p.status === 'completed').length;
+    
+    // Fix: Get member count from organization's members array - count unique, active members only
+    const uniqueActiveMembers = (organization?.members || [])
+      .filter((member, index, arr) => {
+        // Ensure member has a valid user ID
+        if (!member.user) return false;
+        
+        // Check if this is the first occurrence of this user ID (remove duplicates)
+        const firstIndex = arr.findIndex(m => m.user.toString() === member.user.toString());
+        if (firstIndex !== index) return false;
+        
+        // Check if member is active
+        if (member.hasOwnProperty('isActive') && member.isActive === false) return false;
+        
+        return true;
+      });
+    
+    const totalMembers = uniqueActiveMembers.length || 0;
+    
+    console.log(`Stats for org ${organizationId}:`, {
+      totalHours,
+      activeProjects,
+      completedTasks,
+      totalMembers,
+      totalProjects: projects.length
+    });
+
+    return res.status(200).json({ 
+      success: true, 
+      stats: {
+        totalHours,
+        activeProjects,
+        completedTasks,
+        totalMembers,
+        totalProjects: projects.length
+      }
+    });
+  } catch (error) {
+    console.error('Stats error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+// Hours logging handler
+async function handleLogHours(req, res) {
+  const decoded = verifyToken(req);
+  
+  try {
+    console.log('log-hours endpoint called with data:', req.body);
+    const { hours, description, date, organizationId } = req.body;
+    
+    console.log('Extracted data:', { hours, description, date, organizationId });
+    
+    if (!hours || !date) {
+      console.log('Missing required fields:', { hours: !!hours, date: !!date });
+      return res.status(400).json({ error: 'Hours and date are required' });
+    }
+    
+    const HourLog = getModel('HourLog', new mongoose.Schema({
+      hours: { type: Number, required: true, min: 0.1, max: 24 },
+      description: { type: String, default: '' },
+      date: { type: Date, required: true },
+      organizationId: { type: String, default: 'default' },
+      userId: { type: String, required: true },
+      createdAt: { type: Date, default: Date.now }
+    }));
+    
+    const parsedHours = parseFloat(hours);
+    console.log('Parsed hours:', parsedHours);
+    
+    if (isNaN(parsedHours) || parsedHours <= 0) {
+      console.log('Invalid hours value:', parsedHours);
+      return res.status(400).json({ error: 'Hours must be a positive number' });
+    }
+    
+    const hourLogData = {
+      hours: parsedHours,
+      description: description || '',
+      date: new Date(date),
+      organizationId: organizationId || 'default',
+      userId: decoded.userId
+    };
+    
+    console.log('Creating hour log with data:', hourLogData);
+    const hourLog = new HourLog(hourLogData);
+
+    console.log('Saving hour log to database...');
+    const savedHourLog = await hourLog.save();
+    console.log('Hours logged successfully:', savedHourLog._id);
+
+    return res.status(201).json({ 
+      success: true,
+      message: 'Hours logged successfully',
+      hourLog: {
+        _id: savedHourLog._id,
+        hours: savedHourLog.hours,
+        date: savedHourLog.date,
+        description: savedHourLog.description
+      }
+    });
+  } catch (hourLogError) {
+    console.error('Error in log-hours endpoint:', hourLogError);
+    console.error('Error stack:', hourLogError.stack);
+    return res.status(500).json({ 
+      error: 'Failed to log hours', 
+      details: hourLogError.message,
+      stack: hourLogError.stack
+    });
+  }
+}
+
+// Get hours handler
+async function handleGetHours(req, res) {
+  const decoded = verifyToken(req);
+  const organizationId = req.query.organizationId || 'default';
+  
+  try {
+    const HourLog = getModel('HourLog', new mongoose.Schema({
+      hours: Number,
+      description: String,
+      date: Date,
+      organizationId: String,
+      userId: String,
+      createdAt: { type: Date, default: Date.now }
+    }));
+    
+    console.log('Getting hours for organization:', organizationId);
+    
+    const hourLogs = await HourLog.find({ 
+      organizationId: organizationId
+    }).sort({ date: -1 });
+
+    const totalHours = hourLogs.reduce((sum, log) => sum + log.hours, 0);
+    
+    console.log(`Found ${hourLogs.length} hour logs with total ${totalHours} hours for org ${organizationId}`);
+
+    return res.status(200).json({ 
+      success: true, 
+      hourLogs: hourLogs,
+      totalHours
+    });
+  } catch (error) {
+    console.error('Get hours error:', error);
+    return res.status(500).json({ error: 'Failed to fetch hours' });
+  }
 } 
