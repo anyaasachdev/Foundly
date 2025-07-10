@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -87,6 +87,9 @@ async function handleRegister(req, res) {
   const newUser = { ...user, _id: result.insertedId };
   delete newUser.password;
 
+  // Include organizations in the response (empty array for new users)
+  newUser.organizations = [];
+
   // Generate tokens
   const token = jwt.sign({ userId: newUser._id }, JWT_SECRET, { expiresIn: '1h' });
   const refreshToken = jwt.sign({ userId: newUser._id }, JWT_SECRET, { expiresIn: '7d' });
@@ -108,6 +111,7 @@ async function handleLogin(req, res) {
 
   const db = await connectDB();
   const users = db.collection('users');
+  const organizations = db.collection('organizations');
 
   // Find user
   const user = await users.findOne({ email });
@@ -128,6 +132,29 @@ async function handleLogin(req, res) {
   // Remove password from response
   const userResponse = { ...user };
   delete userResponse.password;
+
+  // Fetch user's organizations with details
+  let userOrganizations = [];
+  if (user.organizations && user.organizations.length > 0) {
+    try {
+      const orgIds = user.organizations.map(org => org.organizationId);
+      const orgDetails = await organizations.find({ _id: { $in: orgIds } }).toArray();
+      
+      // Combine user org data with org details
+      userOrganizations = user.organizations.map(userOrg => {
+        const orgDetail = orgDetails.find(org => org._id.toString() === userOrg.organizationId.toString());
+        return {
+          ...userOrg,
+          organization: orgDetail
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching organization details:', error);
+    }
+  }
+
+  // Include organizations in the response
+  userResponse.organizations = userOrganizations;
 
   res.status(200).json({
     success: true,
@@ -194,7 +221,7 @@ async function handleCreateOrganization(req, res) {
 
     // Update user with organization
     await users.updateOne(
-      { _id: decoded.userId },
+      { _id: new ObjectId(decoded.userId) },
       { 
         $push: { 
           organizations: {
@@ -262,7 +289,7 @@ async function handleJoinOrganization(req, res) {
 
     // Update user with organization
     await users.updateOne(
-      { _id: decoded.userId },
+      { _id: new ObjectId(decoded.userId) },
       { 
         $push: { 
           organizations: {
@@ -297,7 +324,7 @@ async function handleGetOrganizations(req, res) {
 
     // Get user with organizations
     const user = await users.findOne(
-      { _id: decoded.userId },
+      { _id: new ObjectId(decoded.userId) },
       { projection: { organizations: 1 } }
     );
 

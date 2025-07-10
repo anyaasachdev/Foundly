@@ -35,8 +35,9 @@ function LoginScreen({ onLogin }) {
       }
 
       if (result.success) {
-        // Store user data in localStorage
+        // Store complete user data in localStorage including organizations
         localStorage.setItem('user', JSON.stringify(result.user));
+        console.log('User logged in with organizations:', result.user.organizations?.length || 0);
         onLogin(result.user);
       } else {
         setError(result.error);

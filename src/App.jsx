@@ -96,6 +96,19 @@ function App() {
       // Check if user has organizations in their data first
       if (userData.organizations && userData.organizations.length > 0) {
         console.log('Found organizations in user data:', userData.organizations.length);
+        
+        // Set up the current organization if not already set
+        const currentOrgId = localStorage.getItem('currentOrganization');
+        if (!currentOrgId) {
+          // Set first organization as current
+          const firstOrg = userData.organizations[0];
+          const orgId = firstOrg.organization?._id || firstOrg.organizationId?._id || firstOrg.organizationId;
+          if (orgId) {
+            console.log('Setting current organization to:', orgId);
+            localStorage.setItem('currentOrganization', orgId);
+          }
+        }
+        
         setNeedsOrgSetup(false);
         return;
       }
