@@ -16,45 +16,12 @@ const projectSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  assignedTo: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
   status: {
     type: String,
-    enum: ['planning', 'active', 'completed', 'on-hold'],
-    default: 'planning'
+    enum: ['active', 'completed', 'on-hold'],
+    default: 'active'
   },
-  priority: {
-    type: String,
-    enum: ['low', 'medium', 'high', 'urgent'],
-    default: 'medium'
-  },
-  category: {
-    type: String,
-    enum: ['community', 'environment', 'education', 'technology', 'health'],
-    default: 'community'
-  },
-  dueDate: Date,
-  tags: [String],
-  progress: {
-    type: Number,
-    min: 0,
-    max: 100,
-    default: 0
-  },
-  tasks: [{
-    title: String,
-    completed: { type: Boolean, default: false },
-    assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    dueDate: Date
-  }],
-  attachments: [{
-    name: String,
-    url: String,
-    uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    uploadedAt: { type: Date, default: Date.now }
-  }]
+  dueDate: Date
 }, {
   timestamps: true
 });
