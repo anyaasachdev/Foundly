@@ -14,6 +14,7 @@ const Navbar = ({ user, onLogout }) => {
   const [organizations, setOrganizations] = useState([]);
   const [currentOrg, setCurrentOrg] = useState(null);
   const [orgLoadError, setOrgLoadError] = useState(null);
+  const [orgLoading, setOrgLoading] = useState(true);
   const { unreadCount } = useNotifications();
   const location = useLocation();
 
@@ -59,6 +60,7 @@ const Navbar = ({ user, onLogout }) => {
 
   const loadOrganizations = async () => {
     setOrgLoadError(null);
+    setOrgLoading(true);
     try {
       console.log('🔍 Navbar: Loading organizations...');
       console.log('🔍 User data:', user);
@@ -139,6 +141,8 @@ const Navbar = ({ user, onLogout }) => {
       setOrganizations([]);
       setCurrentOrg(null);
       setOrgLoadError('Failed to load organizations. Please check your connection or try again.');
+    } finally {
+      setOrgLoading(false);
     }
   };
 
@@ -332,6 +336,10 @@ const Navbar = ({ user, onLogout }) => {
                     {orgLoadError}
                     <button style={{ marginTop: 8 }} onClick={loadOrganizations}>Retry</button>
                   </div>
+                ) : orgLoading ? (
+                  <div className="org-option" style={{ color: '#6c757d', fontStyle: 'italic' }}>
+                    Loading organizations...
+                  </div>
                 ) : organizations && organizations.length > 0 ? (
                   organizations.map((org) => {
                     const orgId = org._id;
@@ -360,7 +368,7 @@ const Navbar = ({ user, onLogout }) => {
                   })
                 ) : (
                   <div className="org-option" style={{ color: '#6c757d', fontStyle: 'italic' }}>
-                    Loading organizations...
+                    No organizations found
                   </div>
                 )}
                 <div className="org-dropdown-divider" />

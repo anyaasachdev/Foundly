@@ -62,25 +62,27 @@ const StatsScreen = ({ user }) => {
   const loadAnalytics = async () => {
     setLoading(true);
     try {
-      console.log('Loading stats...');
+      console.log('📊 StatsScreen: Loading stats...');
       
       // Use the same getStats method as HomeScreen for consistency
       const statsResponse = await ApiService.getStats();
       
-      console.log('Stats response:', statsResponse);
+      console.log('📊 StatsScreen: Stats response:', statsResponse);
       
       const stats = statsResponse.stats || statsResponse.data || {};
       
-      setAnalyticsData({
+      const analyticsData = {
         totalHours: stats.totalHours || 0,
         activeProjects: stats.activeProjects || 0,
         completedTasks: stats.completedTasks || 0,
         totalMembers: stats.totalMembers || 1,
         totalProjects: stats.totalProjects || 0
-      });
-      setLoading(false);
+      };
+      
+      console.log('📊 StatsScreen: Setting analytics data:', analyticsData);
+      setAnalyticsData(analyticsData);
     } catch (error) {
-      console.error('Failed to load analytics:', error);
+      console.error('❌ StatsScreen: Failed to load analytics:', error);
       setAnalyticsData({
         totalHours: 0,
         activeProjects: 0,
@@ -88,6 +90,7 @@ const StatsScreen = ({ user }) => {
         totalMembers: 1,
         totalProjects: 0
       });
+    } finally {
       setLoading(false);
     }
   };

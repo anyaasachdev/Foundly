@@ -101,7 +101,8 @@ class ApiService {
           const retryResponse = await fetch(url, config);
           
           if (!retryResponse.ok) {
-            throw new Error(`HTTP error! status: ${retryResponse.status}`);
+            const errorText = await retryResponse.text();
+            throw new Error(`HTTP error! status: ${retryResponse.status}, details: ${errorText}`);
           }
           
           return await retryResponse.json();
@@ -115,16 +116,19 @@ class ApiService {
       }
       
       if (!response.ok) {
-        // Try to get error details from response
+        // Read the error response body only once
+        const errorText = await response.text();
         let errorDetails = 'Unknown error';
+        
         try {
-          const errorData = await response.json();
+          const errorData = JSON.parse(errorText);
           errorDetails = errorData.error || errorData.message || errorData.details || 'Unknown error';
           console.error('Server error response:', errorData);
         } catch (parseError) {
-          console.error('Could not parse error response:', parseError);
-          errorDetails = await response.text();
+          console.error('Could not parse error response as JSON:', parseError);
+          errorDetails = errorText;
         }
+        
         throw new Error(`HTTP error! status: ${response.status}, details: ${errorDetails}`);
       }
       

@@ -6,6 +6,16 @@ const MONGODB_URI = process.env.MONGODB_URI;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 let client;
+const models = {};
+
+// Helper function to get or create mongoose models
+function getModel(name, schema) {
+  if (models[name]) {
+    return models[name];
+  }
+  models[name] = mongoose.model(name, schema);
+  return models[name];
+}
 
 async function connectDB() {
   if (!client) {
