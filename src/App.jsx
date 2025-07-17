@@ -10,6 +10,7 @@ import StatsScreen from './components/StatsScreen';
 import ProfileScreen from './components/ProfileScreen';
 import OrganizationSetup from './components/OrganizationSetup';
 import Navbar from './components/Navbar';
+import SimpleNavbar from './components/SimpleNavbar';
 import ApiService from './services/api';
 import './App.css';
 
@@ -76,7 +77,7 @@ function App() {
   return (
     <Router>
       <div className="app">
-        {user && <Navbar user={user} onLogout={handleLogout} />}
+        {user && <SimpleNavbar user={user} onLogout={handleLogout} />}
         <main className={user ? 'main-content' : 'main-content-full'}>
           <Routes>
             <Route 
