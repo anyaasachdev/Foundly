@@ -11,6 +11,7 @@ import ProfileScreen from './components/ProfileScreen';
 import OrganizationSetup from './components/OrganizationSetup';
 import Navbar from './components/Navbar';
 import SimpleNavbar from './components/SimpleNavbar';
+import ErrorBoundary from './components/ErrorBoundary';
 import ApiService from './services/api';
 import './App.css';
 
@@ -79,36 +80,38 @@ function App() {
       <div className="app">
         {user && <SimpleNavbar user={user} onLogout={handleLogout} />}
         <main className={user ? 'main-content' : 'main-content-full'}>
-          <Routes>
-            <Route 
-              path="/login" 
-              element={!user ? <LoginScreen onLogin={handleLogin} /> : <Navigate to="/" />} 
-            />
-            <Route 
-              path="/" 
-              element={user ? <SimpleHomeScreen user={user} /> : <Navigate to="/login" />} 
-            />
-            <Route 
-              path="/projects" 
-              element={user ? <ProjectsScreen user={user} /> : <Navigate to="/login" />} 
-            />
-            <Route 
-              path="/calendar" 
-              element={user ? <CalendarScreen user={user} /> : <Navigate to="/login" />} 
-            />
-            <Route 
-              path="/stats" 
-              element={user ? <StatsScreen user={user} /> : <Navigate to="/login" />} 
-            />
-            <Route 
-              path="/profile" 
-              element={user ? <ProfileScreen user={user} /> : <Navigate to="/login" />} 
-            />
-            <Route 
-              path="/organization/create" 
-              element={user ? <OrganizationSetup onComplete={handleOrganizationSetup} /> : <Navigate to="/login" />} 
-            />
-          </Routes>
+          <ErrorBoundary>
+            <Routes>
+              <Route 
+                path="/login" 
+                element={!user ? <LoginScreen onLogin={handleLogin} /> : <Navigate to="/" />} 
+              />
+              <Route 
+                path="/" 
+                element={user ? <SimpleHomeScreen user={user} /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/projects" 
+                element={user ? <ProjectsScreen user={user} /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/calendar" 
+                element={user ? <CalendarScreen user={user} /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/stats" 
+                element={user ? <StatsScreen user={user} /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/profile" 
+                element={user ? <ProfileScreen user={user} /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/organization/create" 
+                element={user ? <OrganizationSetup onComplete={handleOrganizationSetup} /> : <Navigate to="/login" />} 
+              />
+            </Routes>
+          </ErrorBoundary>
         </main>
       </div>
     </Router>
