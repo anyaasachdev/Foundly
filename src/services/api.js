@@ -76,6 +76,10 @@ class ApiService {
     return this.request('/organizations');
   }
 
+  async getMyOrganizations() {
+    return this.request('/organizations');
+  }
+
   async switchOrganization(orgId) {
     return this.request(`/organizations/switch/${orgId}`, {
       method: 'PUT',
