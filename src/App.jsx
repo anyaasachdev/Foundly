@@ -79,7 +79,7 @@ function App() {
             />
             <Route 
               path="/" 
-              element={user ? <TestHomeScreen user={user} /> : <Navigate to="/login" />} 
+              element={user ? <HomeScreen user={user} /> : <Navigate to="/login" />} 
             />
             <Route 
               path="/projects" 
