@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginScreen from './components/LoginScreen';
 import HomeScreen from './components/HomeScreen';
+import TestHomeScreen from './components/TestHomeScreen';
 import ProjectsScreen from './components/ProjectsScreen';
 import CalendarScreen from './components/CalendarScreen';
 import StatsScreen from './components/StatsScreen';
@@ -78,7 +79,7 @@ function App() {
             />
             <Route 
               path="/" 
-              element={user ? <HomeScreen user={user} /> : <Navigate to="/login" />} 
+              element={user ? <TestHomeScreen user={user} /> : <Navigate to="/login" />} 
             />
             <Route 
               path="/projects" 
