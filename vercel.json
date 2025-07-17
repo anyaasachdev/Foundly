@@ -1,5 +1,22 @@
 {
   "version": 2,
+  "functions": {
+    "api/health.js": {
+      "maxDuration": 30
+    },
+    "api/test-deployment.js": {
+      "maxDuration": 30
+    },
+    "api/auth/login.js": {
+      "maxDuration": 30
+    },
+    "api/auth/register.js": {
+      "maxDuration": 30
+    },
+    "api/auth/refresh.js": {
+      "maxDuration": 30
+    }
+  },
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/static/(.*)", "dest": "/static/$1" },

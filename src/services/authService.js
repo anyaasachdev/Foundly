@@ -1,6 +1,8 @@
+import { API_CONFIG } from './config.js';
+
 class AuthService {
   constructor() {
-    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+    this.baseURL = API_CONFIG.baseURL;
   }
 
   getApiUrl() {
