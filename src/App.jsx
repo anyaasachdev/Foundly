@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LoginScreen from './components/LoginScreen';
 import HomeScreen from './components/HomeScreen';
 import TestHomeScreen from './components/TestHomeScreen';
+import SimpleHomeScreen from './components/SimpleHomeScreen';
 import ProjectsScreen from './components/ProjectsScreen';
 import CalendarScreen from './components/CalendarScreen';
 import StatsScreen from './components/StatsScreen';
@@ -36,8 +37,10 @@ function App() {
   };
 
   const handleLogin = async (userData) => {
+    console.log('🔍 App: handleLogin called with userData:', userData);
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
+    console.log('🔍 App: User state set, localStorage updated');
   };
 
   const handleLogout = () => {
@@ -67,6 +70,9 @@ function App() {
     );
   }
 
+  console.log('🔍 App: Current user state:', user);
+  console.log('🔍 App: Loading state:', loading);
+
   return (
     <Router>
       <div className="app">
@@ -79,7 +85,7 @@ function App() {
             />
             <Route 
               path="/" 
-              element={user ? <HomeScreen user={user} /> : <Navigate to="/login" />} 
+              element={user ? <SimpleHomeScreen user={user} /> : <Navigate to="/login" />} 
             />
             <Route 
               path="/projects" 
