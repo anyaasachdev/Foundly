@@ -58,26 +58,26 @@ class ApiService {
   }
 
   // Organization methods
-  async createOrganization(name, description) {
-    return this.request('/organizations', {
+  async createOrganization(organizationData) {
+    return this.request('/working?action=organizations', {
       method: 'POST',
-      body: JSON.stringify({ name, description }),
+      body: JSON.stringify(organizationData),
     });
   }
 
   async joinOrganization(joinCode) {
-    return this.request('/organizations/join', {
+    return this.request('/working?action=organizations', {
       method: 'POST',
-      body: JSON.stringify({ joinCode }),
+      body: JSON.stringify({ inviteCode: joinCode }),
     });
   }
 
   async getOrganizations() {
-    return this.request('/organizations');
+    return this.request('/working?action=organizations');
   }
 
   async getMyOrganizations() {
-    return this.request('/organizations');
+    return this.request('/working?action=organizations');
   }
 
   async switchOrganization(orgId) {
@@ -88,43 +88,43 @@ class ApiService {
 
   // Project methods
   async createProject(title, description, dueDate) {
-    return this.request('/projects', {
+    return this.request('/working?action=projects', {
       method: 'POST',
       body: JSON.stringify({ title, description, dueDate }),
     });
   }
 
   async getProjects() {
-    return this.request('/projects');
+    return this.request('/working?action=projects');
   }
 
   // Event methods
   async createEvent(title, description, date, time) {
-    return this.request('/events', {
+    return this.request('/working?action=events', {
       method: 'POST',
       body: JSON.stringify({ title, description, date, time }),
     });
   }
 
   async getEvents() {
-    return this.request('/events');
+    return this.request('/working?action=events');
   }
 
   // Hours methods
   async logHours(projectId, hours, description, date) {
-    return this.request('/hours', {
+    return this.request('/working?action=log-hours', {
       method: 'POST',
       body: JSON.stringify({ projectId, hours, description, date }),
     });
   }
 
   async getHours() {
-    return this.request('/hours');
+    return this.request('/working?action=hours');
   }
 
   // Stats methods
   async getStats() {
-    return this.request('/stats');
+    return this.request('/working?action=stats');
   }
 
   // Health check
