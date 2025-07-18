@@ -206,6 +206,51 @@ function App() {
                   </div>
                 } 
               />
+              <Route 
+                path="/simple" 
+                element={
+                  <div style={{
+                    padding: '20px',
+                    backgroundColor: '#f0f9ff',
+                    color: '#1e40af',
+                    minHeight: '100vh',
+                    fontFamily: 'Arial, sans-serif',
+                    textAlign: 'center'
+                  }}>
+                    <h1>✅ React is Working!</h1>
+                    <p>This is a simple test page to verify React is rendering correctly.</p>
+                    <p>Current state: Loading={loading ? 'true' : 'false'}, User={user ? user.email : 'none'}</p>
+                    <button 
+                      onClick={() => setUser({ email: 'test@example.com' })}
+                      style={{
+                        padding: '10px 20px',
+                        backgroundColor: '#10B981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        margin: '10px'
+                      }}
+                    >
+                      Set Test User
+                    </button>
+                    <button 
+                      onClick={() => window.location.reload()}
+                      style={{
+                        padding: '10px 20px',
+                        backgroundColor: '#3B82F6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        margin: '10px'
+                      }}
+                    >
+                      Reload Page
+                    </button>
+                  </div>
+                } 
+              />
             </Routes>
           </ErrorBoundary>
         </main>

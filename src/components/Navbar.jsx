@@ -162,9 +162,9 @@ const Navbar = ({ user, onLogout }) => {
                   whiteSpace: 'nowrap'
                 }}>
                   {truncateName(user.name)}
-                  {organizations && organizations.length > 0 && (
+                  {user.organizations && user.organizations.length > 0 && (
                     (() => {
-                      const currentOrg = organizations.find(org => {
+                      const currentOrg = user.organizations.find(org => {
                         const orgId = org.organizationId?._id || org.organizationId || org._id;
                         return orgId === localStorage.getItem('currentOrganization');
                       });
