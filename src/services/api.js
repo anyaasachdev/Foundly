@@ -18,25 +18,53 @@ class ApiService {
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    
+    // Get fresh token from localStorage
+    const currentToken = localStorage.getItem('authToken');
+    
+    console.log('🔍 API Request Debug:', {
+      baseURL: this.baseURL,
+      endpoint,
+      fullURL: url,
+      method: options.method || 'GET',
+      headers: options.headers,
+      body: options.body,
+      hasToken: !!currentToken
+    });
+    
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        ...(this.token && { Authorization: `Bearer ${this.token}` }),
+        ...(currentToken && { Authorization: `Bearer ${currentToken}` }),
         ...options.headers,
       },
       ...options,
     };
 
     try {
+      console.log('📡 Making request to:', url);
       const response = await fetch(url, config);
+      
+      console.log('📥 Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        url: response.url
+      });
       
       // Check if response is JSON
       const contentType = response.headers.get('content-type');
+      console.log('📋 Content-Type:', contentType);
+      
       if (!contentType || !contentType.includes('application/json')) {
-        throw new Error(`Expected JSON response but got ${contentType}. Status: ${response.status}`);
+        // Log the actual response text for debugging
+        const responseText = await response.text();
+        console.error('❌ Non-JSON response received:', responseText.substring(0, 200));
+        throw new Error(`Expected JSON response but got ${contentType}. Status: ${response.status}. Response: ${responseText.substring(0, 100)}`);
       }
       
       const data = await response.json();
+      console.log('✅ JSON data received:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Request failed');
@@ -44,7 +72,7 @@ class ApiService {
 
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error('❌ API request failed:', error);
       throw error;
     }
   }

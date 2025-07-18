@@ -122,6 +122,58 @@ const OrganizationSetup = ({ onComplete }) => {
     // Clear any previous errors
     console.log('Starting organization creation...');
     
+    // Debug: Check authentication
+    const token = localStorage.getItem('authToken');
+    console.log('🔐 Auth token check:', {
+      hasToken: !!token,
+      tokenLength: token ? token.length : 0,
+      tokenPreview: token ? token.substring(0, 20) + '...' : 'none'
+    });
+    
+    // Check if user is authenticated
+    if (!token) {
+      alert('You must be logged in to create an organization. Please log in first.');
+      return;
+    }
+    
+    // Test API connection first
+    console.log('🧪 Testing API connection...');
+    console.log('🔧 API Service baseURL:', ApiService.baseURL);
+    try {
+      const healthResponse = await fetch('http://localhost:3001/api/health');
+      const healthData = await healthResponse.json();
+      console.log('✅ API health check:', healthData);
+    } catch (healthError) {
+      console.error('❌ API health check failed:', healthError);
+      alert('Cannot connect to the backend server. Please make sure the server is running.');
+      return;
+    }
+    
+    // Test authentication
+    console.log('🔐 Testing authentication...');
+    try {
+      const authResponse = await fetch('http://localhost:3001/api/organizations', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (authResponse.ok) {
+        const authData = await authResponse.json();
+        console.log('✅ Authentication successful, user has organizations:', authData.organizations?.length || 0);
+      } else {
+        const authError = await authResponse.json();
+        console.error('❌ Authentication failed:', authError);
+        alert('Authentication failed. Please log in again.');
+        return;
+      }
+    } catch (authError) {
+      console.error('❌ Authentication test failed:', authError);
+      alert('Authentication test failed. Please check your connection and try again.');
+      return;
+    }
+    
     // Basic validation
     if (!newOrgData.name.trim()) {
       alert('Please enter an organization name');
@@ -187,6 +239,8 @@ const OrganizationSetup = ({ onComplete }) => {
         errorMessage += error.message;
       } else if (error.message.includes('network') || error.message.includes('fetch')) {
         errorMessage += 'Network error. Please check if the backend server is running.';
+      } else if (error.message.includes('Invalid token') || error.message.includes('401')) {
+        errorMessage += 'Authentication error. Please log in again.';
       } else {
         errorMessage += error.message || 'Please try again.';
       }
