@@ -17,6 +17,7 @@ const HomeScreen = ({ user }) => {
     date: new Date().toISOString().split('T')[0]
   });
   const [members, setMembers] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [stats, setStats] = useState({
     totalMembers: 0,
     activeProjects: 0,
@@ -469,7 +470,7 @@ const HomeScreen = ({ user }) => {
         </div>
       </div>
     );
-
+  }
 
   return (
     <div className="home-container" style={{
