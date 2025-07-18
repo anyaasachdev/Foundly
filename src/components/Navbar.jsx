@@ -3,16 +3,12 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, Users, Calendar, BarChart3, MessageSquare, User, LogOut, Menu, X, ChevronDown, FolderOpen, Building2, Settings } from 'lucide-react';
 
 import ApiService from '../services/api';
+import SimpleOrgSwitcher from './SimpleOrgSwitcher';
 import './Navbar.css';
 
 const Navbar = ({ user, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [showOrgDropdown, setShowOrgDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [organizations, setOrganizations] = useState([]);
-  const [currentOrg, setCurrentOrg] = useState(null);
-  const [orgLoadError, setOrgLoadError] = useState(null);
-  const [orgLoading, setOrgLoading] = useState(true);
   const location = useLocation();
 
   const navItems = [
@@ -22,12 +18,6 @@ const Navbar = ({ user, onLogout }) => {
     { path: '/stats', icon: BarChart3, label: 'Stats' },
   ];
 
-  useEffect(() => {
-    if (user) {
-      loadOrganizations();
-    }
-  }, [user]);
-
   // Ensure dropdowns close properly
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -35,13 +25,9 @@ const Navbar = ({ user, onLogout }) => {
       if (isOpen && !event.target.closest('.navbar-container')) {
         setIsOpen(false);
       }
-      if (!event.target.closest('.org-switcher')) {
-        setShowOrgDropdown(false);
-      }
       if (!event.target.closest('.user-menu')) {
         setShowUserDropdown(false);
       }
-
     };
   
     document.addEventListener('mousedown', handleClickOutside);
@@ -53,201 +39,7 @@ const Navbar = ({ user, onLogout }) => {
     setIsOpen(false);
   }, [location.pathname]);
 
-  const loadOrganizations = async () => {
-    setOrgLoadError(null);
-    setOrgLoading(true);
-    try {
-      console.log('🔍 Navbar: Loading organizations...');
-      console.log('🔍 User data:', user);
-      
-      const response = await ApiService.getMyOrganizations();
-      console.log('📡 Navbar organizations response:', response);
-      
-      // Handle different response structures consistently
-      let orgs = [];
-      if (response?.organizations && Array.isArray(response.organizations)) {
-        orgs = response.organizations;
-      } else if (Array.isArray(response)) {
-        orgs = response;
-      } else {
-        console.warn('⚠️ Unexpected organizations response structure:', response);
-        orgs = [];
-      }
-      
-      // Filter out fake/temporary orgs and normalize structure
-      orgs = orgs.filter(org => {
-        if (!org) return false;
-        
-        // Normalize organization structure
-        const orgName = org.name || org.organization?.name || org.organizationId?.name || '';
-        const orgId = org._id || org.organization?._id || org.organizationId?._id || org.organizationId;
-        
-        // Update org object with normalized structure
-        org.name = orgName;
-        org._id = orgId;
-        
-        return orgName && orgId && 
-               !orgName.includes('Temporary') && 
-               !orgName.includes('Error') && 
-               !orgName.includes('Getting Started');
-      });
-      
-      console.log('📊 Organizations found (filtered):', orgs.length);
-      console.log('📊 Filtered orgs:', orgs);
-      
-      if (orgs.length === 0) {
-        setOrganizations([]);
-        setCurrentOrg(null);
-        setOrgLoadError('No organizations found. If this is unexpected, please contact support.');
-        return;
-      }
-      
-      setOrganizations(orgs);
-      
-      // Get current org from localStorage
-      let current = null;
-      const currentOrgId = localStorage.getItem('currentOrganization');
-      console.log('🔍 Current org ID from localStorage:', currentOrgId);
-      
-      if (currentOrgId) {
-        current = orgs.find(org => org._id === currentOrgId);
-        
-        if (current) {
-          console.log('✅ Found current org from localStorage:', current.name);
-        } else {
-          console.log('⚠️ Current org ID not found in user organizations, clearing localStorage');
-          localStorage.removeItem('currentOrganization');
-        }
-      }
-      
-      if (!current && orgs.length > 0) {
-        // Fallback: use first valid organization
-        current = orgs[0];
-        localStorage.setItem('currentOrganization', current._id);
-        console.log('🎯 Using first org as current:', current.name, 'ID:', current._id);
-      }
-      
-      setCurrentOrg(current);
-      if (!current) {
-        console.log('❌ No valid current organization could be set');
-      }
-    } catch (error) {
-      console.error('❌ Failed to load organizations:', error);
-      setOrganizations([]);
-      setCurrentOrg(null);
-      setOrgLoadError('Failed to load organizations. Please check your connection or try again.');
-    } finally {
-      setOrgLoading(false);
-    }
-  };
 
-  // Improved organization switching logic
-  const handleOrgSwitch = async (orgId) => {
-    try {
-      console.log('🔄 Switching to organization:', orgId);
-      
-      // Find the organization to switch to
-      const newOrg = organizations.find(org => org._id === orgId);
-      if (!newOrg) {
-        console.error('❌ Organization not found in user organizations:', orgId);
-        alert('Organization not found. Please refresh the page and try again.');
-        return;
-      }
-      
-      // Validate that this is a real organization
-      if (!newOrg.name || newOrg.name.includes('Temporary') || newOrg.name.includes('Error') || newOrg.name.includes('Getting Started')) {
-        console.error('❌ Cannot switch to temporary/fake organization:', newOrg.name);
-        alert('Invalid organization. Please refresh the page.');
-        return;
-      }
-      
-      console.log('✅ Switching to valid org:', newOrg.name, 'ID:', orgId);
-      
-      // Update localStorage
-      localStorage.setItem('currentOrganization', orgId);
-      
-      // Store organization preference for persistence
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
-      localStorage.setItem('userOrganizationData', JSON.stringify({
-        userEmail: userData.email,
-        organizationId: orgId,
-        organizationName: newOrg.name,
-        role: newOrg.role || 'member',
-        setAt: new Date().toISOString(),
-        source: 'navbar_switch'
-      }));
-      
-      // Update state
-      setCurrentOrg(newOrg);
-      setShowOrgDropdown(false);
-      
-      // Call backend to update current organization
-      try {
-        await ApiService.switchOrganization(orgId);
-        console.log('✅ Backend organization switch successful');
-      } catch (backendError) {
-        console.warn('⚠️ Backend organization switch failed, but continuing with frontend switch:', backendError);
-      }
-      
-      // Clear cached data to force fresh load
-      localStorage.removeItem('cachedProjects');
-      localStorage.removeItem('cachedStats');
-      localStorage.removeItem('cachedHours');
-      
-      console.log('🎯 Organization switch complete, triggering data refresh...');
-      
-      // Dispatch custom event to notify other components
-      window.dispatchEvent(new CustomEvent('organizationChanged', {
-        detail: { organizationId: orgId, organization: newOrg }
-      }));
-      
-      // Force a soft refresh of the current page data
-      if (window.location.pathname === '/') {
-        // If on homepage, trigger a refresh
-        window.location.reload();
-      } else {
-        // For other pages, navigate to homepage to show new org data
-        window.location.href = '/';
-      }
-    } catch (error) {
-      console.error('❌ Failed to switch organization:', error);
-      alert('Failed to switch organization. Please try again.');
-    }
-  };
-  
-  const handleLeaveOrganization = async (orgId) => {
-    if (window.confirm('Are you sure you want to leave this organization? This action cannot be undone.')) {
-      try {
-        await ApiService.leaveOrganization(orgId);
-        
-        // Remove from localStorage if it's the current org
-        if (localStorage.getItem('currentOrganization') === orgId) {
-          localStorage.removeItem('currentOrganization');
-        }
-        
-        // Reload organizations
-        await loadOrganizations();
-        setShowUserDropdown(false);
-        
-        // Show success message
-        alert('Successfully left the organization!');
-        
-        // Check if user has any organizations left
-        const updatedOrgs = await ApiService.getMyOrganizations();
-        
-        if (!updatedOrgs || updatedOrgs.length === 0) {
-          window.location.href = '/organization/create';
-        } else {
-          const firstOrg = updatedOrgs[0];
-          localStorage.setItem('currentOrganization', firstOrg.organizationId._id);
-          window.location.reload();
-        }
-      } catch (error) {
-        console.error('Failed to leave organization:', error);
-        alert('Failed to leave organization. Please try again.');
-      }
-    }
-  };
 
   // Generate unique color based on user ID
   const getAvatarColor = (userId) => {
@@ -309,70 +101,13 @@ const Navbar = ({ user, onLogout }) => {
 
         {/* Center - Organization Switcher */}
         {user && (
-          <div className="org-switcher">
-            <button 
-              className="org-button"
-              onClick={() => setShowOrgDropdown(!showOrgDropdown)}
-            >
-              <Building2 size={16} />
-              <span className="org-name">
-                {currentOrg?.name || (organizations && organizations.length > 0 ? organizations[0]?.name || 'Organization' : 'Organization')}
-              </span>
-              <ChevronDown size={16} className={`chevron ${showOrgDropdown ? 'open' : ''}`} />
-            </button>
-            
-            {showOrgDropdown && (
-              <div className="org-dropdown">
-                <div className="org-dropdown-header">
-                  <span>Switch Organization</span>
-                </div>
-                {orgLoadError ? (
-                  <div className="org-option" style={{ color: '#d9534f', fontStyle: 'italic' }}>
-                    {orgLoadError}
-                    <button style={{ marginTop: 8 }} onClick={loadOrganizations}>Retry</button>
-                  </div>
-                ) : orgLoading ? (
-                  <div className="org-option" style={{ color: '#6c757d', fontStyle: 'italic' }}>
-                    Loading organizations...
-                  </div>
-                ) : organizations && organizations.length > 0 ? (
-                  organizations.map((org) => {
-                    const orgId = org._id;
-                    const orgName = org.name || 'Unknown Organization';
-                    const orgRole = org.role || 'Member';
-                    
-                    // Fix the active organization comparison
-                    const currentOrgId = currentOrg?._id;
-                    const isActive = currentOrgId === orgId;
-                    
-                    return (
-                      <button
-                        key={orgId}
-                        className={`org-option ${isActive ? 'active' : ''}`}
-                        onClick={() => {
-                          console.log('🔄 Switching to organization:', orgName, 'ID:', orgId);
-                          handleOrgSwitch(orgId);
-                        }}
-                      >
-                        <div className="org-info">
-                          <span className="org-option-name">{orgName}</span>
-                          <span className="org-role">{orgRole}</span>
-                        </div>
-                      </button>
-                    );
-                  })
-                ) : (
-                  <div className="org-option" style={{ color: '#6c757d', fontStyle: 'italic' }}>
-                    No organizations found
-                  </div>
-                )}
-                <div className="org-dropdown-divider" />
-                <Link to="/organization/create" className="org-option create-new">
-                  <span>+ New Organization</span>
-                </Link>
-              </div>
-            )}
-          </div>
+          <SimpleOrgSwitcher 
+            user={user} 
+            onOrgChange={(newOrg) => {
+              console.log('🔄 Organization changed in Navbar:', newOrg);
+              // The SimpleOrgSwitcher handles the page refresh internally
+            }}
+          />
         )}
 
         {/* Right side - Notifications, User Menu */}

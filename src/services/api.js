@@ -29,6 +29,13 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
+      
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error(`Expected JSON response but got ${contentType}. Status: ${response.status}`);
+      }
+      
       const data = await response.json();
 
       if (!response.ok) {
@@ -57,27 +64,27 @@ class ApiService {
     });
   }
 
-  // Organization methods
+  // Organization methods - Updated to use correct endpoints
   async createOrganization(organizationData) {
-    return this.request('/working?action=organizations', {
+    return this.request('/organizations', {
       method: 'POST',
       body: JSON.stringify(organizationData),
     });
   }
 
   async joinOrganization(joinCode) {
-    return this.request('/working?action=organizations', {
+    return this.request('/organizations/join', {
       method: 'POST',
-      body: JSON.stringify({ inviteCode: joinCode }),
+      body: JSON.stringify({ joinCode }),
     });
   }
 
   async getOrganizations() {
-    return this.request('/working?action=organizations');
+    return this.request('/organizations');
   }
 
   async getMyOrganizations() {
-    return this.request('/working?action=organizations');
+    return this.request('/organizations');
   }
 
   async switchOrganization(orgId) {
@@ -86,45 +93,51 @@ class ApiService {
     });
   }
 
-  // Project methods
+  async leaveOrganization(orgId) {
+    return this.request(`/organizations/${orgId}/leave`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Project methods - Updated to use correct endpoints
   async createProject(title, description, dueDate) {
-    return this.request('/working?action=projects', {
+    return this.request('/projects', {
       method: 'POST',
       body: JSON.stringify({ title, description, dueDate }),
     });
   }
 
   async getProjects() {
-    return this.request('/working?action=projects');
+    return this.request('/projects');
   }
 
-  // Event methods
+  // Event methods - Updated to use correct endpoints
   async createEvent(title, description, date, time) {
-    return this.request('/working?action=events', {
+    return this.request('/events', {
       method: 'POST',
       body: JSON.stringify({ title, description, date, time }),
     });
   }
 
   async getEvents() {
-    return this.request('/working?action=events');
+    return this.request('/events');
   }
 
-  // Hours methods
+  // Hours methods - Updated to use correct endpoints
   async logHours(projectId, hours, description, date) {
-    return this.request('/working?action=log-hours', {
+    return this.request('/hours', {
       method: 'POST',
       body: JSON.stringify({ projectId, hours, description, date }),
     });
   }
 
   async getHours() {
-    return this.request('/working?action=hours');
+    return this.request('/hours');
   }
 
-  // Stats methods
+  // Stats methods - Updated to use correct endpoints
   async getStats() {
-    return this.request('/working?action=stats');
+    return this.request('/stats');
   }
 
   // Health check

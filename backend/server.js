@@ -100,11 +100,31 @@ app.post('/api/auth/login', async (req, res) => {
 // Organization routes
 app.post('/api/organizations', authenticateToken, async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, customJoinCode } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: 'Organization name is required' });
+    }
+    
+    if (!customJoinCode) {
+      return res.status(400).json({ error: 'Custom join code is required' });
+    }
+    
+    // Validate custom join code format
+    if (customJoinCode.length < 6 || customJoinCode.length > 10) {
+      return res.status(400).json({ error: 'Join code must be between 6-10 characters' });
+    }
+    
+    // Check if join code already exists
+    const existingOrg = await Organization.findOne({ joinCode: customJoinCode.toUpperCase() });
+    if (existingOrg) {
+      return res.status(400).json({ error: 'This join code is already taken. Please choose a different one.' });
+    }
     
     const organization = new Organization({
       name,
-      description,
+      description: description || '',
+      joinCode: customJoinCode.toUpperCase(),
       createdBy: req.user._id,
       members: [{ user: req.user._id }]
     });
@@ -126,7 +146,8 @@ app.post('/api/organizations', authenticateToken, async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create organization' });
+    console.error('Create organization error:', error);
+    res.status(500).json({ error: 'Failed to create organization: ' + error.message });
   }
 });
 
@@ -210,6 +231,47 @@ app.put('/api/organizations/switch/:orgId', authenticateToken, async (req, res) 
     res.json({ message: 'Organization switched successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to switch organization' });
+  }
+});
+
+app.delete('/api/organizations/:orgId/leave', authenticateToken, async (req, res) => {
+  try {
+    const { orgId } = req.params;
+    
+    // Check if user is a member of this organization
+    const isMember = req.user.organizations.some(org => 
+      org.organizationId.toString() === orgId
+    );
+    
+    if (!isMember) {
+      return res.status(403).json({ error: 'Not a member of this organization' });
+    }
+
+    // Remove user from organization
+    const organization = await Organization.findById(orgId);
+    if (organization) {
+      organization.members = organization.members.filter(member => 
+        member.user.toString() !== req.user._id.toString()
+      );
+      organization.totalMembers = organization.members.length;
+      await organization.save();
+    }
+
+    // Remove organization from user's organizations
+    req.user.organizations = req.user.organizations.filter(org => 
+      org.organizationId.toString() !== orgId
+    );
+    
+    // If this was the current organization, clear it
+    if (req.user.currentOrganization && req.user.currentOrganization.toString() === orgId) {
+      req.user.currentOrganization = null;
+    }
+    
+    await req.user.save();
+
+    res.json({ message: 'Left organization successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to leave organization' });
   }
 });
 

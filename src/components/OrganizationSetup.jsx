@@ -160,7 +160,16 @@ const OrganizationSetup = ({ onComplete }) => {
       console.log('Response received:', response);
       
       if (response && response.organization) {
-        setCreatedOrg(response.organization);
+        // Normalize the organization data structure
+        const normalizedOrg = {
+          _id: response.organization.id || response.organization._id,
+          name: response.organization.name,
+          description: response.organization.description,
+          joinCode: response.organization.joinCode,
+          role: 'admin'
+        };
+        
+        setCreatedOrg(normalizedOrg);
         setStep('success');
         console.log('Organization created successfully!');
       } else {
@@ -211,6 +220,25 @@ const OrganizationSetup = ({ onComplete }) => {
 
   const finishSetup = () => {
     console.log('finishSetup called with:', createdOrg);
+    
+    // Store the organization in localStorage
+    if (createdOrg) {
+      localStorage.setItem('currentOrganization', createdOrg._id);
+      
+      // Update user data with the new organization
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      if (!userData.organizations) {
+        userData.organizations = [];
+      }
+      
+      userData.organizations.push({
+        organizationId: createdOrg._id,
+        role: 'admin'
+      });
+      
+      localStorage.setItem('user', JSON.stringify(userData));
+    }
+    
     onComplete({
       type: 'created',
       organization: createdOrg
