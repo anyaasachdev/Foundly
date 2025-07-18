@@ -364,77 +364,116 @@ const HomeScreen = ({ user }) => {
   if (!organization) {
     return (
       <div className="home-screen">
-        <div className="error-container" style={{
+        <div className="welcome-container" style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           minHeight: '60vh',
           padding: '40px 20px',
-          textAlign: 'center'
+          textAlign: 'center',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white'
         }}>
           <div style={{
             fontSize: '4rem',
             marginBottom: '20px'
-          }}>⚠️</div>
+          }}>🎉</div>
           <h2 style={{
-            fontSize: '1.5rem',
-            fontWeight: '600',
+            fontSize: '2rem',
+            fontWeight: '700',
             marginBottom: '15px',
-            color: '#1F2937'
-          }}>Unable to load organization data</h2>
+            color: 'white'
+          }}>Welcome to Foundly!</h2>
           <p style={{
-            fontSize: '1rem',
-            color: '#6B7280',
-            marginBottom: '25px',
-            maxWidth: '400px',
-            lineHeight: '1.5'
+            fontSize: '1.1rem',
+            color: 'rgba(255, 255, 255, 0.9)',
+            marginBottom: '30px',
+            maxWidth: '500px',
+            lineHeight: '1.6'
           }}>
-            We're having trouble loading your organization information. This might be a temporary issue.
+            You're all set up! To get started, you'll need to create or join an organization.
           </p>
           <div style={{
             display: 'flex',
-            gap: '15px',
+            gap: '20px',
             flexWrap: 'wrap',
             justifyContent: 'center'
           }}>
             <button 
-              onClick={loadOrganizationData}
+              onClick={() => window.location.href = '/organization/create'}
               style={{
-                background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                background: 'rgba(255, 255, 255, 0.2)',
                 color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                fontSize: '1rem',
-                fontWeight: '500',
+                border: '2px solid white',
+                borderRadius: '12px',
+                padding: '15px 30px',
+                fontSize: '1.1rem',
+                fontWeight: '600',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.3s ease',
+                backdropFilter: 'blur(10px)'
+              }}
+              onMouseOver={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.3)';
+                e.target.style.transform = 'translateY(-2px)';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                e.target.style.transform = 'translateY(0)';
               }}
             >
-              Try Again
+              🏢 Create Organization
             </button>
             <button 
-              onClick={() => window.location.reload()}
+              onClick={() => window.location.href = '/organization/join'}
               style={{
                 background: 'white',
-                color: '#6B7280',
-                border: '1px solid #D1D5DB',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                fontSize: '1rem',
-                fontWeight: '500',
+                color: '#667eea',
+                border: 'none',
+                borderRadius: '12px',
+                padding: '15px 30px',
+                fontSize: '1.1rem',
+                fontWeight: '600',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.3s ease'
+              }}
+              onMouseOver={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 8px 25px rgba(0,0,0,0.2)';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = 'none';
               }}
             >
-              Refresh Page
+              🔗 Join Organization
             </button>
+          </div>
+          <div style={{
+            marginTop: '40px',
+            padding: '20px',
+            background: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '12px',
+            backdropFilter: 'blur(10px)',
+            maxWidth: '400px'
+          }}>
+            <h3 style={{ marginBottom: '10px', color: 'white' }}>What's Next?</h3>
+            <ul style={{ 
+              textAlign: 'left', 
+              color: 'rgba(255, 255, 255, 0.9)',
+              lineHeight: '1.6'
+            }}>
+              <li>Create your first organization</li>
+              <li>Invite team members</li>
+              <li>Start tracking projects</li>
+              <li>Log volunteer hours</li>
+            </ul>
           </div>
         </div>
       </div>
     );
-  }
+
 
   return (
     <div className="home-container" style={{

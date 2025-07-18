@@ -78,7 +78,7 @@ function App() {
   return (
     <Router>
       <div className="app">
-        {user && <SimpleNavbar user={user} onLogout={handleLogout} />}
+        {user && <Navbar user={user} onLogout={handleLogout} />}
         <main className={user ? 'main-content' : 'main-content-full'}>
           <ErrorBoundary>
             <Routes>
@@ -88,7 +88,7 @@ function App() {
               />
               <Route 
                 path="/" 
-                element={user ? <SimpleHomeScreen user={user} /> : <Navigate to="/login" />} 
+                element={user ? <HomeScreen user={user} /> : <Navigate to="/login" />} 
               />
               <Route 
                 path="/projects" 
