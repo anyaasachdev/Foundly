@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './LoginScreen.css';
 import authService from '../services/authService';
 
@@ -11,6 +11,10 @@ function LoginScreen({ onLogin }) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    console.log('🔍 LoginScreen mounted');
+  }, []);
 
   const handleInputChange = (e) => {
     setFormData({
@@ -26,6 +30,9 @@ function LoginScreen({ onLogin }) {
     setError('');
 
     try {
+      console.log('🔍 LoginScreen - Starting auth process:', isLogin ? 'login' : 'register');
+      console.log('🔍 LoginScreen - Form data:', { email: formData.email, hasPassword: !!formData.password, hasName: !!formData.name });
+      
       let result;
       
       if (isLogin) {
@@ -64,21 +71,28 @@ function LoginScreen({ onLogin }) {
           setError(result.error);
         }
       } else {
+        console.log('🔍 REGISTER DEBUG: Starting registration process for:', formData.email);
         result = await authService.register(formData.email, formData.password, formData.name);
+        console.log('🔍 REGISTER DEBUG: Registration result:', result);
+        
         if (result.success) {
+          console.log('🔍 REGISTER DEBUG: Registration successful');
           localStorage.setItem('user', JSON.stringify(result.user));
           onLogin(result.user);
         } else {
+          console.log('🔍 REGISTER DEBUG: Registration failed:', result.error);
           setError(result.error);
         }
       }
     } catch (error) {
-      console.error('🔍 LOGIN DEBUG: Auth error:', error);
+      console.error('🔍 LoginScreen - Auth error:', error);
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
+  console.log('🔍 LoginScreen - Rendering, loading:', loading, 'error:', error);
 
   return (
     <div className="login-container">

@@ -6,10 +6,11 @@ const getApiUrl = () => {
     return process.env.REACT_APP_API_URL;
   }
   
-  // In production, use Vercel URL
+  // In production, use the same domain for API calls
   if (process.env.NODE_ENV === 'production') {
-    console.log('🔧 Using production URL: https://foundly-olive.vercel.app/api');
-    return 'https://foundly-olive.vercel.app/api';
+    const currentUrl = window.location.origin;
+    console.log('🔧 Using production URL:', `${currentUrl}/api`);
+    return `${currentUrl}/api`;
   }
   
   // In development, use localhost

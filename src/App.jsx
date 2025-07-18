@@ -18,48 +18,74 @@ import './App.css';
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    console.log('🚀 App component mounted');
     checkAuth();
   }, []);
 
   const checkAuth = () => {
-    const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('user');
-    
-    if (token && userData) {
-      try {
-        setUser(JSON.parse(userData));
-      } catch (error) {
-        console.error('Failed to parse user data:', error);
-        logout();
+    try {
+      console.log('🔍 Checking authentication...');
+      const token = localStorage.getItem('authToken');
+      const userData = localStorage.getItem('user');
+      
+      console.log('🔍 Auth check - Token exists:', !!token);
+      console.log('🔍 Auth check - User data exists:', !!userData);
+      
+      if (token && userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          console.log('🔍 Auth check - User parsed successfully:', parsedUser.email);
+          setUser(parsedUser);
+        } catch (error) {
+          console.error('🔍 Auth check - Failed to parse user data:', error);
+          logout();
+        }
+      } else {
+        console.log('🔍 Auth check - No stored auth data found');
       }
+    } catch (error) {
+      console.error('🔍 Auth check - Error during auth check:', error);
+      setError('Failed to check authentication status');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleLogin = async (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    try {
+      console.log('🔍 Login handler - Setting user:', userData.email);
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+    } catch (error) {
+      console.error('🔍 Login handler - Error:', error);
+      setError('Failed to complete login');
+    }
   };
 
   const handleLogout = () => {
+    console.log('🔍 Logout handler - Logging out user');
     logout();
   };
 
   const logout = () => {
     setUser(null);
+    setError(null);
     ApiService.clearToken();
     localStorage.removeItem('user');
     localStorage.removeItem('currentOrganization');
+    console.log('🔍 Logout - Cleared all auth data');
   };
 
   const handleOrganizationSetup = () => {
-    // Refresh user data after organization setup
+    console.log('🔍 Organization setup handler - Refreshing auth');
     checkAuth();
   };
 
   if (loading) {
+    console.log('🔍 App - Showing loading screen');
     return (
       <div className="app">
         <div className="loading-screen">
@@ -70,7 +96,40 @@ function App() {
     );
   }
 
+  if (error) {
+    console.log('🔍 App - Showing error screen:', error);
+    return (
+      <div className="app">
+        <div style={{
+          padding: '20px',
+          margin: '20px',
+          border: '2px solid red',
+          borderRadius: '8px',
+          backgroundColor: '#fff5f5',
+          textAlign: 'center'
+        }}>
+          <h2 style={{ color: 'red' }}>🚨 Application Error</h2>
+          <p>{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            style={{
+              marginTop: '10px',
+              padding: '8px 16px',
+              backgroundColor: '#dc2626',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Reload Page
+          </button>
+        </div>
+      </div>
+    );
+  }
 
+  console.log('🔍 App - Rendering main app, user:', user?.email || 'not logged in');
 
   return (
     <Router>
