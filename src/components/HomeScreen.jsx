@@ -375,10 +375,6 @@ const HomeScreen = ({ user }) => {
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           color: 'white'
         }}>
-          <div style={{
-            fontSize: '4rem',
-            marginBottom: '20px'
-          }}>🎉</div>
           <h2 style={{
             fontSize: '2rem',
             fontWeight: '700',
@@ -400,31 +396,31 @@ const HomeScreen = ({ user }) => {
             flexWrap: 'wrap',
             justifyContent: 'center'
           }}>
-            <button 
-              onClick={() => window.location.href = '/organization/create'}
-              style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                color: 'white',
-                border: '2px solid white',
-                borderRadius: '12px',
-                padding: '15px 30px',
-                fontSize: '1.1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                backdropFilter: 'blur(10px)'
-              }}
-              onMouseOver={(e) => {
-                e.target.style.background = 'rgba(255, 255, 255, 0.3)';
-                e.target.style.transform = 'translateY(-2px)';
-              }}
-              onMouseOut={(e) => {
-                e.target.style.background = 'rgba(255, 255, 255, 0.2)';
-                e.target.style.transform = 'translateY(0)';
-              }}
-            >
-              🏢 Create Organization
-            </button>
+                          <button 
+                onClick={() => window.location.href = '/organization/create'}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  border: '2px solid white',
+                  borderRadius: '12px',
+                  padding: '15px 30px',
+                  fontSize: '1.1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  backdropFilter: 'blur(10px)'
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.background = 'rgba(255, 255, 255, 0.3)';
+                  e.target.style.transform = 'translateY(-2px)';
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                  e.target.style.transform = 'translateY(0)';
+                }}
+              >
+                Create Organization
+              </button>
             <button 
               onClick={() => window.location.href = '/organization/join'}
               style={{
@@ -446,9 +442,9 @@ const HomeScreen = ({ user }) => {
                 e.target.style.transform = 'translateY(0)';
                 e.target.style.boxShadow = 'none';
               }}
-            >
-              🔗 Join Organization
-            </button>
+                          >
+                Join Organization
+              </button>
           </div>
           <div style={{
             marginTop: '40px',

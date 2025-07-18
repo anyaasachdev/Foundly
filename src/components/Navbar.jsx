@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Users, Calendar, BarChart3, MessageSquare, User, LogOut, Menu, X, ChevronDown, FolderOpen, Building2, Bell, Settings } from 'lucide-react';
-import { useNotifications } from '../contexts/NotificationContext';
-import NotificationCenter from './NotificationCenter';
+import { Home, Users, Calendar, BarChart3, MessageSquare, User, LogOut, Menu, X, ChevronDown, FolderOpen, Building2, Settings } from 'lucide-react';
+
 import ApiService from '../services/api';
 import './Navbar.css';
 
@@ -10,12 +9,10 @@ const Navbar = ({ user, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showOrgDropdown, setShowOrgDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [organizations, setOrganizations] = useState([]);
   const [currentOrg, setCurrentOrg] = useState(null);
   const [orgLoadError, setOrgLoadError] = useState(null);
   const [orgLoading, setOrgLoading] = useState(true);
-  const { unreadCount } = useNotifications();
   const location = useLocation();
 
   const navItems = [
@@ -44,9 +41,7 @@ const Navbar = ({ user, onLogout }) => {
       if (!event.target.closest('.user-menu')) {
         setShowUserDropdown(false);
       }
-      if (!event.target.closest('.notification-center')) {
-        setShowNotifications(false);
-      }
+
     };
   
     document.addEventListener('mousedown', handleClickOutside);
