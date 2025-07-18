@@ -28,7 +28,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 9999;
+        z-index: 1000;
         transition: opacity 0.5s ease;
       }
       
@@ -85,7 +85,7 @@
           sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
+        background: white;
         min-height: 100vh;
       }
       
@@ -98,44 +98,55 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     
-    <!-- Loading Screen -->
-    <div id="loading">
+    <!-- Loading Screen (temporarily disabled for debugging) -->
+    <!-- <div id="loading">
       <div class="loading-content">
         <div class="loading-emoji">⭐</div>
         <div class="loading-text">Foundly</div>
         <div class="loading-subtext">Loading your impact platform...</div>
       </div>
+    </div> -->
+    
+    <div id="root">
+      <!-- Debug info - this should be replaced by React -->
+      <div style="padding: 20px; background: #f0f0f0; border: 2px solid #ccc; margin: 20px;">
+        <h3>Debug: React not loaded yet</h3>
+        <p>If you see this, React hasn't mounted yet. This should disappear when React loads.</p>
+        <p>Time: <span id="debug-time"></span></p>
+      </div>
     </div>
     
-    <div id="root"></div>
+    <script>
+      // Update debug time
+      document.getElementById('debug-time').textContent = new Date().toLocaleString();
+    </script>
     
     <script>
       // Hide loading screen once React app loads
+      function hideLoadingScreen() {
+        const loading = document.getElementById('loading');
+        if (loading) {
+          console.log('🔍 Hiding loading screen...');
+          loading.style.opacity = '0';
+          setTimeout(function() {
+            loading.style.display = 'none';
+            console.log('✅ Loading screen hidden');
+          }, 500);
+        }
+      }
+      
+      // Hide on page load
       window.addEventListener('load', function() {
-        setTimeout(function() {
-          const loading = document.getElementById('loading');
-          if (loading) {
-            loading.style.opacity = '0';
-            setTimeout(function() {
-              loading.style.display = 'none';
-            }, 500);
-          }
-        }, 1000); // Show loading for at least 1 second
+        console.log('🔍 Page loaded, hiding loading screen in 1 second...');
+        setTimeout(hideLoadingScreen, 1000); // Show loading for at least 1 second
       });
       
-      // Also hide when React renders
+      // Hide when React renders
       const observer = new MutationObserver(function(mutations) {
         const root = document.getElementById('root');
         if (root && root.children.length > 0) {
-          setTimeout(function() {
-            const loading = document.getElementById('loading');
-            if (loading) {
-              loading.style.opacity = '0';
-              setTimeout(function() {
-                loading.style.display = 'none';
-              }, 500);
-            }
-          }, 500);
+          console.log('🔍 React content detected, hiding loading screen...');
+          setTimeout(hideLoadingScreen, 500);
           observer.disconnect();
         }
       });
@@ -144,6 +155,12 @@
         childList: true,
         subtree: true
       });
+      
+      // Fallback: hide after 2 seconds regardless
+      setTimeout(function() {
+        console.log('🔍 Fallback: hiding loading screen after timeout');
+        hideLoadingScreen();
+      }, 2000);
     </script>
   </body>
 </html>
