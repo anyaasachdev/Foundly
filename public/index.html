@@ -98,28 +98,16 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     
-    <!-- Loading Screen (temporarily disabled for debugging) -->
-    <!-- <div id="loading">
+    <!-- Loading Screen -->
+    <div id="loading">
       <div class="loading-content">
         <div class="loading-emoji">⭐</div>
         <div class="loading-text">Foundly</div>
         <div class="loading-subtext">Loading your impact platform...</div>
       </div>
-    </div> -->
-    
-    <div id="root">
-      <!-- Debug info - this should be replaced by React -->
-      <div style="padding: 20px; background: #f0f0f0; border: 2px solid #ccc; margin: 20px;">
-        <h3>Debug: React not loaded yet</h3>
-        <p>If you see this, React hasn't mounted yet. This should disappear when React loads.</p>
-        <p>Time: <span id="debug-time"></span></p>
-      </div>
     </div>
     
-    <script>
-      // Update debug time
-      document.getElementById('debug-time').textContent = new Date().toLocaleString();
-    </script>
+    <div id="root"></div>
     
     <script>
       // Hide loading screen once React app loads

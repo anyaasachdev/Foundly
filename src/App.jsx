@@ -25,15 +25,76 @@ function App() {
 
   useEffect(() => {
     console.log('🚀 App component mounted');
+    checkAuth();
     
-    // Simple test - just set loading to false after 2 seconds
-    const timer = setTimeout(() => {
-      console.log('🔍 App - Setting loading to false');
+    // Fallback: force loading to false after 5 seconds
+    const timeout = setTimeout(() => {
+      console.log('🔍 App - Loading timeout, forcing loading to false');
       setLoading(false);
-    }, 2000);
+    }, 5000);
     
-    return () => clearTimeout(timer);
+    return () => clearTimeout(timeout);
   }, []);
+
+  const checkAuth = () => {
+    try {
+      console.log('🔍 Checking authentication...');
+      const token = localStorage.getItem('authToken');
+      const userData = localStorage.getItem('user');
+      
+      console.log('🔍 Auth check - Token exists:', !!token);
+      console.log('🔍 Auth check - User data exists:', !!userData);
+      
+      if (token && userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          console.log('🔍 Auth check - User parsed successfully:', parsedUser.email);
+          setUser(parsedUser);
+        } catch (error) {
+          console.error('🔍 Auth check - Failed to parse user data:', error);
+          logout();
+        }
+      } else {
+        console.log('🔍 Auth check - No stored auth data found');
+      }
+    } catch (error) {
+      console.error('🔍 Auth check - Error during auth check:', error);
+      setError('Failed to check authentication status');
+    } finally {
+      console.log('🔍 Auth check - Setting loading to false');
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async (userData) => {
+    try {
+      console.log('🔍 Login handler - Setting user:', userData.email);
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+    } catch (error) {
+      console.error('🔍 Login handler - Error:', error);
+      setError('Failed to complete login');
+    }
+  };
+
+  const handleLogout = () => {
+    console.log('🔍 Logout handler - Logging out user');
+    logout();
+  };
+
+  const logout = () => {
+    setUser(null);
+    setError(null);
+    ApiService.clearToken();
+    localStorage.removeItem('user');
+    localStorage.removeItem('currentOrganization');
+    console.log('🔍 Logout - Cleared all auth data');
+  };
+
+  const handleOrganizationSetup = () => {
+    console.log('🔍 Organization setup handler - Refreshing auth');
+    checkAuth();
+  };
 
   console.log('🔍 App render state:', { loading, user: !!user, error: !!error });
 
@@ -83,44 +144,73 @@ function App() {
     );
   }
 
-  console.log('🔍 App - Rendering main app');
+  console.log('🔍 App - Rendering main app, user:', user?.email || 'not logged in');
 
   return (
-    <div className="app" style={{ backgroundColor: 'white', minHeight: '100vh' }}>
-      <h1 style={{ padding: '20px', color: '#1e3a8a' }}>✅ Foundly App is Working!</h1>
-      <p style={{ padding: '0 20px', color: '#333' }}>
-        If you can see this, React is working correctly. The app is now ready to show the full interface.
-      </p>
-      <div style={{ padding: '20px' }}>
-        <button 
-          onClick={() => setLoading(true)}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#1e3a8a',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            marginRight: '10px'
-          }}
-        >
-          Test Loading State
-        </button>
-        <button 
-          onClick={() => setError('Test error message')}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#dc2626',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer'
-          }}
-        >
-          Test Error State
-        </button>
+    <Router>
+      <div className="app">
+        {user && <Navbar user={user} onLogout={handleLogout} />}
+        <main className={user ? 'main-content' : 'main-content-full'}>
+          <ErrorBoundary>
+            <Routes>
+              <Route 
+                path="/login" 
+                element={!user ? <LoginScreen onLogin={handleLogin} /> : <Navigate to="/" />} 
+              />
+              <Route 
+                path="/" 
+                element={user ? <HomeScreen user={user} /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/projects" 
+                element={user ? <ProjectsScreen user={user} /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/calendar" 
+                element={user ? <CalendarScreen user={user} /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/stats" 
+                element={user ? <StatsScreen user={user} /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/profile" 
+                element={user ? <ProfileScreen user={user} /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/organization/create" 
+                element={user ? <OrganizationSetup onComplete={handleOrganizationSetup} /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/test" 
+                element={<SimpleTest />} 
+              />
+              <Route 
+                path="/debug" 
+                element={
+                  <div style={{
+                    padding: '20px',
+                    backgroundColor: 'white',
+                    color: 'black',
+                    minHeight: '100vh',
+                    fontFamily: 'Arial, sans-serif'
+                  }}>
+                    <h1>🔧 Debug Page</h1>
+                    <p>React is working! Current state:</p>
+                    <ul>
+                      <li>Loading: {loading ? 'true' : 'false'}</li>
+                      <li>User: {user ? user.email : 'none'}</li>
+                      <li>Error: {error || 'none'}</li>
+                    </ul>
+                    <button onClick={() => window.location.reload()}>Reload Page</button>
+                  </div>
+                } 
+              />
+            </Routes>
+          </ErrorBoundary>
+        </main>
       </div>
-    </div>
+    </Router>
   );
 }
 
