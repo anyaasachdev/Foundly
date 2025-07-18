@@ -39,10 +39,8 @@ function App() {
   };
 
   const handleLogin = async (userData) => {
-    console.log('🔍 App: handleLogin called with userData:', userData);
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
-    console.log('🔍 App: User state set, localStorage updated');
   };
 
   const handleLogout = () => {
@@ -72,8 +70,7 @@ function App() {
     );
   }
 
-  console.log('🔍 App: Current user state:', user);
-  console.log('🔍 App: Loading state:', loading);
+
 
   return (
     <Router>
